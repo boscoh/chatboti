@@ -1321,7 +1321,6 @@ source = { editable = "." }
 dependencies = [
     { name = "aioboto3" },
     { name = "fastapi" },
-    { name = "groq" },
     { name = "httpx" },
     { name = "mcp" },
     { name = "microeval" },
@@ -1341,7 +1340,6 @@ dependencies = [
 requires-dist = [
     { name = "aioboto3", specifier = ">=15.2.0" },
     { name = "fastapi", specifier = ">=0.116.1" },
-    { name = "groq", specifier = ">=0.9.0" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "mcp", specifier = ">=1.18.0" },
     { name = "microeval", specifier = ">=0.1.0" },

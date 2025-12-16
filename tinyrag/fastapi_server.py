@@ -5,18 +5,13 @@ from tinyrag.setup_logger import setup_logging
 
 setup_logging()
 
-import asyncio
 import logging
 import os
-import threading
-import time
-import webbrowser
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, AsyncIterator, Dict, Optional
 from uuid import uuid4
 
-import httpx
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -145,53 +140,5 @@ class ChatRequest(BaseModel):
 
 
 app = create_app()
-
-
-def is_in_container() -> bool:
-    """Check if running inside a container (Docker, Podman, Kubernetes, ECS, etc.)."""
-    if os.path.exists("/.dockerenv"):
-        return True
-    if os.path.exists("/run/.containerenv"):
-        return True
-    container_indicators = [
-        "docker",
-        "containerd",
-        "kubepods",
-        "crio",
-        "libpod",
-        "ecs",
-    ]
-    for cgroup_file in ["/proc/1/cgroup", "/proc/self/cgroup"]:
-        if os.path.exists(cgroup_file):
-            try:
-                with open(cgroup_file, "r") as f:
-                    content = f.read()
-                    if any(indicator in content for indicator in container_indicators):
-                        return True
-            except (OSError, IOError):
-                pass
-    return False
-
-
-def poll_and_open_browser(
-    port: int, timeout_seconds: int = 300, interval_seconds: int = 1
-) -> None:
-    start_time = time.time()
-    ui_url = f"http://localhost:{port}"
-
-    while time.time() - start_time < timeout_seconds:
-        try:
-            response = httpx.get(ui_url, timeout=2)
-            if response.status_code == 200 and "<html" in response.text.lower():
-                logger.info(f"Server is live at {ui_url}, opening browser...")
-                webbrowser.open(ui_url)
-                return
-        except (httpx.RequestError, httpx.TimeoutException):
-            pass
-
-        time.sleep(interval_seconds)
-
-    logger.warning(f"Server did not respond within {timeout_seconds} seconds")
-
 
 
