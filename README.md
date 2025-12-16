@@ -28,14 +28,17 @@ uv sync
 Create a `.env` file:
 
 ```bash
-LLM_SERVICE=openai
+CHAT_SERVICE=openai
 OPENAI_API_KEY=your-api-key-here
 ```
 
-Supported `LLM_SERVICE` values:
+Supported `CHAT_SERVICE` values:
 - `openai` - OpenAI API
 - `bedrock` - AWS Bedrock
-- `ollama` - Local Ollama instance
+
+Optional:
+- `EMBED_SERVICE` - Service for embeddings (defaults to `CHAT_SERVICE`)
+- `LLM_SERVICE` - Legacy variable, deprecated (use `CHAT_SERVICE` instead)
 
 ## Usage
 
@@ -66,7 +69,7 @@ Options:
 uv run tinyrag mcp
 ```
 
-Interactive chat interface using MCP tools.
+Interactive chat interface using MCP tools. Requires `CHAT_SERVICE` environment variable.
 
 ### Build and Run Docker
 
@@ -134,18 +137,16 @@ Process a query using the RAG system.
 - Chat: `amazon.nova-pro-v1:0`
 - Embeddings: `amazon.titan-embed-text-v2:0`
 
-**Ollama:**
-- Embeddings: `nomic-embed-text`
-- Chat tools not supported (embeddings only)
-
 ### Environment Variables
 
-- `LLM_SERVICE` - Service to use (required)
+- `CHAT_SERVICE` - Service for chat/MCP operations (`openai` or `bedrock`) (required)
+- `EMBED_SERVICE` - Service for embeddings (defaults to `CHAT_SERVICE`)
 - `OPENAI_API_KEY` - OpenAI API key (if using OpenAI)
 - `AWS_PROFILE` - AWS profile (if using Bedrock)
 - `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` - AWS credentials (alternative to profile)
 - `CORS_OFF` - Disable CORS if set
 - `AWS_REGION` - AWS region (default: us-east-1)
+- `LLM_SERVICE` - Legacy variable (deprecated, use `CHAT_SERVICE`)
 
 ## Project Structure
 
