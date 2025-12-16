@@ -65,6 +65,8 @@ def write_env_file(file_path: Path, config_vars: dict):
 
 
 def main():
+    image_name = "tinyrag"
+
     script_dir = Path(__file__).parent
     project_root = script_dir.parent
 
@@ -81,7 +83,7 @@ def main():
     embed_service = os.getenv("EMBED_SERVICE", "openai")
     uses_bedrock = chat_service == "bedrock" or embed_service == "bedrock"
 
-    config_vars = {
+    env_vars = {
         "CHAT_SERVICE": chat_service,
         "EMBED_SERVICE": embed_service,
     }
@@ -92,17 +94,17 @@ def main():
             if not profile_name:
                 print(f"Extracting credentials from AWS profile: {profile_name}")
                 aws_creds = get_aws_credentials_from_profile(profile_name)
-            config_vars.update(aws_creds)
+            env_vars.update(aws_creds)
         else:
             openai_api_key = os.getenv("OPENAI_API_KEY")
             if openai_api_key:
-                config_vars["OPENAI_API_KEY"] = openai_api_key
+                env_vars["OPENAI_API_KEY"] = openai_api_key
 
-        write_env_file(env_docker_file, config_vars)
+        write_env_file(env_docker_file, env_vars)
         print(f"Successfully wrote config to {env_docker_file}")
-        print(f"Extracted {len(config_vars)} environment variables")
+        print(f"Extracted {len(env_vars)} environment variables")
 
-        build_cmd = ["docker", "build", "-t", "aws-demo", "."]
+        build_cmd = ["docker", "build", "-t", image_name, "."]
         print("\nBuilding Docker image:")
         print(" ".join(build_cmd))
         sys.stdout.flush()
@@ -115,7 +117,7 @@ def main():
             "80:80",
             "--env-file",
             str(env_docker_file),
-            "aws-demo",
+            image_name,
         ]
 
         print("\nRunning Docker command:")

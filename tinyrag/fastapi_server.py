@@ -3,10 +3,16 @@
 
 import logging
 import os
+import threading
+import time
+import webbrowser
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, AsyncIterator, Dict, Optional
 from uuid import uuid4
+
+import httpx
+import uvicorn
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
@@ -32,6 +38,7 @@ class ChatRequest(BaseModel):
     mode: str | None = None
     userToken: str | None = None
     history: list[SlimMessage] | None = None
+
 
 limiter = Limiter(key_func=get_remote_address)
 
@@ -156,6 +163,54 @@ def create_app() -> FastAPI:
             raise HTTPException(status_code=500, detail=str(e))
 
     return app
+
+
+def wait_and_open_browser(check_url: str, open_url: str):
+    max_retries = 60
+    retry_count = 0
+
+    while retry_count < max_retries:
+        try:
+            response = httpx.get(check_url, timeout=1)
+            if response.status_code == 200:
+                webbrowser.open(open_url)
+                print(f"Opening {open_url} in browser...")
+                return
+        except Exception:
+            pass
+
+        time.sleep(0.5)
+        retry_count += 1
+
+    try:
+        webbrowser.open(open_url)
+        print(f"Opening {open_url} in browser (timeout waiting for ready)...")
+    except Exception as e:
+        print(f"Could not open browser: {e}")
+
+
+def run_server(host: str, port: int, open_browser: bool = False, reload: bool = False):
+    if open_browser:
+        base_url = f"http://{host}:{port}"
+        thread = threading.Thread(
+            target=wait_and_open_browser,
+            args=(f"{base_url}/ready", base_url),
+            daemon=True,
+        )
+        thread.start()
+
+    logger.info(f"Starting TinyRAG server on http://{host}:{port}")
+    if reload:
+        uvicorn.run(
+            "tinyrag.fastapi_server:app",
+            host=host,
+            port=port,
+            log_config=None,
+            reload=True,
+        )
+    else:
+        fastapi_app = create_app()
+        uvicorn.run(fastapi_app, host=host, port=port, log_config=None)
 
 
 app = create_app()
