@@ -2,10 +2,10 @@ FROM ghcr.io/astral-sh/uv:python3.13-trixie-slim
 
 WORKDIR /app
 
-COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev
-
+COPY pyproject.toml uv.lock README.md ./
 COPY tinyrag/ ./tinyrag/
+
+RUN uv sync --frozen --no-dev
 RUN mkdir -p /app/tinyrag/data
 
 ENV PYTHONPATH=/app

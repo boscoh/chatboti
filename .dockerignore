@@ -10,10 +10,8 @@ ENV/
 *.log
 .git/
 .gitignore
-README.md
 .env
 .env.*
-*.md
 test/
 scripts/
 node_modules/
