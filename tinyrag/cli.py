@@ -49,14 +49,7 @@ def wait_and_open_browser(check_url: str, open_url: str):
         typer.echo(f"Could not open browser: {e}")
 
 
-app = typer.Typer(
-    name="tinyrag", help="TinyRAG - Tiny RAG starter kit", no_args_is_help=True
-)
-
-
 def run_server(host: str, port: int, open_browser: bool = False):
-    fastapi_app = create_app()
-
     if open_browser:
         base_url = f"http://{host}:{port}"
         thread = threading.Thread(
@@ -67,17 +60,22 @@ def run_server(host: str, port: int, open_browser: bool = False):
         thread.start()
 
     logger.info(f"Starting TinyRAG server on http://{host}:{port}")
+    fastapi_app = create_app()
     uvicorn.run(fastapi_app, host=host, port=port, log_config=None)
+
+
+app = typer.Typer(
+    name="tinyrag", help="TinyRAG - Tiny RAG starter kit", no_args_is_help=True
+)
 
 
 @app.command()
 def ui(
     host: str = typer.Option("127.0.0.1", help="Server host"),
     port: int = typer.Option(8000, help="Server port"),
-    no_browser: bool = typer.Option(False, "--no-browser", help="Don't open browser"),
 ):
     """Start the UI with FastAPI backend and open browser"""
-    run_server(host, port, open_browser=not no_browser)
+    run_server(host, port, open_browser=True)
 
 
 @app.command()

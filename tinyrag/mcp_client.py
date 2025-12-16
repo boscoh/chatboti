@@ -34,7 +34,7 @@ class SpeakerMcpClient:
 
         self.tools: Optional[List[Dict[str, Any]]] = None
 
-        self.chat_client: IChatClient = None
+        self.chat_client: Optional[IChatClient] = None
         model = chat_models.get(self.chat_service)
         if not model:
             raise ValueError(f"Unsupported chat service: {self.chat_service}")
@@ -316,7 +316,7 @@ class SpeakerMcpClient:
 
 
 async def setup_async_exception_handler():
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
 
     def silence_event_loop_closed(loop, context):
         if "exception" not in context or not isinstance(

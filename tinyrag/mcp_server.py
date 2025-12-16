@@ -29,7 +29,7 @@ async def lifespan(app):
     await rag_service.__aexit__(None, None, None)
 
 
-mcp = FastMCP("Simle MCP", lifespan=lifespan)
+mcp = FastMCP("Simple MCP", lifespan=lifespan)
 
 
 @mcp.tool()

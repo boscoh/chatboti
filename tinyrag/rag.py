@@ -1,4 +1,3 @@
-import copy
 import csv
 import json
 import logging
@@ -122,11 +121,7 @@ class RAGService:
 
     @staticmethod
     def _strip_embeddings(speaker: dict) -> dict:
-        clean_speaker = copy.deepcopy(speaker)
-        for key in speaker.keys():
-            if "embedding" in key:
-                clean_speaker.pop(key, None)
-        return clean_speaker
+        return {k: v for k, v in speaker.items() if "embedding" not in k}
 
     def get_speaker_distance(self, embedding, speaker: dict) -> float:
         if "abstract_embedding" in speaker and "bio_embedding" in speaker:
@@ -139,11 +134,11 @@ class RAGService:
     async def get_best_speaker(self, query: str) -> Optional[dict]:
         await self.connect()
         embedding = await self.embed_client.embed(query)
-        distances = py_.map(
-            self.speakers_with_embeddings,
-            lambda s: self.get_speaker_distance(embedding, s),
-        )
-        i_speaker_best = distances.index(min(distances))
+        distances = [
+            self.get_speaker_distance(embedding, s)
+            for s in self.speakers_with_embeddings
+        ]
+        i_speaker_best = int(np.argmin(distances))
         return self.speakers[i_speaker_best]
 
     async def get_speakers(self) -> List[dict]:

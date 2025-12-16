@@ -21,6 +21,18 @@ from tinyrag.rag import RAGService
 
 logger = logging.getLogger(__name__)
 
+
+class SlimMessage(BaseModel):
+    role: str
+    content: str
+
+
+class ChatRequest(BaseModel):
+    query: str
+    mode: str | None = None
+    userToken: str | None = None
+    history: list[SlimMessage] | None = None
+
 limiter = Limiter(key_func=get_remote_address)
 
 
@@ -144,18 +156,6 @@ def create_app() -> FastAPI:
             raise HTTPException(status_code=500, detail=str(e))
 
     return app
-
-
-class SlimMessage(BaseModel):
-    role: str
-    content: str
-
-
-class ChatRequest(BaseModel):
-    query: str
-    mode: str | None = None  # assistant or quest
-    userToken: str | None = None
-    history: list[SlimMessage] | None = None
 
 
 app = create_app()
