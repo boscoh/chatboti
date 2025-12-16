@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Extract AWS credentials from a profile and write to .env.bedrock, then run Docker.
+Build and run Docker container with appropriate environment config.
+Extracts AWS credentials only when bedrock services are used.
 """
 
 import os
@@ -56,9 +57,9 @@ def get_aws_credentials_from_profile(profile_name: str):
     return credentials
 
 
-def write_env_file(file_path: Path, credentials: dict):
+def write_env_file(file_path: Path, config_vars: dict):
     with open(file_path, "w") as f:
-        for key, value in sorted(credentials.items()):
+        for key, value in sorted(config_vars.items()):
             if value:
                 f.write(f"{key}={value}\n")
 
@@ -68,29 +69,38 @@ def main():
     project_root = script_dir.parent
 
     env_file = project_root / ".env"
-    env_bedrock_file = project_root / ".env.bedrock"
+    env_docker_file = project_root / ".env.docker"
 
     if not env_file.exists():
         print(f"Error: .env file not found at {env_file}", file=sys.stderr)
         sys.exit(1)
 
-    load_dotenv()
+    load_dotenv(env_file)
 
-    profile_name = os.getenv("AWS_PROFILE")
+    chat_service = os.getenv("CHAT_SERVICE", "openai")
+    embed_service = os.getenv("EMBED_SERVICE", "openai")
+    uses_bedrock = chat_service == "bedrock" or embed_service == "bedrock"
 
-    if not profile_name:
-        print("Error: aws_profile or AWS_PROFILE not found in .env", file=sys.stderr)
-        sys.exit(1)
-
-    print(f"Extracting credentials from AWS profile: {profile_name}")
+    config_vars = {
+        "CHAT_SERVICE": chat_service,
+        "EMBED_SERVICE": embed_service,
+    }
 
     try:
-        credentials = get_aws_credentials_from_profile(profile_name)
-        credentials["CHAT_SERVICE"] = "bedrock"
-        credentials["EMBED_SERVICE"] = "bedrock"
-        write_env_file(env_bedrock_file, credentials)
-        print(f"Successfully wrote credentials to {env_bedrock_file}")
-        print(f"Extracted {len(credentials)} environment variables")
+        if uses_bedrock:
+            profile_name = os.getenv("AWS_PROFILE")
+            if not profile_name:
+                print(f"Extracting credentials from AWS profile: {profile_name}")
+                aws_creds = get_aws_credentials_from_profile(profile_name)
+            config_vars.update(aws_creds)
+        else:
+            openai_api_key = os.getenv("OPENAI_API_KEY")
+            if openai_api_key:
+                config_vars["OPENAI_API_KEY"] = openai_api_key
+
+        write_env_file(env_docker_file, config_vars)
+        print(f"Successfully wrote config to {env_docker_file}")
+        print(f"Extracted {len(config_vars)} environment variables")
 
         build_cmd = ["docker", "build", "-t", "aws-demo", "."]
         print("\nBuilding Docker image:")
@@ -104,11 +114,11 @@ def main():
             "-p",
             "80:80",
             "--env-file",
-            str(env_bedrock_file),
+            str(env_docker_file),
             "aws-demo",
         ]
 
-        print(f"\nRunning Docker command:")
+        print("\nRunning Docker command:")
         print(" ".join(docker_cmd))
         print()
 
