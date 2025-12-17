@@ -7,11 +7,12 @@ from typing import List, Optional, Union
 
 import numpy as np
 from dotenv import load_dotenv
-from microeval.chat_client import get_chat_client
+from microeval.chat_client import get_chat_client, load_config
 from path import Path
 from pydash import py_
 
-from tinyrag.config import embed_models
+model_config = load_config()
+embed_models = model_config["embed_models"]
 
 logger = logging.getLogger(__name__)
 

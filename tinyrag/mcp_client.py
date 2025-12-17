@@ -13,10 +13,11 @@ from typing import Any, Dict, List, Optional
 from dotenv import load_dotenv
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
-from microeval.chat_client import IChatClient, get_chat_client
+from microeval.chat_client import IChatClient, get_chat_client, load_config
 from path import Path
 
-from tinyrag.config import chat_models
+model_config = load_config()
+chat_models = model_config["chat_models"]
 
 load_dotenv()
 

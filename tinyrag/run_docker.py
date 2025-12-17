@@ -81,24 +81,37 @@ def main():
 
     chat_service = os.getenv("CHAT_SERVICE", "openai")
     embed_service = os.getenv("EMBED_SERVICE", "openai")
-    uses_bedrock = chat_service == "bedrock" or embed_service == "bedrock"
 
     env_vars = {
         "CHAT_SERVICE": chat_service,
         "EMBED_SERVICE": embed_service,
     }
 
+    uses_bedrock = chat_service == "bedrock" or embed_service == "bedrock"
+    uses_openai = chat_service == "openai" or embed_service == "openai"
+    uses_groq = chat_service == "groq" or embed_service == "groq"
+
     try:
         if uses_bedrock:
             profile_name = os.getenv("AWS_PROFILE")
-            if not profile_name:
+            if profile_name:
                 print(f"Extracting credentials from AWS profile: {profile_name}")
                 aws_creds = get_aws_credentials_from_profile(profile_name)
-            env_vars.update(aws_creds)
-        else:
+                env_vars.update(aws_creds)
+            else:
+                for key, value in os.environ.items():
+                    if key.startswith("AWS_"):
+                        env_vars[key] = value
+
+        if uses_openai:
             openai_api_key = os.getenv("OPENAI_API_KEY")
             if openai_api_key:
                 env_vars["OPENAI_API_KEY"] = openai_api_key
+
+        if uses_groq:
+            groq_api_key = os.getenv("GROQ_API_KEY")
+            if groq_api_key:
+                env_vars["GROQ_API_KEY"] = groq_api_key
 
         write_env_file(env_docker_file, env_vars)
         print(f"Successfully wrote config to {env_docker_file}")

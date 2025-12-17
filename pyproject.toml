@@ -36,7 +36,7 @@ dependencies = [
     "mcp>=1.18.0",
     "numpy>=2.3.4",
     "slowapi>=0.1.9",
-    "microeval>=0.1.0",
+    "microeval>=0.1.1",
 ]
 
 [project.urls]

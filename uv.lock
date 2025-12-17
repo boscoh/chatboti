@@ -672,7 +672,7 @@ wheels = [
 
 [[package]]
 name = "microeval"
-version = "0.1.0"
+version = "0.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aioboto3" },
@@ -689,9 +689,9 @@ dependencies = [
     { name = "typer" },
     { name = "uvicorn" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ba/55/23505f5eac5a3036126dec0b5e97409e35d643ed839aec696cb5e88820a2/microeval-0.1.0.tar.gz", hash = "sha256:22a51fb676bb81470877ae75c8b3aa7d6074fdbcf49a8a60afa19c09e7b9f365", size = 51785, upload-time = "2025-12-15T11:21:39.882Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0f/b8/5d13feacf7de7d0eed58ed6597c8689c2c8bc9a83ae7a35edff6673411a8/microeval-0.1.1.tar.gz", hash = "sha256:e967aceb012fdf776728fb4560ca9d9fc550d1ed5a70ee9d389826ed753da24e", size = 52606, upload-time = "2025-12-17T02:59:01.584Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/de/7c/e9f2760f1734036b15b13c027d9309e70aee3d61cb9b3d4f84bfcddb9274/microeval-0.1.0-py3-none-any.whl", hash = "sha256:ace3c70e2467fae35b2b680d52b6f087d0ffda378e03b21e66d77a38b0058351", size = 42907, upload-time = "2025-12-15T11:21:38.037Z" },
+    { url = "https://files.pythonhosted.org/packages/fa/6b/3fcc4242461adea55ceb35b964be462d77c4c7f3b5eb712c2d1caf10fa5d/microeval-0.1.1-py3-none-any.whl", hash = "sha256:62cb2b72a770736ac7246c8992e4f0d4b9c99deeef480eeb13740c3fef739ed5", size = 43163, upload-time = "2025-12-17T02:58:59.976Z" },
 ]
 
 [[package]]
@@ -1342,7 +1342,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.116.1" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "mcp", specifier = ">=1.18.0" },
-    { name = "microeval", specifier = ">=0.1.0" },
+    { name = "microeval", specifier = ">=0.1.1" },
     { name = "numpy", specifier = ">=2.3.4" },
     { name = "ollama", specifier = ">=0.5.1" },
     { name = "openai", specifier = ">=1.0.0" },
