@@ -79,6 +79,14 @@ uv run tinyrag docker
 
 Builds and runs the Docker container with credentials from your `.env` file. Automatically handles OpenAI, AWS Bedrock, and Groq API keys.
 
+### Docker Deployment
+
+The `Dockerfile` in the project root is configured for CI deployment to typical ECS clusters (and similar container orchestration platforms):
+
+- **Port**: Exposes port `80`
+- **Health endpoint**: `/health` for container health checks
+- **Root Dockerfile**: Standard location for CI/CD pipelines
+
 ### Show Version
 
 ```bash
