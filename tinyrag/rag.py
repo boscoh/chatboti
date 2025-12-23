@@ -147,8 +147,45 @@ class RAGService:
         return self.speakers
 
 
-async def amain():
+async def build_embeddings():
     """Run embeddings generation."""
     load_dotenv()
     async with RAGService():
         pass
+
+
+async def search_loop():
+    """Interactive search loop - query the RAG database directly."""
+    load_dotenv()
+    service = os.getenv("EMBED_SERVICE") or os.getenv("CHAT_SERVICE")
+    if not service:
+        print("Error: EMBED_SERVICE or CHAT_SERVICE environment variable is not set")
+        return
+
+    async with RAGService(llm_service=service) as rag_service:
+        print("RAG Search - Find the best matching speaker")
+        print("Type 'quit' or 'exit' to stop\n")
+
+        while True:
+            try:
+                query = input("Query: ")
+            except (KeyboardInterrupt, EOFError):
+                print("\nGoodbye!")
+                break
+
+            if query.lower() in ("quit", "exit", "q"):
+                print("Goodbye!")
+                break
+
+            if not query.strip():
+                continue
+
+            speaker = await rag_service.get_best_speaker(query)
+            if speaker:
+                print("\n--- Best Match ---")
+                print(f"Name: {speaker.get('name', 'N/A')}")
+                print(f"Bio: {speaker.get('bio_max_120_words', 'N/A')}")
+                print(f"Abstract: {speaker.get('final_abstract_max_150_words', 'N/A')}")
+                print("")
+            else:
+                print("No match found.\n")

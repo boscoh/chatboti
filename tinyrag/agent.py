@@ -24,7 +24,7 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 
-class SpeakerMcpClient:
+class InfoAgent:
     def __init__(self, chat_service: Optional[str] = None):
         self.chat_service = chat_service or os.getenv("CHAT_SERVICE")
         if not self.chat_service:
@@ -330,7 +330,7 @@ async def setup_async_exception_handler():
 
 async def amain(service):
     await setup_async_exception_handler()
-    async with SpeakerMcpClient(service) as client:
+    async with InfoAgent(service) as client:
         for tool in client.tools:
             logger.info("----------------------------------------------")
             logger.info(f"Tool: {tool['function']['name']}")
@@ -352,3 +352,4 @@ async def amain(service):
             print(f"\nResponse: {response}")
             conversation_history.append({"role": "user", "content": user_input})
             conversation_history.append({"role": "assistant", "content": response})
+

@@ -63,13 +63,13 @@ Options:
 - `--host` - Server host (default: 0.0.0.0)
 - `--port` - Server port (default: 8000)
 
-### Start the MCP Client
+### Start the Agent
 
 ```bash
-uv run tinyrag mcp
+uv run tinyrag chat
 ```
 
-Interactive chat interface using MCP tools. Requires `CHAT_SERVICE` environment variable.
+Interactive chat with agent using MCP tools. Requires `CHAT_SERVICE` environment variable.
 
 ### Build and Run Docker
 
@@ -77,7 +77,7 @@ Interactive chat interface using MCP tools. Requires `CHAT_SERVICE` environment 
 uv run tinyrag docker
 ```
 
-Builds and runs the Docker container with AWS credentials.
+Builds and runs the Docker container with credentials from your `.env` file. Automatically handles OpenAI, AWS Bedrock, and Groq API keys.
 
 ### Show Version
 
@@ -91,11 +91,12 @@ uv run tinyrag version
 The main chat interface.
 
 ### `/info` - Service Information
-Returns LLM service, chat model, and embedding model details:
+Returns chat service, chat model, and embedding model details:
 ```json
 {
-  "llm_service": "openai",
+  "chat_service": "openai",
   "chat_model": "gpt-4o",
+  "embed_service": "openai",
   "embed_model": "text-embedding-3-small"
 }
 ```
@@ -144,7 +145,6 @@ Process a query using the RAG system.
 - `OPENAI_API_KEY` - OpenAI API key (if using OpenAI)
 - `AWS_PROFILE` - AWS profile (if using Bedrock)
 - `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` - AWS credentials (alternative to profile)
-- `CORS_OFF` - Disable CORS if set
 - `AWS_REGION` - AWS region (default: us-east-1)
 - `LLM_SERVICE` - Legacy variable (deprecated, use `CHAT_SERVICE`)
 
@@ -153,11 +153,12 @@ Process a query using the RAG system.
 ```
 tinyrag/
 ├── cli.py               # Command-line interface
-├── fastapi_server.py    # FastAPI application
+├── server.py            # FastAPI application
 ├── mcp_server.py        # MCP server implementation
-├── mcp_client.py        # MCP client with LLM integration
+├── agent.py             # Agent with MCP tools and LLM integration
 ├── rag.py               # RAG service with embeddings
-├── config.py            # Model configuration
+├── docker.py            # Docker build and run
+├── logger.py            # Logging configuration
 ├── index.html           # Web UI
 └── data/                # Speaker data and embeddings
 ```
@@ -166,10 +167,7 @@ tinyrag/
 
 - **FastAPI Server** - REST API and web interface
 - **MCP Server** - Tool provider via STDIO
-- **MCP Client** - Tool caller with multi-step reasoning
+- **Agent** - Tool caller with multi-step reasoning
 - **RAG Service** - Embeddings and semantic search
-- **Chat Client** - Unified LLM interface
+- **Chat Client** - Simple async-only LLM interface with tool calling and embeddings
 
-## License
-
-MIT

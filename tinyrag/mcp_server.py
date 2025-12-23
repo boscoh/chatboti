@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
 
 from tinyrag.rag import RAGService
-from tinyrag.setup_logger import setup_logging
+from tinyrag.logger import setup_logging
 
 logger = logging.getLogger(__name__)
 

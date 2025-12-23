@@ -22,7 +22,7 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
-from tinyrag.mcp_client import SpeakerMcpClient
+from tinyrag.agent import InfoAgent
 from tinyrag.rag import RAGService
 
 model_config = load_config()
@@ -49,7 +49,7 @@ limiter = Limiter(key_func=get_remote_address)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    app.state.mcp_client: Optional[SpeakerMcpClient] = None
+    app.state.info_agent: Optional[InfoAgent] = None
     app.state.ready = False
 
     chat_service = os.getenv("CHAT_SERVICE")
@@ -68,8 +68,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
             # Initialize MCP client with chat service
             logger.info(f"Initializing MCP client with {chat_service}...")
-            app.state.mcp_client = SpeakerMcpClient(chat_service=chat_service)
-            await app.state.mcp_client.connect()
+            app.state.info_agent = InfoAgent(chat_service=chat_service)
+            await app.state.info_agent.connect()
             logger.info("MCP client initialized successfully")
             app.state.ready = True
         except Exception as e:
@@ -78,9 +78,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     yield
 
-    if app.state.mcp_client:
+    if app.state.info_agent:
         try:
-            await app.state.mcp_client.disconnect()
+            await app.state.info_agent.disconnect()
         except Exception as e:
             logger.error(f"Error disconnecting MCP client: {e}")
 
@@ -102,8 +102,8 @@ def create_app() -> FastAPI:
         status = {
             "status": "ok",
         }
-        if app.state.mcp_client and app.state.mcp_client.tools:
-            status["mcp_tools"] = len(app.state.mcp_client.tools)
+        if app.state.info_agent and app.state.info_agent.tools:
+            status["mcp_tools"] = len(app.state.info_agent.tools)
         return status
 
     @app.get("/ready")
@@ -113,11 +113,11 @@ def create_app() -> FastAPI:
     @app.get("/info")
     async def get_info() -> Dict[str, Any]:
         info = {}
-        if app.state.mcp_client and app.state.mcp_client.chat_client:
-            info["chat_service"] = app.state.mcp_client.chat_service
+        if app.state.info_agent and app.state.info_agent.chat_client:
+            info["chat_service"] = app.state.info_agent.chat_service
             info["chat_model"] = getattr(
-                app.state.mcp_client.chat_client, "model", None
-            ) or chat_models.get(app.state.mcp_client.chat_service)
+                app.state.info_agent.chat_client, "model", None
+            ) or chat_models.get(app.state.info_agent.chat_service)
             embed_service = os.getenv("EMBED_SERVICE") or os.getenv("CHAT_SERVICE")
             info["embed_service"] = embed_service
             info["embed_model"] = embed_models.get(embed_service)
@@ -144,7 +144,7 @@ def create_app() -> FastAPI:
                 "data": <response from MCP client>
             }
         """
-        if not app.state.mcp_client:
+        if not app.state.info_agent:
             raise HTTPException(status_code=503, detail="Chat service not initialized")
 
         try:
@@ -153,7 +153,7 @@ def create_app() -> FastAPI:
                 if chat_request.history
                 else None
             )
-            result = await app.state.mcp_client.process_query(
+            result = await app.state.info_agent.process_query(
                 chat_request.query, history=history
             )
             return {
@@ -178,7 +178,7 @@ def wait_and_open_browser(check_url: str, open_url: str):
             response = httpx.get(check_url, timeout=1)
             if response.status_code == 200:
                 webbrowser.open(open_url)
-                print(f"Opening {open_url} in browser...")
+                logger.info(f"Opening {open_url} in browser...")
                 return
         except Exception:
             pass
@@ -188,9 +188,9 @@ def wait_and_open_browser(check_url: str, open_url: str):
 
     try:
         webbrowser.open(open_url)
-        print(f"Opening {open_url} in browser (timeout waiting for ready)...")
+        logger.info(f"Opening {open_url} in browser (timeout waiting for ready)...")
     except Exception as e:
-        print(f"Could not open browser: {e}")
+        logger.error(f"Could not open browser: {e}")
 
 
 def run_server(host: str, port: int, open_browser: bool = False, reload: bool = False):
@@ -206,7 +206,7 @@ def run_server(host: str, port: int, open_browser: bool = False, reload: bool = 
     logger.info(f"Starting TinyRAG server on http://{host}:{port}")
     if reload:
         uvicorn.run(
-            "tinyrag.fastapi_server:app",
+            "tinyrag.server:app",
             host=host,
             port=port,
             log_config=None,

@@ -37,6 +37,7 @@ dependencies = [
     "numpy>=2.3.4",
     "slowapi>=0.1.9",
     "microeval>=0.1.1",
+    "cyclopts>=3.0.0",
 ]
 
 [project.urls]

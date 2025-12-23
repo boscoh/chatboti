@@ -1,33 +1,41 @@
-/.idea
-/backend/.venv
-/frontend/node_modules
-.venv
-__pycache__
-.idea
-.ruff_cache
-*.pyc
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
 
-.terraform
-*.tfstate
-.terraform.lock.hcl
-terraform.tfstate.backup
-terraform.tfstate.lock.info
-
-public
-
-.DS_Store
-data/storage.json
-
-.pytest_cache
-.env.local.docker
-
-
-backend-wip/src/data/*
-.env
-
-# Build artifacts
-/build/
-/dist/
+# Distribution / packaging
+dist/
+build/
 *.egg-info/
 *.egg
-.ruff.toml
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment variables
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log
+
+# Ruff
+.ruff_cache
