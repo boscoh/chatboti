@@ -115,9 +115,11 @@ def create_app() -> FastAPI:
         info = {}
         if app.state.info_agent and app.state.info_agent.chat_client:
             info["chat_service"] = app.state.info_agent.chat_service
-            info["chat_model"] = getattr(
-                app.state.info_agent.chat_client, "model", None
-            ) or chat_models.get(app.state.info_agent.chat_service)
+            info["chat_model"] = (
+                os.getenv("CHAT_MODEL")
+                or getattr(app.state.info_agent.chat_client, "model", None)
+                or chat_models.get(app.state.info_agent.chat_service)
+            )
             embed_service = os.getenv("EMBED_SERVICE") or os.getenv("CHAT_SERVICE")
             info["embed_service"] = embed_service
             info["embed_model"] = embed_models.get(embed_service)

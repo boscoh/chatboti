@@ -36,8 +36,17 @@ dependencies = [
     "mcp>=1.18.0",
     "numpy>=2.3.4",
     "slowapi>=0.1.9",
-    "microeval>=0.1.5",
+    "microeval @ file:///Users/boscoh/p/microeval",
     "cyclopts>=3.0.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "chromadb>=0.5.0",
+    "pyarrow>=17.0.0",
+    "faiss-cpu>=1.9.0",
 ]
 
 [project.urls]
@@ -48,6 +57,9 @@ Issues = "https://github.com/boscoh/chatboti/issues"
 
 [project.scripts]
 chatboti = "chatboti.cli:main"
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["chatboti"]

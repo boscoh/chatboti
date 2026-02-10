@@ -25,7 +25,11 @@ class RAGService:
     def __init__(self, llm_service: Optional[str] = None):
         self.llm_service = llm_service or os.getenv("LLM_SERVICE", "openai").lower()
 
-        model = embed_models.get(self.llm_service)
+        model = (
+            os.getenv("EMBED_MODEL")
+            or os.getenv(f"{self.llm_service.upper()}_MODEL")
+            or embed_models.get(self.llm_service)
+        )
         if model is None:
             raise ValueError(f"Unsupported service: {self.llm_service}")
 

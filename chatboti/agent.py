@@ -36,7 +36,11 @@ class InfoAgent:
         self.tools: Optional[List[Dict[str, Any]]] = None
 
         self.chat_client: Optional[SimpleLLMClient] = None
-        model = chat_models.get(self.chat_service)
+        model = (
+            os.getenv("CHAT_MODEL")
+            or os.getenv(f"{self.chat_service.upper()}_MODEL")
+            or chat_models.get(self.chat_service)
+        )
         if not model:
             raise ValueError(f"Unsupported chat service: {self.chat_service}")
         self.chat_client = get_llm_client(self.chat_service, model=model)
@@ -245,9 +249,13 @@ class InfoAgent:
                             "type": "function",
                             "function": {
                                 "name": tool_call["function"]["name"],
-                                "arguments": tool_call["function"].get(
-                                    "arguments",
-                                    json.dumps(self.parse_tool_args(tool_call)),
+                                "arguments": (
+                                    json.loads(tool_call["function"]["arguments"])
+                                    if isinstance(tool_call["function"].get("arguments"), str)
+                                    else tool_call["function"].get(
+                                        "arguments",
+                                        json.dumps(self.parse_tool_args(tool_call)),
+                                    )
                                 ),
                             },
                         }
