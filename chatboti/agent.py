@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
-"""
-Test client demonstrating MCP tool integration with multi-step reasoning for speaker queries.
-"""
+"""MCP-based agent with multi-step tool chaining."""
 
 import asyncio
 import json
 import logging
 import os
 import re
+import textwrap
 from typing import Any, Dict, List, Optional
 
 from dotenv import load_dotenv
@@ -15,6 +14,7 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from microeval.llm import SimpleLLMClient, get_llm_client, load_config
 from path import Path
+import pydash as py_
 
 model_config = load_config()
 chat_models = model_config["chat_models"]
@@ -39,7 +39,7 @@ class InfoAgent:
         model = (
             os.getenv("CHAT_MODEL")
             or os.getenv(f"{self.chat_service.upper()}_MODEL")
-            or chat_models.get(self.chat_service)
+            or py_.get(chat_models, self.chat_service)
         )
         if not model:
             raise ValueError(f"Unsupported chat service: {self.chat_service}")
@@ -73,7 +73,7 @@ class InfoAgent:
         await self._mcp_session.initialize()
 
         self.tools = await self.get_tools()
-        names = [tool["function"]["name"] for tool in self.tools]
+        names = [py_.get(tool, "function.name", "") for tool in self.tools]
         logger.info(f"Connected Server to MCP tools: {', '.join(names)}")
 
         await self.chat_client.connect()
@@ -97,7 +97,6 @@ class InfoAgent:
         self._mcp_session = None
 
     async def get_tools(self):
-        """Returns tool in format compatible with SimpleLLMClient.get_completion()"""
         response = await self._mcp_session.list_tools()
         return [
             {
@@ -111,24 +110,73 @@ class InfoAgent:
             for tool in response.tools
         ]
 
-    def parse_tool_args(self, tool_call: Dict[str, Any]) -> Dict[str, Any]:
-        tool_args_json = tool_call["function"].get("arguments", "")
-        if not tool_args_json:
-            return {}
-        try:
-            return json.loads(tool_args_json)
-        except json.JSONDecodeError:
-            return {"__raw": tool_args_json}
+    def _normalize_tool_args_to_json_str(self, tool_args: Any) -> str:
+        """
+        :param tool_args: Arguments as dict, string, or other type
+        :return: Normalized JSON string with sorted keys
+        """
+        if not tool_args:
+            return "{}"
 
-    def is_duplicate_call(
+        # If it's a dict, dump it with sorted keys
+        if isinstance(tool_args, dict):
+            try:
+                return json.dumps(tool_args, sort_keys=True)
+            except Exception as e:
+                logger.warning(f"Failed to serialize dict to JSON: {e}")
+                return "{}"
+
+        # If it's a string, parse and re-dump for normalization
+        if isinstance(tool_args, str):
+            try:
+                parsed = json.loads(tool_args)
+                return json.dumps(parsed, sort_keys=True)
+            except json.JSONDecodeError as e:
+                logger.warning(f"Invalid JSON string: {tool_args[:100]}... Error: {e}")
+                return "{}"
+
+        # For any other type, convert to empty dict and warn
+        logger.warning(f"Unexpected tool arguments type: {type(tool_args)}, using empty dict")
+        return "{}"
+
+    def _parse_tool_args(self, tool_call: Dict[str, Any]) -> Dict[str, Any]:
+        """Parse tool arguments from JSON string or dict.
+
+        :param tool_call: Tool call dict with function.arguments
+        :return: Parsed arguments dict, or empty dict if invalid
+        """
+        tool_args = py_.get(tool_call, "function.arguments", "")
+        if not tool_args:
+            return {}
+
+        if isinstance(tool_args, dict):
+            return tool_args
+
+        if isinstance(tool_args, str):
+            try:
+                return json.loads(tool_args)
+            except json.JSONDecodeError as e:
+                logger.warning(
+                    f"Failed to parse tool arguments as JSON: {e}. "
+                    f"Raw: {tool_args[:100]}{'...' if len(tool_args) > 100 else ''}"
+                )
+                return {}
+
+        logger.warning(f"Unexpected tool arguments type: {type(tool_args)}")
+        return {}
+
+    def _is_duplicate_call(
         self, tool_name: str, tool_args: Dict[str, Any], seen_calls: set
     ) -> bool:
-        """Return True if this tool call was seen before; otherwise record it and return False."""
-        try:
-            normalized_args = json.dumps(tool_args, sort_keys=True)
-        except Exception:
-            normalized_args = str(tool_args)
-        call_key = (tool_name, normalized_args)
+        """Check if a tool call is a duplicate.
+
+        :param tool_name: Name of the tool
+        :param tool_args: Tool arguments as dict
+        :param seen_calls: Set of seen (tool_name, normalized_args) tuples
+        :return: True if duplicate, False otherwise
+        """
+        args_str = self._normalize_tool_args_to_json_str(tool_args)
+        call_key = (tool_name, args_str)
         if call_key in seen_calls:
             logger.info(f"Skipped duplicate tool call: {call_key}")
             return True
@@ -136,192 +184,178 @@ class InfoAgent:
         return False
 
     def _extract_content_text(self, item: Any) -> str:
-        """Extract text representation from a message content item."""
-        if isinstance(item, dict):
-            if "text" in item:
-                return item["text"]
-            elif "toolUse" in item:
-                return f"[toolUse: {item['toolUse'].get('name', 'unknown')}]"
-            elif "toolResult" in item:
-                return f"[toolResult: {item['toolResult'].get('toolUseId', 'unknown')}]"
-        return str(item)
+        return str(py_.get(item, "text", item))
 
-    def log_messages(self, messages: List[Dict[str, Any]], max_length: int = 100):
-        """Log each message with truncated content if too long."""
+    def _log_messages(self, messages: List[Dict[str, Any]], max_length: int = 100):
         logger.info(f"Calling LLM with {len(messages)} messages:")
         for msg in messages:
-            msg_content = msg.get("content", "")
+            content = py_.get(msg, "content", "")
+            if isinstance(content, list):
+                content = " ".join(self._extract_content_text(item) for item in content)
+            content = re.sub(r"\s+", " ", str(content).replace("\r", "")).strip()
+            truncated = content[:max_length] + ("..." if len(content) > max_length else "")
+            logger.info(f"- {py_.get(msg, 'role', 'unknown')}: {truncated}")
 
-            if isinstance(msg_content, list):
-                content_parts = [
-                    self._extract_content_text(item) for item in msg_content
-                ]
-                content_str = " ".join(content_parts)
-            else:
-                content_str = str(msg_content)
+    def _get_tool_call_id(self, tool_call: Dict[str, Any]) -> str:
+        return py_.get(tool_call, "function.tool_call_id", "")
 
-            content_str = content_str.replace("\r", "")
-            content_str = re.sub(r"\s+", " ", content_str).strip()
+    def _sanitize_tool_call(self, tool_call: Dict[str, Any]) -> Dict[str, Any]:
+        """Normalize tool call arguments to valid JSON string with sorted keys.
 
-            truncated_content = content_str[:max_length] + (
-                "..." if len(content_str) > max_length else ""
-            )
-            role = msg.get("role", "unknown")
-            logger.info(f"- {role}: {truncated_content}")
-
-    async def process_query(
-        self, query: str, history: Optional[List[Dict[str, Any]]] = None
-    ) -> str:
-        """Returns a response to a user query by getting a completion with tool calls.
-
-        Supports multi-step tool chaining (e.g., find correct name -> get_speaker_by_name)
-        by iteratively executing returned tool calls and re-querying the model
-        with tool outputs until no more tool calls are requested or a safety
-        limit is reached.
-
-        Args:
-            query: The user's query string
-            history: Optional list of previous messages with 'role' and 'content' keys
+        :param tool_call: Tool call dict with function.arguments
+        :return: Tool call with normalized function.arguments as JSON string
         """
-        await self.connect()
+        result = py_.clone_deep(tool_call)
+        tool_args = py_.get(tool_call, "function.arguments", "")
+        args_str = self._normalize_tool_args_to_json_str(tool_args)
+        return py_.set_(result, "function.arguments", args_str)
 
-        system_prompt = """You are a helpful assistant that can use tools to answer 
-        questions about speakers.
+    def _sanitize_message(self, msg: Dict[str, Any]) -> Dict[str, Any]:
+        result = py_.clone_deep(msg)
+        if tool_calls := py_.get(result, "tool_calls", []):
+            py_.set_(result, "tool_calls", py_.map_(tool_calls, self._sanitize_tool_call))
+        return result
 
-        IMPORTANT: Proactively use tools in multiple rounds to gather, refine, and
-        verify information. Prefer taking several small, iterative tool steps over
-        guessing. You should:
+    def _build_assistant_message(
+        self, response: Dict[str, Any], tool_calls: List[Dict[str, Any]]
+    ) -> Optional[Dict[str, Any]]:
+        formatted_calls = []
+        for tc in tool_calls:
+            call_id = self._get_tool_call_id(tc)
+            if not call_id:
+                continue
+
+            sanitized = self._sanitize_tool_call(tc)
+            sanitized = py_.set_(sanitized, "id", call_id)
+            sanitized = py_.set_(sanitized, "type", py_.get(sanitized, "type", "function"))
+            formatted_calls.append(sanitized)
+
+        if not formatted_calls:
+            return None
+
+        return {
+            "role": "assistant",
+            "content": py_.get(response, "text", None),
+            "tool_calls": formatted_calls,
+        }
+
+    SYSTEM_PROMPT = textwrap.dedent("""
+        You are a helpful assistant that can use tools to answer questions about speakers.
+
+        IMPORTANT: Proactively use tools in multiple rounds to gather, refine, and verify information.
 
         MULTI-ROUND TOOL CHAINING STRATEGY:
         1. ANALYZE the query and list what you need to know to answer it well
         2. PLAN a sequence of tool calls (potentially across multiple rounds)
         3. EXECUTE one or more tool calls, then reassess what you learned
         4. ITERATE with additional calls to fill gaps, cross-check, or drill down
-        5. AVOID exact duplicate calls with identical parameters (vary params to explore)
+        5. AVOID exact duplicate calls with identical parameters
         6. SYNTHESIZE the gathered evidence into a comprehensive final answer
 
         TOOL USAGE GUIDELINES:
-        - Feel free to make multiple tool calls across multiple reasoning rounds
+        - Make multiple tool calls across multiple reasoning rounds as needed
         - Use follow-up calls to verify, compare alternatives, and resolve ambiguity
         - Avoid repeating the exact same call with the same parameters
-        - ALWAYS provide a complete, detailed final answer that includes specific
-          information you obtained via the tools
+        - ALWAYS provide a complete, detailed final answer with specific information from tools"""
+    )
 
-        Available tools can help you search, filter, and retrieve speaker
-        information. Use them iteratively and transparently. Your final answer
-        should be detailed and include specific speaker information."""
+    MAX_TOOL_ITERATIONS = 5
 
-        messages = [
-            {"role": "system", "content": system_prompt},
-        ]
+    async def _execute_tool(
+        self, tool_call: Dict[str, Any], seen_calls: set
+    ) -> Optional[Dict[str, Any]]:
+        tool_name = py_.get(tool_call, "function.name", "")
+        tool_args = self._parse_tool_args(tool_call)
+        tool_call_id = self._get_tool_call_id(tool_call)
+
+        if not tool_call_id:
+            logger.warning(f"Skipping tool call {tool_name} without tool_call_id")
+            return None
+
+        result = {
+            "role": "tool",
+            "tool_call_id": tool_call_id,
+            "status": "error",
+            "content": "",
+        }
+
+        if self._is_duplicate_call(tool_name, tool_args, seen_calls):
+            result["content"] = f"Duplicate tool call: {tool_name}({tool_args})"
+        else:
+            try:
+                logger.info(f"Calling tool {tool_name}({tool_args})...")
+                tool_result = await self._mcp_session.call_tool(tool_name, tool_args)
+                result["content"] = str(getattr(tool_result, "content", tool_result))
+                result["status"] = "success"
+            except Exception as e:
+                logger.error(f"Tool {tool_name} error: {e}")
+                result["content"] = f"Tool {tool_name} failed: {str(e)}"
+
+        return result
+
+    def _build_initial_messages(
+        self, query: str, history: Optional[List[Dict[str, Any]]]
+    ) -> List[Dict[str, Any]]:
+        messages = [{"role": "system", "content": self.SYSTEM_PROMPT}]
 
         if history:
             for msg in history:
-                role = msg.get("role", "user")
-                if role in ("user", "assistant", "tool"):
-                    messages.append(msg)
+                if py_.get(msg, "role", "") in ("user", "assistant", "tool"):
+                    messages.append(self._sanitize_message(msg))
 
-        messages.append({"role": "user", "content": str(query)})
+        # Only add the query if it's not already the last user message in history
+        should_add_query = True
+        if messages:
+            last_msg = messages[-1]
+            if py_.get(last_msg, "role", "") == "user" and py_.get(last_msg, "content", "") == str(query):
+                should_add_query = False
 
-        self.log_messages(messages)
+        if should_add_query:
+            messages.append({"role": "user", "content": str(query)})
+
+        return messages
+
+    async def process_query(
+        self, query: str, history: Optional[List[Dict[str, Any]]] = None
+    ) -> str:
+        """Process user query with multi-step tool chaining.
+
+        :param query: User's query string
+        :param history: Optional conversation history
+        :return: Final LLM response text
+        """
+        await self.connect()
+
+        messages = self._build_initial_messages(query, history)
+        self._log_messages(messages)
 
         response = await self.chat_client.get_completion(messages, self.tools)
+        tool_calls = py_.get(response, "tool_calls", None)
+        seen_calls: set = set()
 
-        tool_calls = response.get("tool_calls")
-        max_iterations = 5
-        iterations = 0
-        seen_calls = set()
+        for iteration in range(self.MAX_TOOL_ITERATIONS):
+            if not tool_calls:
+                break
 
-        while tool_calls and iterations < max_iterations:
-            iterations += 1
-            logger.info(
-                f"Reasoning step {iterations} with {len(tool_calls)} tool calls"
-            )
+            logger.info(f"Reasoning step {iteration + 1} with {len(tool_calls)} tool calls")
 
-            if tool_calls:
-                assistant_msg = {
-                    "role": "assistant",
-                    "content": response.get("text") or None,
-                    "tool_calls": [
-                        {
-                            "id": tool_call["function"].get("tool_call_id")
-                            or tool_call["function"].get("toolUseId", ""),
-                            "type": "function",
-                            "function": {
-                                "name": tool_call["function"]["name"],
-                                "arguments": (
-                                    json.loads(tool_call["function"]["arguments"])
-                                    if isinstance(tool_call["function"].get("arguments"), str)
-                                    else tool_call["function"].get(
-                                        "arguments",
-                                        json.dumps(self.parse_tool_args(tool_call)),
-                                    )
-                                ),
-                            },
-                        }
-                        for tool_call in tool_calls
-                        if tool_call["function"].get("tool_call_id")
-                        or tool_call["function"].get("toolUseId")
-                    ],
-                }
-                if assistant_msg["tool_calls"]:
-                    messages.append(assistant_msg)
+            assistant_msg = self._build_assistant_message(response, tool_calls)
+            if assistant_msg:
+                messages.append(assistant_msg)
 
-                tool_result_messages = []
-                for tool_call in tool_calls:
-                    tool_name = tool_call["function"]["name"]
-                    tool_args = self.parse_tool_args(tool_call)
-                    tool_call_id = tool_call["function"].get(
-                        "tool_call_id"
-                    ) or tool_call["function"].get("toolUseId", "")
+            for tc in tool_calls:
+                result_msg = await self._execute_tool(tc, seen_calls)
+                if result_msg:
+                    messages.append(result_msg)
 
-                    if not tool_call_id:
-                        logger.warning(
-                            f"Skipping tool call {tool_name} without tool_call_id"
-                        )
-                        continue
-
-                    if self.is_duplicate_call(tool_name, tool_args, seen_calls):
-                        result_content = (
-                            f"Duplicate tool call: {tool_name}({tool_args})"
-                        )
-                        status = "error"
-                    else:
-                        try:
-                            logger.info(f"Calling tool {tool_name}({tool_args})...")
-                            result = await self._mcp_session.call_tool(
-                                tool_name, tool_args
-                            )
-                            result_content = str(getattr(result, "content", result))
-                            status = "success"
-                        except Exception as e:
-                            result_content = f"Tool {tool_name} failed: {str(e)}"
-                            status = "error"
-                            logger.error(f"Tool {tool_name} error: {e}")
-
-                    tool_result_messages.append(
-                        {
-                            "role": "tool",
-                            "content": result_content,
-                            "tool_call_id": tool_call_id,
-                            "status": status,
-                        }
-                    )
-
-                messages.extend(tool_result_messages)
-            elif content := response.get("text", ""):
-                messages.append({"role": "assistant", "content": content})
-
-            self.log_messages(messages)
-
+            self._log_messages(messages)
             response = await self.chat_client.get_completion(messages, self.tools)
+            tool_calls = py_.get(response, "tool_calls", None)
+        else:
+            if tool_calls:
+                logger.warning(f"Reached maximum tool iterations ({self.MAX_TOOL_ITERATIONS})")
 
-            tool_calls = response.get("tool_calls")
-
-        if iterations >= max_iterations:
-            logger.warning(f"Reached maximum tool iterations ({max_iterations})")
-
-        return response.get("text", "")
+        return py_.get(response, "text", "")
 
 
 async def setup_async_exception_handler():
@@ -341,9 +375,9 @@ async def amain(service):
     async with InfoAgent(service) as client:
         for tool in client.tools:
             logger.info("----------------------------------------------")
-            logger.info(f"Tool: {tool['function']['name']}")
+            logger.info(f"Tool: {py_.get(tool, 'function.name')}")
             logger.info("Description:")
-            for line in tool["function"]["description"].split("\n"):
+            for line in py_.get(tool, "function.description", "").split("\n"):
                 logger.info(f"| {line}")
         logger.info("----------------------------------------------")
         print("Type your query to pick a speaker.")
