@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "chatboti"
-version = "0.1.0"
+version = "0.2.0"
 description = "Raglet - RAG starter kit with FastAPI, MCP, and multiple LLM providers"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -36,7 +36,7 @@ dependencies = [
     "mcp>=1.18.0",
     "numpy>=2.3.4",
     "slowapi>=0.1.9",
-    "microeval @ file:///Users/boscoh/p/microeval",
+    "microeval>=0.3.0",
     "cyclopts>=3.0.0",
 ]
 
