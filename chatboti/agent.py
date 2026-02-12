@@ -76,19 +76,43 @@ class InfoAgent:
         )
 
         # Enter context managers in the correct order using AsyncExitStack
-        _stdio_read, _stdio_write = await self._exit_stack.enter_async_context(
-            stdio_client(server_params)
-        )
-        self._mcp_session = await self._exit_stack.enter_async_context(
-            ClientSession(_stdio_read, _stdio_write)
-        )
-        await self._mcp_session.initialize()
+        try:
+            logger.info(f"Starting MCP stdio client with command: {uv_command}")
+            _stdio_read, _stdio_write = await self._exit_stack.enter_async_context(
+                stdio_client(server_params)
+            )
+            logger.info("MCP stdio connection established")
+
+            self._mcp_session = await self._exit_stack.enter_async_context(
+                ClientSession(_stdio_read, _stdio_write)
+            )
+            logger.info("MCP session created, initializing...")
+
+            await self._mcp_session.initialize()
+            logger.info("MCP session initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize MCP client: {e}")
+            logger.error(
+                "MCP initialization failed. Common issues:\n"
+                "  1. MCP server subprocess failed to start\n"
+                "  2. Missing environment variables (CHAT_SERVICE, AWS_DEFAULT_REGION)\n"
+                "  3. AWS credentials or IAM role issues\n"
+                "  4. Dependency errors in MCP server\n"
+                "  5. Port already in use"
+            )
+            raise
 
         self.tools = await self.get_tools()
         names = [py_.get(tool, "function.name", "") for tool in self.tools]
         logger.info(f"Connected Server to MCP tools: {', '.join(names)}")
 
-        await self.chat_client.connect()
+        try:
+            logger.info(f"Connecting chat client for service: {self.chat_service}")
+            await self.chat_client.connect()
+            logger.info("Chat client connected successfully")
+        except Exception as e:
+            logger.error(f"Failed to connect chat client: {e}")
+            raise
 
     async def disconnect(self):
         try:

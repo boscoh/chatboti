@@ -24,9 +24,19 @@ rag_service = RAGService(llm_service=embed_service)
 
 @asynccontextmanager
 async def lifespan(app):
-    await rag_service.__aenter__()
+    try:
+        logger.info(f"Initializing RAG service with embed_service: {embed_service}")
+        await rag_service.__aenter__()
+        logger.info("RAG service initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize RAG service: {e}", exc_info=True)
+        raise
     yield
-    await rag_service.__aexit__(None, None, None)
+    try:
+        await rag_service.__aexit__(None, None, None)
+        logger.info("RAG service closed successfully")
+    except Exception as e:
+        logger.warning(f"Error during RAG service cleanup: {e}")
 
 
 mcp = FastMCP("Simple MCP", lifespan=lifespan)

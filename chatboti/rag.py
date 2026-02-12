@@ -41,7 +41,21 @@ class RAGService:
         self.speakers: Optional[List[dict]] = None
 
     async def __aenter__(self):
-        await self.embed_client.connect()
+        try:
+            logger.info(f"Connecting embed client for service: {self.llm_service}")
+            await self.embed_client.connect()
+            logger.info("Embed client connected successfully")
+        except Exception as e:
+            logger.error(f"Failed to connect embed client: {e}")
+            if "bedrock" in self.llm_service.lower():
+                logger.error(
+                    "AWS Bedrock initialization failed. Common issues:\n"
+                    "  1. Missing AWS_DEFAULT_REGION environment variable\n"
+                    "  2. Invalid AWS credentials\n"
+                    "  3. IAM role/user lacks bedrock permissions\n"
+                    "  4. Bedrock not available in the region"
+                )
+            raise
         await self.connect()
         return self
 
