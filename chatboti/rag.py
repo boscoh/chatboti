@@ -50,7 +50,7 @@ class RAGService:
             if "bedrock" in self.llm_service.lower():
                 logger.error(
                     "AWS Bedrock initialization failed. Common issues:\n"
-                    "  1. Missing AWS_DEFAULT_REGION environment variable\n"
+                    "  1. Missing AWS_REGION environment variable\n"
                     "  2. Invalid AWS credentials\n"
                     "  3. IAM role/user lacks bedrock permissions\n"
                     "  4. Bedrock not available in the region"

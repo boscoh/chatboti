@@ -95,7 +95,7 @@ class InfoAgent:
             logger.error(
                 "MCP initialization failed. Common issues:\n"
                 "  1. MCP server subprocess failed to start\n"
-                "  2. Missing environment variables (CHAT_SERVICE, AWS_DEFAULT_REGION)\n"
+                "  2. Missing environment variables (CHAT_SERVICE, AWS_REGION)\n"
                 "  3. AWS credentials or IAM role issues\n"
                 "  4. Dependency errors in MCP server\n"
                 "  5. Port already in use"

@@ -71,7 +71,7 @@ def get_aws_config(is_raise_exception: bool = True):
             log(f"AWS profile '{profile_name}' not found, using default credential chain...")
             profile_not_found = True
 
-    region = os.getenv("AWS_REGION")
+    region = os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION")
     if region:
         aws_config["region_name"] = region
 
