@@ -12,11 +12,20 @@ Transform chatboti RAG from **speaker-specific** → **generic document storage*
 
 ## ✅ Solution Architecture
 
-### Storage Layer
+### Storage Layer (Incremental)
+
+**Phase 1 - Simple Start:**
 ```
 documents/
 ├── vectors.faiss    # FAISS index (all vectors as float32)
-└── metadata.db      # SQLite (all metadata, no vectors)
+└── metadata.json    # JSON (human-readable, easy debugging)
+```
+
+**Phase 2 - Scaled Production:**
+```
+documents/
+├── vectors.faiss    # FAISS index (all vectors as float32)
+└── metadata.db      # SQLite (ACID, indexed queries)
 ```
 
 **Why FAISS?**
@@ -26,11 +35,18 @@ documents/
 - ✅ Memory-mapped (instant load)
 - ✅ Always float32 (type safe)
 
-**Why SQLite?**
+**Why JSON first?**
+- ✅ Simple to implement and debug
+- ✅ Human-readable
+- ✅ No SQL knowledge needed
+- ✅ Good for <1K documents
+- ✅ Easy migration to SQLite later
+
+**Why SQLite later?**
 - ✅ ACID transactions
-- ✅ Flexible metadata queries
-- ✅ No separate server needed
-- ✅ Standard relational model
+- ✅ Indexed queries (fast metadata search)
+- ✅ Better for >1K documents
+- ✅ Efficient updates
 
 ### Core Abstractions
 
@@ -91,8 +107,9 @@ embedding: NDArray[np.float32] = np.array([0.1, 0.2, ...], dtype=np.float32)  �
 - Data migration utilities
 - Adapter for legacy code
 
-### Phase 4: FAISS Integration (Week 3)
-- Migrate from JSON → FAISS vector storage
+### Phase 4: FAISS + JSON Storage (Week 3)
+- Migrate from inline JSON embeddings → FAISS vector storage
+- Keep metadata in separate JSON file (simple, readable)
 - FAISS index creation/loading
 - Migration utility for existing data
 - Performance benchmarks
@@ -103,7 +120,13 @@ embedding: NDArray[np.float32] = np.array([0.1, 0.2, ...], dtype=np.float32)  �
 - Index optimization (IVF, PQ)
 - Quantization for compression
 
-### Phase 6: Documentation (Week 4)
+### Phase 6: SQLite Migration (Week 4)
+- Implement SQLite metadata storage (optional, for scaling)
+- Auto-migration utility (JSON → SQLite)
+- Performance comparison benchmarks
+- Trigger migration at 1K+ documents
+
+### Phase 7: Documentation (Week 4)
 - Migration guide
 - Configuration examples
 - API documentation
