@@ -6,12 +6,36 @@ This specification outlines the refactoring of the chatboti RAG system from a sp
 
 **Goal**: Create a flexible, domain-agnostic RAG architecture that maintains backwards compatibility with the existing speaker data while enabling new use cases.
 
-**Recommendation**: Use FAISS as the primary vector storage format, with SQLite for metadata. Never use `List[float]` for embeddings - always use `ndarray[float32]`.
+**Recommendation**: Use FAISS as the primary vector storage format, with JSON for metadata initially (migrating to SQLite later for scale). Never use `List[float]` for embeddings - always use `ndarray[float32]`.
+
+**Storage Evolution Strategy**: Start with JSON metadata (simple, readable, good for <1K documents), then migrate to SQLite when scaling beyond 1K documents (ACID transactions, indexed queries, better concurrency).
 
 **Status**: Proposed Design
 **Author**: Claude Sonnet 4.5
 **Date**: 2026-02-12
-**Related**: metadata-storage-design.md, vector-storage-comparison.md
+**Last Updated**: 2026-02-12
+**Related**: Consolidates content from STORAGE-EVOLUTION.md, faiss-multiple-documents-spec.md, metadata-storage-design.md, vector-storage-comparison.md
+
+---
+
+## Table of Contents
+
+1. [Current System Analysis](#1-current-system-analysis)
+2. [Problems with Current Approach](#2-problems-with-current-approach)
+3. [Proposed Architecture](#3-proposed-architecture)
+4. [Storage Evolution: JSON → SQLite](#4-storage-evolution-json--sqlite)
+5. [Storage Format Comparison](#5-storage-format-comparison)
+6. [Proposed Generic Document Model](#6-proposed-generic-document-model)
+7. [API Design](#7-api-design)
+8. [Backwards Compatibility](#8-backwards-compatibility)
+9. [Integration Points](#9-integration-points)
+10. [Example Use Cases](#10-example-use-cases)
+11. [Implementation Approach](#11-implementation-approach)
+12. [FAISS Integration Details](#12-faiss-integration-details)
+13. [Migration Guide for Users](#13-migration-guide-for-users)
+14. [Future Enhancements](#14-future-enhancements)
+15. [Security Considerations](#15-security-considerations)
+16. [Conclusion](#16-conclusion)
 
 ---
 
@@ -253,7 +277,575 @@ print(f"Waste: {(total_list / total_numpy):.1f}x")  # 8x!
 
 ---
 
-## 3. Storage Format Comparison
+## 3. Proposed Architecture
+
+### 3.1 High-Level Overview
+
+**Incremental Evolution Path**:
+
+```
+Phase 1 (Simple Start):        Phase 2 (Scaled Production):
+├── vectors.faiss              ├── vectors.faiss
+└── metadata.json              └── metadata.db (SQLite)
+```
+
+**Architecture Diagram**:
+```
+Multiple Sources → Document Ingestion → FAISS Index + Metadata → Hybrid Search
+       ↓                  ↓                      ↓                    ↓
+CSV/PDF/Web    Chunking + Embedding    vectors.faiss          Vector + Metadata
+                                       metadata.json/db       retrieval
+```
+
+### 3.2 Why This Approach?
+
+**Start Simple**: JSON metadata is human-readable, easy to debug, no SQL knowledge needed, works great for <1K documents
+
+**Scale When Needed**: Migrate to SQLite when you hit:
+- 1000+ documents
+- Need for frequent updates
+- Complex metadata queries
+- Production deployment requirements
+
+**FAISS for Vectors Always**: Use FAISS from the start for vector storage (10-100x faster search, memory-efficient, proven at scale)
+
+## 4. Storage Evolution: JSON → SQLite
+
+### 4.1 The Question
+
+Can we use JSON for metadata initially, with a migration path to SQLite later?
+
+### 4.2 Answer: YES! Incremental Approach is Better
+
+This section documents the complete strategy for starting with simple JSON storage and evolving to SQLite for production scale.
+
+### 4.3 Abstract Storage Interface
+
+To enable seamless migration between JSON and SQLite, we define an abstract `MetadataStore` interface:
+
+```python
+from abc import ABC, abstractmethod
+from typing import List, Optional
+
+class MetadataStore(ABC):
+    """Abstract interface for metadata storage."""
+
+    @abstractmethod
+    def add_document(self, faiss_id: int, doc: Document) -> None:
+        """Add document metadata."""
+        pass
+
+    @abstractmethod
+    def get_document(self, faiss_id: int) -> Optional[Document]:
+        """Get document by FAISS ID."""
+        pass
+
+    @abstractmethod
+    def get_documents(self, faiss_ids: List[int]) -> List[Document]:
+        """Get multiple documents by FAISS IDs."""
+        pass
+
+    @abstractmethod
+    def update_document(self, faiss_id: int, doc: Document) -> None:
+        """Update document metadata."""
+        pass
+
+    @abstractmethod
+    def delete_document(self, faiss_id: int) -> None:
+        """Delete document metadata."""
+        pass
+
+    @abstractmethod
+    def search_metadata(self, query: dict) -> List[int]:
+        """Search metadata, return FAISS IDs."""
+        pass
+
+    @abstractmethod
+    def count(self) -> int:
+        """Count total documents."""
+        pass
+
+    @abstractmethod
+    def close(self) -> None:
+        """Close storage."""
+        pass
+```
+
+### 4.4 JSON Implementation
+
+#### When to Use JSON
+
+- **Small datasets**: <1000 documents
+- **Infrequent updates**: Batch loading, rare changes
+- **Single-user**: No concurrent access
+- **Development**: Prototyping and testing
+
+#### Advantages
+
+- ✅ **Simple**: No SQL knowledge needed
+- ✅ **Readable**: Easy to inspect and debug
+- ✅ **Portable**: Works everywhere
+- ✅ **No dependencies**: No SQLite library needed
+- ✅ **Fast start**: Quick prototyping
+- ✅ **Version control friendly**: Can diff changes
+
+#### Limitations
+
+- ⚠️ **No transactions**: Risk of corruption on crash
+- ⚠️ **Slow updates**: Requires full file rewrite
+- ⚠️ **Memory intensive**: Loads entire file
+- ⚠️ **No indexing**: Linear search for metadata queries
+- ⚠️ **Poor concurrency**: File locking issues
+
+#### Implementation
+
+```python
+import json
+from pathlib import Path
+from typing import List, Optional, Dict
+
+class JSONMetadataStore(MetadataStore):
+    """JSON file-based metadata storage."""
+
+    def __init__(self, json_path: Path):
+        self.json_path = json_path
+        self.data: Dict[int, dict] = {}
+        self._load()
+
+    def _load(self) -> None:
+        """Load metadata from JSON file."""
+        if self.json_path.exists():
+            with open(self.json_path, 'r') as f:
+                raw_data = json.load(f)
+                # Convert string keys to int (JSON keys are strings)
+                self.data = {int(k): v for k, v in raw_data.items()}
+        else:
+            self.data = {}
+
+    def _save(self) -> None:
+        """Save metadata to JSON file."""
+        # Write to temp file first, then rename (atomic on POSIX)
+        temp_path = self.json_path.with_suffix('.tmp')
+        with open(temp_path, 'w') as f:
+            json.dump(self.data, f, indent=2)
+        temp_path.replace(self.json_path)
+
+    def add_document(self, faiss_id: int, doc: Document) -> None:
+        """Add document metadata."""
+        self.data[faiss_id] = doc.to_dict()
+        self._save()
+
+    def get_document(self, faiss_id: int) -> Optional[Document]:
+        """Get document by FAISS ID."""
+        if faiss_id in self.data:
+            return Document.from_dict(self.data[faiss_id])
+        return None
+
+    def get_documents(self, faiss_ids: List[int]) -> List[Document]:
+        """Get multiple documents by FAISS IDs."""
+        docs = []
+        for faiss_id in faiss_ids:
+            doc = self.get_document(faiss_id)
+            if doc:
+                docs.append(doc)
+        return docs
+
+    def update_document(self, faiss_id: int, doc: Document) -> None:
+        """Update document metadata."""
+        if faiss_id in self.data:
+            self.data[faiss_id] = doc.to_dict()
+            self._save()
+
+    def delete_document(self, faiss_id: int) -> None:
+        """Delete document metadata."""
+        if faiss_id in self.data:
+            del self.data[faiss_id]
+            self._save()
+
+    def search_metadata(self, query: dict) -> List[int]:
+        """Search metadata, return FAISS IDs."""
+        results = []
+        for faiss_id, doc_data in self.data.items():
+            # Simple field matching (can be enhanced)
+            matches = all(
+                doc_data.get(key) == value
+                for key, value in query.items()
+            )
+            if matches:
+                results.append(faiss_id)
+        return results
+
+    def count(self) -> int:
+        """Count total documents."""
+        return len(self.data)
+
+    def close(self) -> None:
+        """Close storage (no-op for JSON)."""
+        pass
+```
+
+#### JSON File Format
+
+```json
+{
+  "0": {
+    "doc_id": "doc-uuid-123",
+    "content": "Full text content here...",
+    "source": "papers.pdf",
+    "doc_type": "research_paper",
+    "metadata": {
+      "title": "Attention Is All You Need",
+      "authors": ["Vaswani", "Shazeer"],
+      "year": 2017
+    },
+    "created_at": "2026-02-12T10:30:00Z"
+  },
+  "1": {
+    "doc_id": "doc-uuid-456",
+    "content": "Another document...",
+    ...
+  }
+}
+```
+
+### 4.5 SQLite Implementation
+
+#### When to Use SQLite
+
+- **Large datasets**: >1000 documents
+- **Frequent updates**: Real-time changes
+- **Multi-user**: Concurrent access
+- **Complex queries**: Filtering, sorting, joins
+- **Production**: Deployed systems
+
+#### Advantages
+
+- ✅ **ACID transactions**: Safe concurrent access
+- ✅ **Efficient updates**: Incremental changes
+- ✅ **Indexing**: Fast metadata queries
+- ✅ **Low memory**: Doesn't load everything
+- ✅ **Reliable**: Battle-tested database
+- ✅ **Standard**: SQL queries
+
+#### Limitations
+
+- ⚠️ **Complexity**: Requires SQL knowledge
+- ⚠️ **Binary format**: Harder to inspect/diff
+- ⚠️ **Schema management**: Migrations needed
+
+#### Implementation
+
+```python
+import sqlite3
+from pathlib import Path
+from typing import List, Optional
+
+class SQLiteMetadataStore(MetadataStore):
+    """SQLite-based metadata storage."""
+
+    def __init__(self, db_path: Path):
+        self.db_path = db_path
+        self.conn = sqlite3.connect(str(db_path))
+        self.conn.row_factory = sqlite3.Row
+        self._init_schema()
+
+    def _init_schema(self) -> None:
+        """Initialize database schema."""
+        self.conn.executescript("""
+            CREATE TABLE IF NOT EXISTS documents (
+                faiss_id INTEGER PRIMARY KEY,
+                doc_id TEXT UNIQUE NOT NULL,
+                content TEXT,
+                source TEXT,
+                doc_type TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE TABLE IF NOT EXISTS metadata (
+                faiss_id INTEGER,
+                key TEXT,
+                value TEXT,
+                FOREIGN KEY (faiss_id) REFERENCES documents(faiss_id),
+                PRIMARY KEY (faiss_id, key)
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_doc_id ON documents(doc_id);
+            CREATE INDEX IF NOT EXISTS idx_doc_type ON documents(doc_type);
+            CREATE INDEX IF NOT EXISTS idx_metadata_key ON metadata(key);
+        """)
+        self.conn.commit()
+
+    def add_document(self, faiss_id: int, doc: Document) -> None:
+        """Add document metadata."""
+        with self.conn:
+            self.conn.execute(
+                """INSERT INTO documents
+                   (faiss_id, doc_id, content, source, doc_type)
+                   VALUES (?, ?, ?, ?, ?)""",
+                (faiss_id, doc.id, doc.content, doc.source, doc.doc_type)
+            )
+            # Store flexible metadata as key-value pairs
+            for key, value in doc.metadata.items():
+                self.conn.execute(
+                    "INSERT INTO metadata (faiss_id, key, value) VALUES (?, ?, ?)",
+                    (faiss_id, key, str(value))
+                )
+
+    def get_document(self, faiss_id: int) -> Optional[Document]:
+        """Get document by FAISS ID."""
+        row = self.conn.execute(
+            "SELECT * FROM documents WHERE faiss_id = ?", (faiss_id,)
+        ).fetchone()
+
+        if not row:
+            return None
+
+        # Fetch metadata
+        metadata_rows = self.conn.execute(
+            "SELECT key, value FROM metadata WHERE faiss_id = ?", (faiss_id,)
+        ).fetchall()
+        metadata = {row['key']: row['value'] for row in metadata_rows}
+
+        return Document(
+            id=row['doc_id'],
+            content=row['content'],
+            source=row['source'],
+            doc_type=row['doc_type'],
+            metadata=metadata
+        )
+
+    def get_documents(self, faiss_ids: List[int]) -> List[Document]:
+        """Get multiple documents by FAISS IDs."""
+        placeholders = ','.join('?' * len(faiss_ids))
+        rows = self.conn.execute(
+            f"SELECT * FROM documents WHERE faiss_id IN ({placeholders})",
+            faiss_ids
+        ).fetchall()
+
+        return [self._row_to_document(row) for row in rows]
+
+    def search_metadata(self, query: dict) -> List[int]:
+        """Search metadata, return FAISS IDs."""
+        # Build dynamic query
+        conditions = []
+        params = []
+
+        for key, value in query.items():
+            conditions.append(
+                "faiss_id IN (SELECT faiss_id FROM metadata WHERE key = ? AND value = ?)"
+            )
+            params.extend([key, str(value)])
+
+        where_clause = " AND ".join(conditions)
+        sql = f"SELECT faiss_id FROM documents WHERE {where_clause}"
+
+        rows = self.conn.execute(sql, params).fetchall()
+        return [row['faiss_id'] for row in rows]
+
+    def count(self) -> int:
+        """Count total documents."""
+        return self.conn.execute("SELECT COUNT(*) FROM documents").fetchone()[0]
+
+    def close(self) -> None:
+        """Close database connection."""
+        self.conn.close()
+```
+
+### 4.6 GenericRAGService with Pluggable Storage
+
+The RAG service automatically detects storage type by file extension:
+
+```python
+from pathlib import Path
+from typing import Union
+
+class GenericRAGService:
+    """Generic RAG service with pluggable metadata storage."""
+
+    def __init__(
+        self,
+        index_path: Path,
+        metadata_store: Union[Path, MetadataStore],
+        llm_service: str = "openai"
+    ):
+        # Load FAISS index
+        self.index = faiss.read_index(str(index_path))
+        self.index_path = index_path
+
+        # Initialize metadata storage
+        if isinstance(metadata_store, MetadataStore):
+            self.metadata = metadata_store
+        elif isinstance(metadata_store, Path):
+            # Auto-detect storage type by extension
+            if metadata_store.suffix == '.json':
+                self.metadata = JSONMetadataStore(metadata_store)
+            elif metadata_store.suffix == '.db':
+                self.metadata = SQLiteMetadataStore(metadata_store)
+            else:
+                raise ValueError(f"Unknown metadata format: {metadata_store.suffix}")
+
+        # Initialize embedding client
+        self.embed_client = get_llm_client(llm_service)
+
+    async def add_document(self, doc: Document) -> int:
+        """Add document to RAG system."""
+        # Generate embedding
+        embedding = await self.embed_client.embed(doc.content)
+        embedding = np.array(embedding, dtype=np.float32).reshape(1, -1)
+
+        # Add to FAISS
+        faiss_id = self.index.ntotal
+        self.index.add(embedding)
+
+        # Save metadata
+        self.metadata.add_document(faiss_id, doc)
+
+        # Persist FAISS index
+        faiss.write_index(self.index, str(self.index_path))
+
+        return faiss_id
+
+    async def search(self, query: str, k: int = 5) -> List[Document]:
+        """Search documents by query."""
+        # Get query embedding
+        query_emb = await self.embed_client.embed(query)
+        query_emb = np.array(query_emb, dtype=np.float32).reshape(1, -1)
+
+        # FAISS search
+        distances, faiss_ids = self.index.search(query_emb, k)
+
+        # Fetch metadata
+        return self.metadata.get_documents(faiss_ids[0].tolist())
+
+    def close(self):
+        """Close all resources."""
+        self.metadata.close()
+```
+
+### 4.7 Automatic Migration: JSON → SQLite
+
+The migration is simple and automatic:
+
+```python
+from pathlib import Path
+
+def migrate_json_to_sqlite(json_path: Path, db_path: Path) -> None:
+    """Migrate metadata from JSON to SQLite."""
+    print(f"Migrating {json_path} → {db_path}")
+
+    # Load JSON data
+    json_store = JSONMetadataStore(json_path)
+
+    # Create SQLite store
+    sqlite_store = SQLiteMetadataStore(db_path)
+
+    # Copy all documents
+    count = 0
+    for faiss_id in sorted(json_store.data.keys()):
+        doc = json_store.get_document(faiss_id)
+        if doc:
+            sqlite_store.add_document(faiss_id, doc)
+            count += 1
+
+    print(f"✓ Migrated {count} documents")
+
+    # Close stores
+    json_store.close()
+    sqlite_store.close()
+
+    # Backup old JSON
+    backup_path = json_path.with_suffix('.json.backup')
+    json_path.rename(backup_path)
+    print(f"✓ Backed up JSON to {backup_path}")
+```
+
+**Auto-Detection and Migration**:
+
+```python
+class GenericRAGService:
+    def __init__(self, index_path: Path, metadata_path: Path, **kwargs):
+        # Auto-migrate if JSON exists but SQLite doesn't
+        json_path = metadata_path.with_suffix('.json')
+        db_path = metadata_path.with_suffix('.db')
+
+        if json_path.exists() and not db_path.exists():
+            # Ask user or auto-migrate
+            print("⚠️  JSON metadata detected. Migrating to SQLite for better performance...")
+            migrate_json_to_sqlite(json_path, db_path)
+            metadata_path = db_path
+
+        # Continue with initialization...
+```
+
+### 4.8 Recommended Evolution Path
+
+#### Phase 1: Start with JSON (Week 1-2)
+
+```python
+# Simple start
+rag = GenericRAGService(
+    index_path=Path("vectors.faiss"),
+    metadata_store=Path("metadata.json")  # JSON storage
+)
+```
+
+**Benefits**:
+- Fast prototyping
+- Easy debugging
+- No SQL knowledge needed
+- Good for <1000 documents
+
+#### Phase 2: Migrate to SQLite (Week 3-4)
+
+```python
+# When scaling up or needing performance
+from chatboti.storage import migrate_json_to_sqlite
+
+migrate_json_to_sqlite(
+    Path("metadata.json"),
+    Path("metadata.db")
+)
+
+# Use SQLite
+rag = GenericRAGService(
+    index_path=Path("vectors.faiss"),
+    metadata_store=Path("metadata.db")  # SQLite storage
+)
+```
+
+**Triggers**:
+- Dataset grows beyond 1000 documents
+- Need frequent updates
+- Want complex metadata queries
+- Production deployment
+
+### 4.9 JSON vs SQLite Comparison
+
+| Feature | JSON | SQLite |
+|---------|------|--------|
+| **Simplicity** | ✅ Very simple | ⚠️ Moderate |
+| **Readability** | ✅ Human readable | ❌ Binary |
+| **Performance (<1K)** | ✅ Fast | ✅ Fast |
+| **Performance (>1K)** | ⚠️ Slow | ✅ Fast |
+| **Updates** | ❌ Full rewrite | ✅ Incremental |
+| **Queries** | ❌ Linear scan | ✅ Indexed |
+| **Transactions** | ❌ No ACID | ✅ ACID |
+| **Memory** | ❌ Loads all | ✅ On-demand |
+| **Concurrency** | ❌ File locks | ✅ Good |
+| **Dependencies** | ✅ None | ✅ Built-in |
+
+### 4.10 Conclusion on Storage Evolution
+
+**Start with JSON, migrate to SQLite when needed.**
+
+This incremental approach:
+- ✅ Simplifies initial development
+- ✅ Provides clear migration path
+- ✅ Matches actual scaling needs
+- ✅ Reduces upfront complexity
+- ✅ Maintains flexibility
+
+## 5. Storage Format Comparison
 
 This section analyzes different storage formats for embedding vectors and recommends FAISS as the optimal solution.
 
@@ -550,7 +1142,378 @@ CREATE TABLE chunks (
 
 ---
 
-## 4. Proposed Generic Document Model
+## 12. FAISS Integration Details
+
+This section provides detailed information about integrating FAISS for vector similarity search, complementing the storage format comparison in Section 5.
+
+### 12.1 Why FAISS for Chatboti?
+
+From the analysis in earlier sections, FAISS becomes the recommended choice for this project because:
+
+**Benefits over JSON storage**:
+- **Performance**: 10-100x faster for large datasets (1-5ms vs 50-100ms for 10K docs)
+- **Memory efficiency**: Memory-mapped indices (instant load, low memory)
+- **Scalability**: Proven at billion-vector scale at Meta
+- **Small overhead**: Only +15 MB dependency (+10% Docker image size)
+- **Type safety**: Always uses float32 (no List[float] confusion)
+
+**When to use FAISS**: Immediately for this project, even at current small scale
+- Current: 63 speakers = 126 embeddings (acceptable with either approach)
+- Future: Will support multiple document sources → 1000s-10000s of embeddings
+- FAISS provides migration path from IndexFlatIP → IndexIVFFlat as dataset grows
+
+### 12.2 Index Selection for Different Scales
+
+#### For Current and Small Scale (<1000 documents, ~2000 embeddings)
+
+**Recommended: IndexFlatIP (Inner Product)**
+
+```python
+import faiss
+import numpy as np
+
+dimension = 1536  # OpenAI text-embedding-3-small
+index = faiss.IndexFlatIP(dimension)
+
+# Normalize vectors for cosine similarity via inner product
+faiss.normalize_L2(vectors)
+index.add(vectors)
+```
+
+**Why IndexFlatIP?**
+- Exact search (no approximation errors)
+- Cosine similarity via normalized inner product
+- <1ms query time for 1000s of vectors
+- Simple: no hyperparameters to tune
+- Direct replacement for current numpy cosine distance
+
+**Alternative: IndexFlatL2 (L2 Distance)**
+- Use if L2 distance preferred over cosine
+- Slightly faster than IP
+- Same exact search guarantees
+
+#### For Future Scale (10K-100K documents)
+
+**IndexIVFFlat (Inverted File Index)**
+
+```python
+# Train on sample vectors
+quantizer = faiss.IndexFlatIP(dimension)
+index = faiss.IndexIVFFlat(quantizer, dimension, nlist=100)
+index.train(training_vectors)
+index.add(vectors)
+
+# Search with probe parameter
+index.nprobe = 10  # Trade-off: speed vs accuracy
+```
+
+**When to migrate**:
+- Dataset > 10K documents (>20K embeddings)
+- Query latency > 10ms with Flat index
+- Memory constraints (large dimensional vectors)
+
+**Trade-offs**:
+- 10-100x faster search
+- 95-99% accuracy (rarely misses true top-K)
+- Requires training phase
+- More complex to configure
+
+### 12.3 Distance Metrics and Cosine Similarity
+
+**Current System**: Cosine distance
+
+```python
+cosine_similarity = dot_product / (norm_a * norm_b)
+cosine_distance = 1.0 - cosine_similarity
+```
+
+**FAISS Equivalent**: Inner Product with normalized vectors
+
+```python
+import faiss
+import numpy as np
+
+# Normalize vectors (in-place)
+faiss.normalize_L2(vectors)
+
+# Inner product on normalized vectors = cosine similarity
+index = faiss.IndexFlatIP(dimension)
+index.add(vectors)
+
+# Search returns (distances, indices)
+# distances = cosine similarities (higher = more similar)
+distances, indices = index.search(query_vector, k=5)
+
+# Convert to cosine distance if needed
+cosine_distances = 1.0 - distances
+```
+
+**Why normalize?**
+- Converts inner product to cosine similarity
+- Makes scores interpretable (0-1 range)
+- Consistent with current implementation
+
+### 12.4 Vector Storage: FAISS Only vs Dual Storage
+
+**Option A: Store in FAISS only** (Recommended)
+
+```python
+# Vectors only in FAISS index
+index.add(vectors)
+faiss.write_index(index, "embeddings.index")
+
+# Metadata in JSON/SQLite (no vector column)
+# Chunk ID serves as link between systems
+```
+
+**Pros**:
+- Single source of truth for vectors
+- Optimized binary format
+- Memory-mapped loading (fast cold start)
+
+**Cons**:
+- Need to rebuild index if FAISS file corrupted
+- Can't easily inspect individual vectors
+
+**Option B: Store in both FAISS and SQLite**
+
+```python
+# FAISS for search
+index.add(vectors)
+
+# SQLite for backup/inspection
+INSERT INTO embeddings (chunk_id, vector) VALUES (?, ?)
+```
+
+**Pros**:
+- Redundancy (can rebuild index from DB)
+- Easy to inspect vectors
+- Supports vector DB migration later
+
+**Cons**:
+- Duplicated storage (~2x size)
+- Sync complexity
+
+**Recommendation**: Start with Option A (FAISS only), add SQLite backup if reliability concerns arise.
+
+### 12.5 Index Persistence and Loading
+
+```python
+import faiss
+
+# Save index
+faiss.write_index(index, "embeddings.index")
+
+# Load index (fast, memory-mapped)
+index = faiss.read_index("embeddings.index")
+
+# File size: dimension * num_vectors * 4 bytes (float32)
+# Example: 1536 dims * 2000 vectors * 4 = ~12MB
+```
+
+**Performance**:
+- Save: <100ms for 10K vectors
+- Load: <50ms (memory-mapped, doesn't load full index)
+- Query: <1ms for flat index
+
+### 12.6 ID Mapping: FAISS Indices to Document IDs
+
+**Challenge**: FAISS uses integer indices (0, 1, 2, ...), but we need string chunk IDs (UUIDs).
+
+**Solution 1: IndexIDMap wrapper**
+
+```python
+import faiss
+
+# Base index
+base_index = faiss.IndexFlatIP(dimension)
+
+# Wrap with ID mapper
+index = faiss.IndexIDMap(base_index)
+
+# Add with explicit IDs
+chunk_ids = [hash(uuid) for uuid in chunk_uuids]  # Convert to int64
+index.add_with_ids(vectors, np.array(chunk_ids, dtype=np.int64))
+
+# Search returns original IDs
+distances, ids = index.search(query, k=5)
+chunk_uuids = [reverse_lookup[id] for id in ids[0]]
+```
+
+**Solution 2: Maintain separate mapping** (Simpler, recommended)
+
+```python
+# FAISS uses sequential indices
+index.add(vectors)
+
+# Separate mapping: FAISS index -> chunk UUID
+id_mapping = {0: "chunk-uuid-1", 1: "chunk-uuid-2", ...}
+
+# After search
+indices = search_results[1][0]  # FAISS indices
+chunk_ids = [id_mapping[i] for i in indices]
+```
+
+**Recommendation**: Use separate mapping for simplicity. Store in SQLite or in-memory dict.
+
+### 12.7 Multiple Document Sources and FAISS
+
+When supporting multiple document types (CSV, PDF, JSON, web):
+
+**Single FAISS Index for All Documents**:
+
+```python
+# All embeddings in one index
+index = faiss.IndexFlatIP(dimension)
+
+# Add embeddings from different sources
+index.add(speaker_embeddings)  # 0-125
+index.add(pdf_embeddings)      # 126-500
+index.add(web_embeddings)      # 501-1000
+
+# Metadata store tracks document type
+metadata[0] = {"doc_type": "speaker", "source": "speakers.csv", ...}
+metadata[126] = {"doc_type": "pdf", "source": "paper.pdf", ...}
+```
+
+**Benefits**:
+- Single index to manage
+- Cross-domain search by default
+- Simple architecture
+
+**Filtering by document type**:
+
+```python
+# 1. Search FAISS (all documents)
+distances, faiss_ids = index.search(query, k=20)
+
+# 2. Filter by metadata
+filtered = [
+    id for id in faiss_ids[0]
+    if metadata[id]["doc_type"] == "pdf"
+][:5]
+```
+
+### 12.8 Document Chunking and FAISS
+
+**Current System**: Each speaker = 2 chunks (abstract, bio) → 126 embeddings for 63 speakers
+
+**With Multiple Documents**:
+- PDF: 10 pages → 30 chunks (3 per page)
+- Web page: 20 paragraphs → 20 chunks
+- CSV row: 2 text fields → 2 chunks
+
+**FAISS Mapping**:
+
+```python
+# Chunk to FAISS ID mapping
+chunks = [
+    {"id": "chunk-1", "text": "Bio text", "faiss_id": 0},
+    {"id": "chunk-2", "text": "Abstract text", "faiss_id": 1},
+    {"id": "chunk-3", "text": "PDF paragraph 1", "faiss_id": 2},
+    ...
+]
+
+# Add all chunk embeddings to FAISS
+embeddings = np.array([chunk["embedding"] for chunk in chunks])
+index.add(embeddings)
+```
+
+### 12.9 Performance Benchmarks
+
+**Expected Performance with FAISS**:
+
+| Operation | 100 docs | 1K docs | 10K docs | 100K docs |
+|-----------|----------|---------|----------|-----------|
+| Build index | 10ms | 50ms | 500ms | 5s |
+| Save index | 5ms | 20ms | 200ms | 2s |
+| Load index | <5ms | <10ms | <50ms | <200ms |
+| Query (k=5) | <1ms | <1ms | 1-5ms | 10-20ms |
+| Memory (index) | <1MB | 6MB | 60MB | 600MB |
+
+**Notes**:
+- Assumes 1536-dim embeddings (OpenAI text-embedding-3-small)
+- IndexFlatIP (exact search)
+- Query time scales linearly with index size
+- Memory usage: `dimension * num_vectors * 4 bytes`
+
+### 12.10 Memory Optimization
+
+**Technique 1: Memory-Mapped Indices**
+
+```python
+# FAISS automatically memory-maps large indices
+index = faiss.read_index("embeddings.index", faiss.IO_FLAG_MMAP)
+
+# Only loads accessed vectors into RAM
+# Reduces startup time for large indices
+```
+
+**Technique 2: Product Quantization** (lossy compression, future)
+
+```python
+# Reduce memory by 8-32x with minimal accuracy loss
+pq = faiss.IndexPQ(dimension, M=8, nbits=8)
+pq.train(training_vectors)
+pq.add(vectors)
+
+# Memory: dimension / M * nbits / 8 bytes per vector
+# Example: 1536 / 8 * 1 = 192 bytes (vs 6144 bytes uncompressed)
+```
+
+**Recommendation**: Start with memory-mapped IndexFlatIP, add compression only if needed.
+
+### 12.11 Package Size Impact
+
+From the analysis in Section 5.6:
+
+| Package | Installed Size | Notes |
+|---------|----------------|-------|
+| **NumPy** | 20-40 MB | Already required |
+| **faiss-cpu** | 15-25 MB | **New dependency** |
+| **Total** | 35-65 MB | Only +15 MB (+10%) |
+
+**Docker Image Impact**:
+- Base Python 3.13-slim: ~120 MB
+- +NumPy: ~140 MB
+- +NumPy + faiss-cpu: ~155 MB (+15 MB = +10% increase)
+
+**Comparison with alternatives**:
+- ChromaDB: +300 MB (+250% increase)
+- Pinecone/Weaviate: Cloud-based (external service)
+
+**Verdict**: faiss-cpu is lightweight and worth the small overhead.
+
+### 12.12 Implementation Roadmap for FAISS
+
+**Phase 1: FAISS Integration** (Week 1-2)
+
+1. Add `faiss-cpu` dependency to `pyproject.toml`
+2. Create `FAISSVectorStore` class
+   - `__init__`, `add_vectors`, `search`, `save`, `load`
+3. Implement FAISS index for current speaker embeddings
+   - Use IndexFlatIP with normalized vectors
+   - Maintain chunk ID mapping
+4. Update `RAGService.connect()` to load FAISS index
+5. Update `get_best_speaker()` to use FAISS search
+6. Add migration script: JSON → FAISS
+7. Test with existing speaker data
+
+**Deliverables**:
+- `chatboti/vector_store.py` (FAISS wrapper)
+- Updated `chatboti/rag.py`
+- Migration script: `scripts/migrate_json_to_faiss.py`
+- Tests: `tests/test_faiss_integration.py`
+
+**Acceptance Criteria**:
+- All existing RAG tests pass
+- FAISS search returns same results as JSON (within floating point error)
+- Query latency ≤ current system
+- Backward compatible with JSON fallback
+
+---
+
+## 6. Proposed Generic Document Model
 
 ### 4.1 Core Abstractions
 
