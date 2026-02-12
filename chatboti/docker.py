@@ -149,19 +149,25 @@ def get_aws_config(is_raise_exception: bool = True):
     return aws_config
 
 
-def get_aws_credentials_from_profile(profile_name: str):
-    """Extract AWS credentials from a profile, including STS identity and expiry."""
+def get_aws_credentials_from_config(aws_config: dict):
+    """Extract AWS credentials from validated aws_config.
+
+    Args:
+        aws_config: Config dict from get_aws_config() (already validated)
+
+    Returns:
+        Dict with AWS_* environment variables for docker
+    """
     credentials = {}
 
     try:
-        session = boto3.Session(profile_name=profile_name)
+        # Use the already-validated config (no need to re-validate)
+        session = boto3.Session(**aws_config)
         creds = session.get_credentials()
 
-        if not creds:
-            raise ValueError(f"No credentials found for profile '{profile_name}'")
-
-        if not creds.access_key or not creds.secret_key:
-            raise ValueError(f"Incomplete credentials for profile '{profile_name}'")
+        # These should always exist since get_aws_config() validated them
+        if not creds or not creds.access_key or not creds.secret_key:
+            raise ValueError("AWS credentials missing after validation")
 
         credentials["AWS_ACCESS_KEY_ID"] = creds.access_key
         credentials["AWS_SECRET_ACCESS_KEY"] = creds.secret_key
@@ -174,6 +180,7 @@ def get_aws_credentials_from_profile(profile_name: str):
             credentials["AWS_DEFAULT_REGION"] = region
             credentials["AWS_REGION"] = region
 
+        # Get identity info (no need to validate again, just get info)
         sts = session.client("sts")
         identity = sts.get_caller_identity()
         if identity:
@@ -188,7 +195,7 @@ def get_aws_credentials_from_profile(profile_name: str):
                 )
 
     except Exception as e:
-        raise ValueError(f"Error getting AWS credentials: {str(e)}") from None
+        raise ValueError(f"Error extracting AWS credentials: {str(e)}") from None
 
     return credentials
 
@@ -228,21 +235,18 @@ def main():
 
     try:
         if uses_bedrock:
-            # Validate AWS configuration first
+            # Validate AWS configuration first (does all credential validation)
             aws_config = get_aws_config(is_raise_exception=True)
 
-            # Extract credentials if we have a profile or fallback to env vars
+            # Extract credentials using the already-validated config
             if aws_config.get("profile_name"):
-                profile_name = aws_config["profile_name"]
-                log(f"Extracting credentials from AWS profile: {profile_name}")
-                aws_creds = get_aws_credentials_from_profile(profile_name)
-                env_vars.update(aws_creds)
+                log(f"Extracting credentials from AWS profile: {aws_config['profile_name']}")
             else:
-                # Fall back to environment variable credentials
-                log("Using AWS credentials from environment variables")
-                for key, value in os.environ.items():
-                    if key.startswith("AWS_"):
-                        env_vars[key] = value
+                log("Using AWS credentials from default credential chain")
+
+            # Extract credentials from the validated config
+            aws_creds = get_aws_credentials_from_config(aws_config)
+            env_vars.update(aws_creds)
 
         if uses_openai:
             openai_api_key = os.getenv("OPENAI_API_KEY")
