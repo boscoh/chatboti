@@ -64,21 +64,36 @@ class RAGService:
         return False
 
     async def connect(self):
+        """Load existing embeddings from disk.
+
+        Raises:
+            FileNotFoundError: If embeddings file doesn't exist. Run 'chatboti rag' to generate.
+        """
         if self.speakers_with_embeddings and self.speakers:
             return
-        elif self.is_exists(self.embed_json):
-            self.speakers_with_embeddings = json.loads(
-                self.read_text_file(self.embed_json)
+
+        if not self.is_exists(self.embed_json):
+            raise FileNotFoundError(
+                f"Embeddings file '{self.embed_json}' not found. "
+                f"Run 'chatboti rag' to generate embeddings first."
             )
-        else:
-            logger.info(
-                f"Generating embeddings with '{self.llm_service}:{self.embed_client.model}'"
-            )
-            self.speakers_with_embeddings = await self._generate_speaker_embeddings()
-            self.save_text_file(
-                json.dumps(self.speakers_with_embeddings, indent=2), self.embed_json
-            )
-            logger.info(f"Embeddings saved to '{self.embed_json}'")
+
+        logger.info(f"Loading embeddings from '{self.embed_json}'")
+        self.speakers_with_embeddings = json.loads(
+            self.read_text_file(self.embed_json)
+        )
+        self.speakers = py_.map(self.speakers_with_embeddings, self._strip_embeddings)
+
+    async def generate_and_save_embeddings(self):
+        """Generate embeddings and save to disk."""
+        logger.info(
+            f"Generating embeddings with '{self.llm_service}:{self.embed_client.model}'"
+        )
+        self.speakers_with_embeddings = await self._generate_speaker_embeddings()
+        self.save_text_file(
+            json.dumps(self.speakers_with_embeddings, indent=2), self.embed_json
+        )
+        logger.info(f"Embeddings saved to '{self.embed_json}'")
         self.speakers = py_.map(self.speakers_with_embeddings, self._strip_embeddings)
 
     def _resolve_data_path(self, file_path: Union[Path, str]) -> Path:
@@ -166,10 +181,10 @@ class RAGService:
 
 
 async def build_embeddings():
-    """Run embeddings generation."""
+    """Generate and save embeddings to disk."""
     load_dotenv()
-    async with RAGService():
-        pass
+    async with RAGService() as rag_service:
+        await rag_service.generate_and_save_embeddings()
 
 
 async def search_loop():
