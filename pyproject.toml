@@ -7,7 +7,7 @@ name = "chatboti"
 version = "0.2.0"
 description = "Raglet - RAG starter kit with FastAPI, MCP, and multiple LLM providers"
 readme = "README.md"
-requires-python = ">=3.13,<3.14"
+requires-python = ">=3.13"
 license = { text = "MIT" }
 authors = [
     { name = "Thoughtworks Labs" }
