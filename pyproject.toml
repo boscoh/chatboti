@@ -33,11 +33,12 @@ dependencies = [
     "pyyaml>=6.0.2",
     "rich>=14.1.0",
     "aioboto3>=15.2.0",
-    "mcp>=1.18.0",
+    "mcp>=1.26.0",
     "numpy>=2.3.4",
     "slowapi>=0.1.9",
-    "microeval>=0.3.0",
+    "microeval>=0.3.1",
     "cyclopts>=3.0.0",
+    "anyio>=4.12.1",
 ]
 
 [project.optional-dependencies]

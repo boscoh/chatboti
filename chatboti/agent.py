@@ -7,6 +7,7 @@ import logging
 import os
 import re
 import textwrap
+from contextlib import AsyncExitStack
 from typing import Any, Dict, List, Optional
 
 from dotenv import load_dotenv
@@ -30,8 +31,7 @@ class InfoAgent:
         if not self.chat_service:
             raise ValueError("CHAT_SERVICE environment variable is not set")
         self._mcp_session: Optional[ClientSession] = None
-        self._session_context: Optional[ClientSession] = None
-        self._stdio_context: Optional[StdioServerParameters] = None
+        self._exit_stack: Optional[AsyncExitStack] = None
 
         self.tools: Optional[List[Dict[str, Any]]] = None
 
@@ -57,19 +57,31 @@ class InfoAgent:
         if self._mcp_session:
             return
 
+        # Use AsyncExitStack to properly manage async context managers
+        self._exit_stack = AsyncExitStack()
+
         env = os.environ.copy()
-        server_script_path = Path(__file__).parent / "mcp_server.py"
-        env["PYTHONPATH"] = server_script_path.parent
         env["CHAT_SERVICE"] = self.chat_service
+
+        # Use full path to uv for non-interactive shells
+        uv_command = os.path.expanduser("~/.local/bin/uv")
+        if not os.path.exists(uv_command):
+            uv_command = "uv"  # Fallback to PATH
+
+        # Run MCP server as a Python module
         server_params = StdioServerParameters(
-            command="uv",
-            args=["run", "python", server_script_path],
+            command=uv_command,
+            args=["run", "-m", "chatboti.mcp_server"],
             env=env,
         )
-        self._stdio_context = stdio_client(server_params)
-        _stdio_read, _stdio_write = await self._stdio_context.__aenter__()
-        self._session_context = ClientSession(_stdio_read, _stdio_write)
-        self._mcp_session = await self._session_context.__aenter__()
+
+        # Enter context managers in the correct order using AsyncExitStack
+        _stdio_read, _stdio_write = await self._exit_stack.enter_async_context(
+            stdio_client(server_params)
+        )
+        self._mcp_session = await self._exit_stack.enter_async_context(
+            ClientSession(_stdio_read, _stdio_write)
+        )
         await self._mcp_session.initialize()
 
         self.tools = await self.get_tools()
@@ -84,17 +96,16 @@ class InfoAgent:
                 await self.chat_client.close()
         except Exception:
             pass
-        try:
-            if self._session_context:
-                await self._session_context.__aexit__(None, None, None)
-        except Exception:
-            pass
-        try:
-            if self._stdio_context:
-                await self._stdio_context.__aexit__(None, None, None)
-        except Exception:
-            pass
+
+        # AsyncExitStack properly exits all context managers in reverse order
+        if self._exit_stack:
+            try:
+                await self._exit_stack.aclose()
+            except Exception as e:
+                logger.warning(f"Error closing exit stack: {e}")
+
         self._mcp_session = None
+        self._exit_stack = None
 
     async def get_tools(self):
         response = await self._mcp_session.list_tools()

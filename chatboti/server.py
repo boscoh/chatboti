@@ -58,6 +58,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     if not chat_service:
         logger.warning("CHAT_SERVICE not set, skipping MCP initialization")
         app.state.ready = True
+        yield
     else:
         try:
             # Pre-load embeddings during startup
@@ -67,22 +68,25 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             logger.info("Embeddings loaded successfully")
 
             # Initialize MCP client with chat service
+            # Note: Don't use async with here - manual lifecycle management avoids
+            # asyncio task context issues with anyio cancel scopes in Python 3.13
             logger.info(f"Initializing MCP client with {chat_service}...")
-            app.state.info_agent = InfoAgent(chat_service=chat_service)
-            await app.state.info_agent.connect()
+            agent = InfoAgent(chat_service=chat_service)
+            await agent.connect()
+            app.state.info_agent = agent
             logger.info("MCP client initialized successfully")
             app.state.ready = True
+
+            yield
+
+            # Manual cleanup to ensure proper task context
+            logger.info("Shutting down MCP client...")
+            if app.state.info_agent:
+                await app.state.info_agent.disconnect()
+                app.state.info_agent = None
         except Exception as e:
             logger.error(f"Failed to initialize during startup: {e}")
             raise
-
-    yield
-
-    if app.state.info_agent:
-        try:
-            await app.state.info_agent.disconnect()
-        except Exception as e:
-            logger.error(f"Error disconnecting MCP client: {e}")
 
 
 def create_app() -> FastAPI:
