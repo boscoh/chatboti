@@ -31,23 +31,21 @@ def error(msg: str):
     sys.exit(1)
 
 
-def get_aws_credentials_for_docker():
-    """Validate AWS config and extract credentials for Docker environment.
+def get_aws_config(is_raise_exception: bool = True):
+    """Get AWS configuration for boto3 client initialization.
 
-    Returns:
-        Dict with AWS_* environment variables for docker
+    Falls back to boto3's credential chain if AWS_PROFILE doesn't exist.
 
-    Raises:
-        ValueError: If credentials are invalid or missing
+    :param is_raise_exception: Raise exceptions or warn on errors
+    :return: Dict with profile_name and region_name keys
     """
     load_dotenv()
 
-    credentials = {}
+    aws_config = {}
     available_profiles = set()
     credentials_path = os.path.expanduser("~/.aws/credentials")
     config_path = os.path.expanduser("~/.aws/config")
 
-    # Discover available profiles
     if os.path.exists(credentials_path):
         import configparser
         config = configparser.ConfigParser()
@@ -64,114 +62,142 @@ def get_aws_credentials_for_docker():
             elif section != "default":
                 available_profiles.add(section)
 
-    # Build AWS config
-    aws_config = {}
     profile_name = os.getenv("AWS_PROFILE")
     profile_not_found = False
-
     if profile_name:
         if profile_name in available_profiles:
             aws_config["profile_name"] = profile_name
-            log(f"Using AWS profile: {profile_name}")
         else:
-            log(f"AWS profile '{profile_name}' not found, using default credential chain")
+            log(f"AWS profile '{profile_name}' not found, using default credential chain...")
             profile_not_found = True
 
     region = os.getenv("AWS_REGION")
     if region:
         aws_config["region_name"] = region
 
-    # Remove AWS_PROFILE from env if profile not found to allow fallback
     if profile_not_found:
         os.environ.pop("AWS_PROFILE", None)
 
     try:
-        # Create session and get credentials (single session creation)
         session = boto3.Session(**aws_config)
-        creds = session.get_credentials()
+        credentials = session.get_credentials()
 
-        if not creds:
-            if available_profiles:
-                error(
-                    f"No AWS credentials found.\n"
-                    f"Available profiles: {', '.join(available_profiles)}\n"
-                    f"To configure: aws configure\n"
-                    f"Or set AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY environment variables"
-                )
-            else:
-                error(
-                    f"No AWS credentials found.\n"
-                    f"To configure: aws configure\n"
-                    f"Or set AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY environment variables"
-                )
+        if not credentials:
+            if is_raise_exception:
+                if available_profiles:
+                    error(
+                        f"No AWS credentials found.\n"
+                        f"Available profiles: {', '.join(available_profiles)}\n"
+                        f"To configure: aws configure\n"
+                        f"Or set AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY environment variables"
+                    )
+                else:
+                    error(
+                        f"No AWS credentials found.\n"
+                        f"To configure: aws configure\n"
+                        f"Or set AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY environment variables"
+                    )
+            return aws_config
 
-        if not creds.access_key or not creds.secret_key:
-            error("Incomplete AWS credentials (missing access key or secret key)")
-
-        # Validate credentials and get identity (single STS call)
         sts = session.client("sts")
-        identity = sts.get_caller_identity()
+        sts.get_caller_identity()
 
-        # Check for SSO expiry
         if profile_name and profile_name in aws_config.get("profile_name", ""):
+            config_path = os.path.expanduser("~/.aws/config")
             if os.path.exists(config_path):
                 import configparser
                 config = configparser.ConfigParser()
                 config.read(config_path)
                 section = f"profile {profile_name}"
                 if config.has_section(section) and config.has_option(section, "sso_start_url"):
-                    if hasattr(creds, "token"):
-                        frozen_creds = creds.get_frozen_credentials()
-                        if hasattr(frozen_creds, "expiry_time") and frozen_creds.expiry_time < datetime.now(timezone.utc):
+                    if hasattr(credentials, "token"):
+                        creds = credentials.get_frozen_credentials()
+                        if hasattr(creds, "expiry_time") and creds.expiry_time < datetime.now(timezone.utc):
                             login_cmd = f"aws sso login --profile {profile_name}"
                             error(f"AWS SSO session expired. Please run:\n  {login_cmd}")
 
-        # Extract credentials for Docker
+        return aws_config
+    except ClientError as e:
+        if is_raise_exception:
+            raise
+        error_code = e.response["Error"]["Code"]
+
+        if error_code == "ExpiredToken":
+            # Check if SSO to provide better error message
+            profile_to_check = aws_config.get("profile_name", profile_name)
+            if profile_to_check:
+                config_path = os.path.expanduser("~/.aws/config")
+                if os.path.exists(config_path):
+                    import configparser
+                    config = configparser.ConfigParser()
+                    config.read(config_path)
+                    section = f"profile {profile_to_check}"
+                    if config.has_section(section) and config.has_option(section, "sso_start_url"):
+                        login_cmd = f"aws sso login --profile {profile_to_check}"
+                        warn(f"AWS SSO session expired. Please run:\n  {login_cmd}")
+                        return aws_config
+            warn("AWS credentials have expired")
+        elif error_code == "InvalidClientTokenId":
+            warn("AWS credentials are invalid. Please reconfigure:\n  aws configure")
+        else:
+            warn(f"AWS API error: {error_code}")
+    except Exception as e:
+        if is_raise_exception:
+            raise
+        warn(f"AWS credential check failed: {e}")
+
+    return aws_config
+
+
+def get_aws_credentials_from_config(aws_config: dict):
+    """Extract AWS credentials from validated aws_config.
+
+    Args:
+        aws_config: Config dict from get_aws_config() (already validated)
+
+    Returns:
+        Dict with AWS_* environment variables for docker
+    """
+    credentials = {}
+
+    try:
+        # Use the already-validated config (no need to re-validate)
+        session = boto3.Session(**aws_config)
+        creds = session.get_credentials()
+
+        # These should always exist since get_aws_config() validated them
+        if not creds or not creds.access_key or not creds.secret_key:
+            raise ValueError("AWS credentials missing after validation")
+
         credentials["AWS_ACCESS_KEY_ID"] = creds.access_key
         credentials["AWS_SECRET_ACCESS_KEY"] = creds.secret_key
 
         if creds.token:
             credentials["AWS_SESSION_TOKEN"] = creds.token
 
-        region_name = session.region_name
-        if region_name:
-            credentials["AWS_DEFAULT_REGION"] = region_name
-            credentials["AWS_REGION"] = region_name
+        region = session.region_name
+        if region:
+            credentials["AWS_DEFAULT_REGION"] = region
+            credentials["AWS_REGION"] = region
 
-        # Add identity info from the single STS call
+        # Get identity info (no need to validate again, just get info)
+        sts = session.client("sts")
+        identity = sts.get_caller_identity()
         if identity:
             credentials["AWS_ACCOUNT_ID"] = identity.get("Account", "")
             credentials["AWS_USER_ARN"] = identity.get("Arn", "")
 
-        # Add expiry info if available
         if hasattr(creds, "token"):
             frozen_creds = creds.get_frozen_credentials()
             if hasattr(frozen_creds, "expiry_time") and frozen_creds.expiry_time:
-                credentials["AWS_CREDENTIALS_EXPIRY"] = frozen_creds.expiry_time.isoformat()
+                credentials["AWS_CREDENTIALS_EXPIRY"] = (
+                    frozen_creds.expiry_time.isoformat()
+                )
 
-        return credentials
-
-    except ClientError as e:
-        error_code = e.response["Error"]["Code"]
-
-        if error_code == "ExpiredToken":
-            # Check if SSO to provide better error message
-            profile_to_check = aws_config.get("profile_name", profile_name)
-            if profile_to_check and os.path.exists(config_path):
-                import configparser
-                config = configparser.ConfigParser()
-                config.read(config_path)
-                section = f"profile {profile_to_check}"
-                if config.has_section(section) and config.has_option(section, "sso_start_url"):
-                    login_cmd = f"aws sso login --profile {profile_to_check}"
-                    error(f"AWS SSO session expired. Please run:\n  {login_cmd}")
-            error("AWS credentials have expired")
-        elif error_code == "InvalidClientTokenId":
-            error("AWS credentials are invalid. Please reconfigure:\n  aws configure")
-        else:
-            error(f"AWS API error: {error_code}")
     except Exception as e:
-        error(f"AWS credential check failed: {e}")
+        raise ValueError(f"Error extracting AWS credentials: {str(e)}") from None
+
+    return credentials
 
 
 def write_env_file(file_path: Path, config_vars: dict):
@@ -209,8 +235,17 @@ def main():
 
     try:
         if uses_bedrock:
-            # Validate and extract AWS credentials (single pass)
-            aws_creds = get_aws_credentials_for_docker()
+            # Validate AWS configuration first (does all credential validation)
+            aws_config = get_aws_config(is_raise_exception=True)
+
+            # Extract credentials using the already-validated config
+            if aws_config.get("profile_name"):
+                log(f"Extracting credentials from AWS profile: {aws_config['profile_name']}")
+            else:
+                log("Using AWS credentials from default credential chain")
+
+            # Extract credentials from the validated config
+            aws_creds = get_aws_credentials_from_config(aws_config)
             env_vars.update(aws_creds)
 
         if uses_openai:
