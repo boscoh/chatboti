@@ -48,6 +48,44 @@ documents/
 - ✅ Better for >1K documents
 - ✅ Efficient updates
 
+### Multi-Model Support
+
+**Supports any embedding model (384 to 3072 dimensions):**
+
+```
+Model-specific storage:
+├── vectors_openai-text-embedding-3-small.faiss  # 1536-dim
+├── metadata_openai-text-embedding-3-small.json
+├── vectors_nomic-nomic-embed-text.faiss         # 768-dim
+└── metadata_nomic-nomic-embed-text.json
+```
+
+**Common Models:**
+
+| Model | Dims | Storage (1K) | Speed | Use Case |
+|-------|------|-------------|-------|----------|
+| `all-MiniLM-L6-v2` | 384 | 1.5 MB | 0.5ms | Fast, local |
+| `nomic-embed-text` | 768 | 3.0 MB | 1.0ms | Open source |
+| `text-embedding-3-small` | 1536 | 6.0 MB | 2.0ms | Production |
+| `text-embedding-3-large` | 3072 | 12.0 MB | 4.0ms | High quality |
+
+**Model Configuration:**
+```python
+rag = MultiModelRAGService(
+    data_dir="./data",
+    model_id="nomic/nomic-embed-text"  # Auto-detects 768 dims
+)
+
+# Upgrade model when needed
+migrate_embeddings("nomic/nomic-embed-text", "openai/text-embedding-3-small")
+```
+
+**Benefits:**
+- ✅ One architecture, any model
+- ✅ Dynamic dimension handling
+- ✅ Easy model migration
+- ✅ Cost optimization (free → paid as needed)
+
 ### Core Abstractions
 
 ```python
@@ -176,6 +214,7 @@ results = await rag.search("quantum computing", k=5)
 | **Dependencies** | NumPy: 20 MB | +FAISS: +15 MB (+10%) |
 | **Type Safety** | List confusion | Always float32 |
 | **Scalability** | <1K docs | 10K-100K docs |
+| **Model Support** | Single model | Any model (384-3072 dims) |
 
 ## 📦 Example Use Cases
 
@@ -234,6 +273,9 @@ results = await rag.search("AI applications", k=10)
 5. **Zero breaking changes** (SpeakerRAGService wrapper)
    - Reason: Smooth migration, existing code works
 
+6. **Support any embedding model** (not separate architectures)
+   - Reason: Flexible, future-proof, cost optimization
+
 ## ⚠️ Non-Goals
 
 - ❌ Cloud vector databases (Pinecone, Weaviate) - keep it simple
@@ -251,12 +293,16 @@ results = await rag.search("AI applications", k=10)
 - ✅ Docker image only +15 MB larger
 - ✅ All embeddings stored as float32 in FAISS
 - ✅ Metadata in SQLite with flexible schema
+- ✅ Supports any embedding model (384-3072 dimensions)
+- ✅ Easy model migration and cost optimization
 - ✅ Comprehensive tests and documentation
 
-## 🔗 Related Specs
+## 🔗 Complete Specification
 
-- `docs/faiss-multiple-documents-spec.md` - FAISS migration details
-- `docs/metadata-storage-design.md` - SQLite schema design
-- `docs/vector-storage-comparison.md` - Parquet vs FAISS analysis
-- `docs/analysis/embedding-storage-architecture.md` - Storage format comparison
-- `docs/analysis/faiss-vs-numpy-size-comparison.md` - Size analysis
+- **`docs/generic-document-storage-spec.md`** (4,020 lines) - THE comprehensive spec
+  - Covers architecture, storage evolution, FAISS integration
+  - **Section 13**: Multi-Model Support (384-3072 dimensions)
+  - Implementation phases, migration strategies, code examples
+  - Single source of truth for the entire system
+
+- **`docs/archive/`** - Reference materials (all content merged into main spec)
