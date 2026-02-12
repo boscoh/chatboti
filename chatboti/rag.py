@@ -6,6 +6,7 @@ from io import StringIO
 from typing import List, Optional, Union
 
 import numpy as np
+from numpy.typing import NDArray
 from dotenv import load_dotenv
 from microeval.llm import get_llm_client, load_config
 from path import Path
@@ -79,9 +80,10 @@ class RAGService:
             )
 
         logger.info(f"Loading embeddings from '{self.embed_json}'")
-        self.speakers_with_embeddings = json.loads(
-            self.read_text_file(self.embed_json)
-        )
+        speakers_raw = json.loads(self.read_text_file(self.embed_json))
+        self.speakers_with_embeddings = [
+            self._convert_embeddings_to_array(speaker) for speaker in speakers_raw
+        ]
         self.speakers = py_.map(self.speakers_with_embeddings, self._strip_embeddings)
 
     async def generate_and_save_embeddings(self):
@@ -90,9 +92,11 @@ class RAGService:
             f"Generating embeddings with '{self.llm_service}:{self.embed_client.model}'"
         )
         self.speakers_with_embeddings = await self._generate_speaker_embeddings()
-        self.save_text_file(
-            json.dumps(self.speakers_with_embeddings, indent=2), self.embed_json
-        )
+        speakers_for_json = [
+            self._convert_arrays_to_list(speaker)
+            for speaker in self.speakers_with_embeddings
+        ]
+        self.save_text_file(json.dumps(speakers_for_json, indent=2), self.embed_json)
         logger.info(f"Embeddings saved to '{self.embed_json}'")
         self.speakers = py_.map(self.speakers_with_embeddings, self._strip_embeddings)
 
@@ -123,18 +127,17 @@ class RAGService:
                 ("abstract_embedding", "final_abstract_max_150_words"),
                 ("bio_embedding", "bio_max_120_words"),
             ]:
-                speaker[embed_key] = await self.embed_client.embed(speaker[field])
+                embedding = await self.embed_client.embed(speaker[field])
+                speaker[embed_key] = np.array(embedding, dtype=np.float32)
             result.append(speaker)
             logger.info(f"Finished text embeddings for '{speaker['name']}'")
         return result
 
     @staticmethod
-    def cosine_distance(
-        vec1: Union[List[float], np.ndarray], vec2: Union[List[float], np.ndarray]
-    ) -> float:
+    def cosine_distance(vec1: NDArray[np.float32], vec2: NDArray[np.float32]) -> float:
         """Return cosine distance between 2 vectors, 0 being the best match."""
-        a = np.asarray(vec1, dtype=np.float64)
-        b = np.asarray(vec2, dtype=np.float64)
+        a = np.asarray(vec1, dtype=np.float32)
+        b = np.asarray(vec2, dtype=np.float32)
 
         if a.size != b.size:
             raise ValueError(
@@ -154,6 +157,24 @@ class RAGService:
         return 1.0 - cosine_similarity
 
     @staticmethod
+    def _convert_embeddings_to_array(speaker: dict) -> dict:
+        """Convert embedding lists to float32 numpy arrays."""
+        result = speaker.copy()
+        for key in speaker:
+            if "embedding" in key and isinstance(speaker[key], list):
+                result[key] = np.array(speaker[key], dtype=np.float32)
+        return result
+
+    @staticmethod
+    def _convert_arrays_to_list(speaker: dict) -> dict:
+        """Convert numpy arrays to lists for JSON serialization."""
+        result = speaker.copy()
+        for key in speaker:
+            if "embedding" in key and isinstance(speaker[key], np.ndarray):
+                result[key] = speaker[key].tolist()
+        return result
+
+    @staticmethod
     def _strip_embeddings(speaker: dict) -> dict:
         return {k: v for k, v in speaker.items() if "embedding" not in k}
 
@@ -167,7 +188,8 @@ class RAGService:
 
     async def get_best_speaker(self, query: str) -> Optional[dict]:
         await self.connect()
-        embedding = await self.embed_client.embed(query)
+        embedding_raw = await self.embed_client.embed(query)
+        embedding = np.array(embedding_raw, dtype=np.float32)
         distances = [
             self.get_speaker_distance(embedding, s)
             for s in self.speakers_with_embeddings
