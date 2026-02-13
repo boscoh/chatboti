@@ -185,19 +185,24 @@ class GenericRAGService:
         # faiss_ids[0]: k indices into vector index (int64)
         distances, faiss_ids = self._vector_search(query_emb, k)
 
-        # 3. Fetch chunk references (extract [0] since single query: (1, k) → (k,))
-        refs: List[ChunkRef] = self._get_chunk_refs(faiss_ids[0].tolist())
+        # 3. Filter out -1 indices (returned when index is empty or not enough results)
+        valid_ids = [fid for fid in faiss_ids[0].tolist() if fid >= 0]
+        if not valid_ids:
+            return []
 
-        # 4. Fetch chunk texts (optimized)
+        # 4. Fetch chunk references
+        refs: List[ChunkRef] = self._get_chunk_refs(valid_ids)
+
+        # 5. Fetch chunk texts (optimized)
         chunk_texts = self._get_chunk_texts(refs)
 
-        # 5. Optionally fetch full document texts
+        # 6. Optionally fetch full document texts
         document_texts = None
         if include_documents:
             doc_ids = list(set(ref.document_id for ref in refs))
             document_texts = self._get_document_texts(doc_ids)
 
-        # 6. Build results
+        # 7. Build results
         return [
             ChunkResult(
                 document_id=ref.document_id,
