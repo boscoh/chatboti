@@ -18,15 +18,16 @@ This specification defines a **single markdown file format** for RAG (Retrieval-
 ## Table of Contents
 
 1. [Motivation](#1-motivation)
-2. [Format Specification](#2-format-specification)
-3. [File Structure](#3-file-structure)
-4. [Encoding Scheme](#4-encoding-scheme)
-5. [API Compatibility](#5-api-compatibility)
-6. [Implementation](#6-implementation)
-7. [Performance Characteristics](#7-performance-characteristics)
-8. [Limitations](#8-limitations)
-9. [Migration Path](#9-migration-path)
-10. [Example File](#10-example-file)
+2. [Alternative Standard Formats](#2-alternative-standard-formats)
+3. [Format Specification](#3-format-specification)
+4. [File Structure](#4-file-structure)
+5. [Encoding Scheme](#5-encoding-scheme)
+6. [API Compatibility](#6-api-compatibility)
+7. [Implementation](#7-implementation)
+8. [Performance Characteristics](#8-performance-characteristics)
+9. [Limitations](#9-limitations)
+10. [Migration Path](#10-migration-path)
+11. [Example File](#11-example-file)
 
 ---
 
@@ -70,7 +71,288 @@ This specification defines a **single markdown file format** for RAG (Retrieval-
 
 ---
 
-## 2. Format Specification
+## 2. Alternative Standard Formats
+
+**Note**: The `.ragmd` format specified in this document is a **custom design**, not an industry standard. Before implementing it, consider these proven single-file alternatives:
+
+### 2.1 HDF5 (.h5) - Industry Standard for Scientific Data
+
+**What it is**: Hierarchical Data Format version 5 - binary container for large scientific datasets with metadata.
+
+**Status**: ✓ Industry standard, mature (since 1998), widely used in ML/scientific computing
+
+**Structure**:
+```
+embeddings.h5
+├── /metadata
+│   ├── model_name (attribute: "nomic-embed-text")
+│   ├── embedding_dim (attribute: 768)
+│   └── created_at (attribute: "2026-02-14T10:00:00Z")
+├── /vectors (dataset: float32 array [n_chunks × embedding_dim])
+├── /chunks (dataset: structured array)
+│   ├── faiss_id (int64)
+│   ├── document_id (string)
+│   └── chunk_key (string)
+└── /documents (group)
+    ├── /doc-001 (group)
+    │   ├── id (attribute)
+    │   ├── source (attribute)
+    │   ├── full_text (dataset: string)
+    │   └── chunks (dataset: JSON or structured array)
+    └── /doc-002 (group)
+        └── ...
+```
+
+**Advantages**:
+- ✓ Highly efficient binary format (no base64 overhead)
+- ✓ Partial loading (load only needed vectors/metadata)
+- ✓ Compression built-in (gzip, lzf)
+- ✓ Excellent Python support (`h5py`, `tables`)
+- ✓ Self-describing (embedded metadata)
+- ✓ Cross-platform, cross-language (C/C++/Java/R/Julia)
+- ✓ Proven at massive scale (used by NASA, CERN)
+
+**Disadvantages**:
+- ✗ Binary format (not human-readable)
+- ✗ Not git-friendly (binary diffs)
+- ✗ Requires external library (`h5py`)
+- ✗ File corruption risk (not as robust as SQLite)
+
+**Python Example**:
+```python
+import h5py
+import numpy as np
+
+# Write
+with h5py.File('embeddings.h5', 'w') as f:
+    # Metadata
+    f.attrs['model_name'] = 'nomic-embed-text'
+    f.attrs['embedding_dim'] = 768
+
+    # Vectors (n_chunks × dim)
+    f.create_dataset('vectors', data=vectors_array, compression='gzip')
+
+    # Chunks (structured array)
+    chunk_dtype = np.dtype([
+        ('faiss_id', 'i8'),
+        ('document_id', 'U64'),
+        ('chunk_key', 'U64')
+    ])
+    f.create_dataset('chunks', data=chunk_refs_array, dtype=chunk_dtype)
+
+    # Documents (nested groups)
+    docs_group = f.create_group('documents')
+    for doc in documents:
+        doc_group = docs_group.create_group(doc.id)
+        doc_group.attrs['source'] = doc.source
+        doc_group.create_dataset('full_text', data=doc.full_text)
+
+# Read
+with h5py.File('embeddings.h5', 'r') as f:
+    model_name = f.attrs['model_name']
+    vectors = f['vectors'][:]  # Load all vectors
+    chunks = f['chunks'][:]    # Load all chunks
+
+    # Partial loading (efficient)
+    vector_10 = f['vectors'][10]  # Load single vector
+    doc_text = f['documents/doc-001/full_text'][()]
+```
+
+**Use when**:
+- Working with large datasets (>1GB)
+- Need partial loading (don't load all vectors into memory)
+- Performance is critical
+- Using scientific Python stack (NumPy, pandas, scikit-learn)
+
+**Integration with FAISS**:
+```python
+# Build FAISS index from HDF5 vectors
+with h5py.File('embeddings.h5', 'r') as f:
+    vectors = f['vectors'][:]
+    index = faiss.IndexFlatIP(vectors.shape[1])
+    index.add(vectors)
+```
+
+---
+
+### 2.3 DuckDB with Parquet - Modern SQL + Columnar Storage
+
+**What it is**: Embedded SQL database (like SQLite) optimized for analytics, using Parquet columnar format for efficient vector storage.
+
+**Status**: ✓ Production-ready, modern (since 2019), designed for analytics workloads
+
+**Structure**:
+```sql
+-- Single .duckdb file with embedded Parquet
+CREATE TABLE embeddings (
+    faiss_id INTEGER PRIMARY KEY,
+    document_id VARCHAR,
+    chunk_key VARCHAR,
+    vector FLOAT[768],  -- Array type for embeddings
+    FOREIGN KEY (document_id) REFERENCES documents(id)
+);
+
+CREATE TABLE documents (
+    id VARCHAR PRIMARY KEY,
+    source VARCHAR,
+    full_text TEXT,
+    content JSON,
+    created_at TIMESTAMP
+);
+
+-- Or export to separate Parquet file
+COPY embeddings TO 'embeddings.parquet' (FORMAT PARQUET, COMPRESSION 'zstd');
+```
+
+**Advantages**:
+- ✓ Single file (`.duckdb`) with all data
+- ✓ SQL interface (familiar, powerful queries)
+- ✓ ACID transactions (safe concurrent access)
+- ✓ Native array/vector types
+- ✓ Excellent compression (Parquet with zstd)
+- ✓ Fast analytical queries (columnar storage)
+- ✓ No server needed (embedded)
+- ✓ Export to Parquet (interop with pandas, Arrow, Spark)
+- ✓ Zero-copy integration with NumPy/pandas
+
+**Disadvantages**:
+- ✗ Not human-readable
+- ✗ Not git-friendly
+- ✗ No native FAISS integration (must extract to NumPy)
+- ✗ Slower than raw FAISS for vector search
+
+**Python Example**:
+```python
+import duckdb
+import numpy as np
+
+# Write
+con = duckdb.connect('embeddings.duckdb')
+
+con.execute("""
+    CREATE TABLE embeddings (
+        faiss_id INTEGER PRIMARY KEY,
+        document_id VARCHAR,
+        chunk_key VARCHAR,
+        vector FLOAT[768]
+    )
+""")
+
+con.execute("""
+    CREATE TABLE documents (
+        id VARCHAR PRIMARY KEY,
+        source VARCHAR,
+        full_text TEXT,
+        content JSON
+    )
+""")
+
+# Insert vectors (convert numpy to list)
+for i, (doc_id, chunk_key, vec) in enumerate(data):
+    con.execute(
+        "INSERT INTO embeddings VALUES (?, ?, ?, ?)",
+        (i, doc_id, chunk_key, vec.tolist())
+    )
+
+# Insert documents
+con.execute(
+    "INSERT INTO documents VALUES (?, ?, ?, ?)",
+    (doc.id, doc.source, doc.full_text, json.dumps(doc.content))
+)
+
+con.close()
+
+# Read
+con = duckdb.connect('embeddings.duckdb')
+
+# Load all vectors as numpy array
+vectors = con.execute("""
+    SELECT vector FROM embeddings ORDER BY faiss_id
+""").fetchnumpy()['vector']
+
+# Efficient: export to Parquet, load with pyarrow
+con.execute("COPY embeddings TO 'vectors.parquet' (FORMAT PARQUET)")
+import pyarrow.parquet as pq
+table = pq.read_table('vectors.parquet')
+vectors_np = np.stack(table['vector'].to_numpy())
+
+# Build FAISS index
+index = faiss.IndexFlatIP(768)
+index.add(vectors_np)
+
+# Query with SQL
+results = con.execute("""
+    SELECT d.full_text, e.chunk_key
+    FROM embeddings e
+    JOIN documents d ON e.document_id = d.id
+    WHERE e.faiss_id IN (10, 23, 45)
+""").fetchall()
+
+con.close()
+```
+
+**Use when**:
+- Need SQL querying capabilities
+- Want metadata filtering before vector search
+- Working with structured document metadata
+- Need ACID transactions
+- Integrating with data analytics tools
+
+**Hybrid workflow** (DuckDB + FAISS):
+```python
+# 1. Store everything in DuckDB
+# 2. At startup, load vectors into FAISS for fast search
+# 3. Use FAISS for vector search → get faiss_ids
+# 4. Use DuckDB for metadata lookup and filtering
+
+con = duckdb.connect('embeddings.duckdb')
+
+# Load vectors into FAISS once
+vectors = con.execute("SELECT vector FROM embeddings ORDER BY faiss_id").fetchnumpy()['vector']
+index = faiss.IndexFlatIP(768)
+index.add(np.stack(vectors))
+
+# Search with FAISS
+query_vec = embed_model.embed("query")
+distances, faiss_ids = index.search(query_vec, k=5)
+
+# Fetch metadata with DuckDB (fast indexed lookups)
+results = con.execute(f"""
+    SELECT e.document_id, e.chunk_key, d.full_text
+    FROM embeddings e
+    JOIN documents d ON e.document_id = d.id
+    WHERE e.faiss_id IN ({','.join(map(str, faiss_ids[0]))})
+""").fetchall()
+```
+
+---
+
+### 2.4 Comparison: Custom .ragmd vs Standard Formats
+
+| Feature | .ragmd (Custom) | HDF5 | DuckDB + Parquet |
+|---------|-----------------|------|------------------|
+| **Human-readable** | ✓ (YAML/JSON) | ✗ | ✗ |
+| **Git-friendly** | ✓ (text diffs) | ✗ | ✗ |
+| **Single file** | ✓ | ✓ | ✓ |
+| **Performance** | Slow (base64) | Fast | Medium |
+| **Partial loading** | ✗ | ✓ | ✓ |
+| **Compression** | ✗ | ✓ | ✓ |
+| **Industry standard** | ✗ | ✓ | ✓ |
+| **SQL queries** | ✗ | ✗ | ✓ |
+| **FAISS integration** | Direct | Easy | Medium |
+| **File size** | Large (+33%) | Small | Small |
+| **External deps** | None | h5py | duckdb |
+| **Learning curve** | Low | Medium | Medium |
+
+**Recommendation**:
+- **Prototyping/education**: Custom `.ragmd` (simple, transparent)
+- **Production/scale**: HDF5 (performance, partial loading)
+- **Analytics/queries**: DuckDB (SQL interface, metadata filtering)
+- **Simple use case**: Current FAISS + JSON (works fine)
+
+---
+
+## 3. Format Specification
 
 ### 2.1 File Extension
 
@@ -100,7 +382,7 @@ UTF-8
 
 ---
 
-## 3. File Structure
+## 4. File Structure
 
 ### 3.1 YAML Frontmatter
 
@@ -211,7 +493,7 @@ TVRMMj... [truncated for brevity] ...Qo=
 
 ---
 
-## 4. Encoding Scheme
+## 5. Encoding Scheme
 
 ### 4.1 FAISS Index Serialization
 
@@ -254,7 +536,7 @@ documents_json = json.dumps(
 
 ---
 
-## 5. API Compatibility
+## 6. API Compatibility
 
 ### 5.1 Backend Interface
 
@@ -295,7 +577,7 @@ else:
 
 ---
 
-## 6. Implementation
+## 7. Implementation
 
 ### 6.1 File I/O Operations
 
@@ -419,7 +701,7 @@ def _parse_markdown_sections(self, body: str) -> dict[str, str]:
 
 ---
 
-## 7. Performance Characteristics
+## 8. Performance Characteristics
 
 ### 7.1 Time Complexity
 
@@ -456,7 +738,7 @@ For 1000 documents × 10 chunks each × 768-dim embeddings:
 
 ---
 
-## 8. Limitations
+## 9. Limitations
 
 ### 8.1 Scalability
 
@@ -480,7 +762,7 @@ Only works well with simple index types:
 
 ---
 
-## 9. Migration Path
+## 10. Migration Path
 
 ### 9.1 FAISS + JSON → Single File
 
@@ -520,7 +802,7 @@ async with SingleFileRAGService(
 
 ---
 
-## 10. Example File
+## 11. Example File
 
 ### 10.1 Minimal Example
 
