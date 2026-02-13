@@ -212,7 +212,7 @@ class TestGenericRAGServiceStorageWrappers:
     """Test storage wrapper methods."""
 
     def test_get_chunk_refs_returns_correct_objects(self, tmp_path):
-        """Test _get_chunk_refs() returns correct ChunkRef objects."""
+        """Test get_chunk_refs() returns correct ChunkRef objects."""
         index_path = tmp_path / "test.index"
         metadata_path = tmp_path / "test_meta.json"
 
@@ -229,7 +229,7 @@ class TestGenericRAGServiceStorageWrappers:
         ]
 
         # Test retrieval
-        refs = service._get_chunk_refs([0, 2])
+        refs = service.get_chunk_refs([0, 2])
 
         assert len(refs) == 2
         assert refs[0].document_id == "doc1"
@@ -237,8 +237,8 @@ class TestGenericRAGServiceStorageWrappers:
         assert refs[1].document_id == "doc1"
         assert refs[1].chunk_key == "chunk2"
 
-    def test_get_chunk_texts_extracts_text_efficiently(self, tmp_path):
-        """Test _get_chunk_texts() extracts text efficiently."""
+    def test_get_chunk_text_extracts_text_efficiently(self, tmp_path):
+        """Test get_chunk_text() extracts text efficiently."""
         index_path = tmp_path / "test.index"
         metadata_path = tmp_path / "test_meta.json"
 
@@ -259,18 +259,14 @@ class TestGenericRAGServiceStorageWrappers:
         service.documents["doc1"] = doc1
 
         # Test text extraction
-        refs = [
-            ChunkRef(document_id="doc1", chunk_key="title"),
-            ChunkRef(document_id="doc1", chunk_key="body")
-        ]
-        chunk_texts = service._get_chunk_texts(refs)
+        ref_title = ChunkRef(document_id="doc1", chunk_key="title")
+        ref_body = ChunkRef(document_id="doc1", chunk_key="body")
 
-        assert len(chunk_texts) == 2
-        assert chunk_texts[refs[0]] == "Test Title"
-        assert chunk_texts[refs[1]] == "Test Body"
+        assert service.get_chunk_text(ref_title) == "Test Title"
+        assert service.get_chunk_text(ref_body) == "Test Body"
 
-    def test_get_chunk_texts_with_text_indices(self, tmp_path):
-        """Test _get_chunk_texts() with chunk-level (text indices) chunks."""
+    def test_get_chunk_text_with_text_indices(self, tmp_path):
+        """Test get_chunk_text() with chunk-level (text indices) chunks."""
         index_path = tmp_path / "test.index"
         metadata_path = tmp_path / "test_meta.json"
 
@@ -292,17 +288,14 @@ class TestGenericRAGServiceStorageWrappers:
         service.documents["doc1"] = doc
 
         # Test text extraction
-        refs = [
-            ChunkRef(document_id="doc1", chunk_key="0"),
-            ChunkRef(document_id="doc1", chunk_key="1")
-        ]
-        chunk_texts = service._get_chunk_texts(refs)
+        ref_0 = ChunkRef(document_id="doc1", chunk_key="0")
+        ref_1 = ChunkRef(document_id="doc1", chunk_key="1")
 
-        assert chunk_texts[refs[0]] == "This is a long document with multiple chunks."
-        assert chunk_texts[refs[1]] == "Here is the second chunk."
+        assert service.get_chunk_text(ref_0) == "This is a long document with multiple chunks."
+        assert service.get_chunk_text(ref_1) == "Here is the second chunk."
 
     def test_get_document_texts_returns_full_text(self, tmp_path):
-        """Test _get_document_texts() returns full document text."""
+        """Test get_document_texts() returns full document text."""
         index_path = tmp_path / "test.index"
         metadata_path = tmp_path / "test_meta.json"
 
@@ -323,7 +316,7 @@ class TestGenericRAGServiceStorageWrappers:
         service.documents = {"doc1": doc1, "doc2": doc2}
 
         # Test retrieval
-        doc_texts = service._get_document_texts(["doc1", "doc2"])
+        doc_texts = service.get_document_texts(["doc1", "doc2"])
 
         assert len(doc_texts) == 2
         assert doc_texts["doc1"] == "Full text for document 1"
