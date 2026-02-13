@@ -9,7 +9,6 @@ from collections import defaultdict
 
 from chatboti.document import Document, DocumentChunk, ChunkRef, ChunkResult
 from chatboti.loaders import CSVDocumentLoader, DocumentLoader
-from chatboti.embed_client import EmbedClient
 
 
 class GenericRAGService:
@@ -23,7 +22,7 @@ class GenericRAGService:
         index_path: Path,
         metadata_path: Path,
         embedding_dim: int = 1536,
-        embed_client: Optional[EmbedClient] = None
+        embed_client = None
     ):
         """Initialize RAG service.
 

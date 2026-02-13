@@ -2,15 +2,14 @@ import pytest
 import numpy as np
 from pathlib import Path
 from chatboti.generic_rag import GenericRAGService
-from chatboti.embed_client import EmbedClient
 from typing import List
 
 
-class MockEmbedClient(EmbedClient):
+class MockEmbedClient:
     """Mock embed client that returns deterministic embeddings."""
 
     def __init__(self):
-        super().__init__(model="mock-embed")
+        self.model = "mock-embed"
         self.call_count = 0
 
     async def embed(self, text: str) -> List[float]:
