@@ -1,11 +1,11 @@
 """Document loaders for various file formats."""
 
 import csv
-import re
 from pathlib import Path
 from typing import List, Optional
 
 from chatboti.document import Document, DocumentChunk
+from chatboti.utils import make_slug
 
 
 async def load_csv(source: str, embed_fields: Optional[List[str]] = None) -> List[Document]:
@@ -20,8 +20,7 @@ async def load_csv(source: str, embed_fields: Optional[List[str]] = None) -> Lis
     """
     # Convert filename to slug (alphanumeric with dashes)
     stem = Path(source).stem
-    prefix = re.sub(r'[^a-z0-9]+', '-', stem.lower())
-    prefix = re.sub(r'-+', '-', prefix).strip('-')
+    prefix = make_slug(stem)
 
     documents = []
     with open(source) as f:

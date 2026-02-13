@@ -11,6 +11,7 @@ from collections import defaultdict
 
 from chatboti.document import Document, ChunkRef, ChunkResult
 from chatboti.loaders import load_documents
+from chatboti.utils import make_slug
 
 
 class GenericRAGService:
@@ -62,10 +63,7 @@ class GenericRAGService:
 
         :return: Slug (e.g., 'nomic-embed-text', 'text-embedding-3-small')
         """
-        slug = re.sub(r':latest$', '', self.model)
-        slug = re.sub(r'[^a-z0-9]+', '-', slug.lower())
-        slug = re.sub(r'-+', '-', slug).strip('-')
-        return slug
+        return make_slug(self.model, strip_latest=True)
 
     async def detect_embedding_dim(self) -> int:
         """Detect embedding dimension by running a test query.
