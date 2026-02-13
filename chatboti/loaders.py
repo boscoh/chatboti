@@ -1,6 +1,7 @@
 """Document loaders for various file formats."""
 
 import csv
+import re
 from pathlib import Path
 from typing import List, Optional
 
@@ -17,7 +18,10 @@ async def load_csv(source: str, embed_fields: Optional[List[str]] = None) -> Lis
     :param embed_fields: Fields to embed (default: all text fields)
     :return: List of documents with chunks
     """
-    doc_type = Path(source).stem
+    # Convert filename to slug (alphanumeric with dashes)
+    stem = Path(source).stem
+    doc_type = re.sub(r'[^a-z0-9]+', '-', stem.lower())
+    doc_type = re.sub(r'-+', '-', doc_type).strip('-')
 
     documents = []
     with open(source) as f:

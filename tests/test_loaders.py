@@ -52,7 +52,7 @@ class TestLoadCSV:
 
         # Check first document
         doc0 = docs[0]
-        assert doc0.id == "sample_speakers-0"
+        assert doc0.id == "sample-speakers-0"
         assert doc0.content["name"] == "Dr. Jane Smith"
         assert doc0.content["title"] == "AI Research Lead"
         assert "machine learning" in doc0.content["bio"]
@@ -60,13 +60,13 @@ class TestLoadCSV:
 
         # Check second document
         doc1 = docs[1]
-        assert doc1.id == "sample_speakers-1"
+        assert doc1.id == "sample-speakers-1"
         assert doc1.content["name"] == "Prof. John Doe"
         assert doc1.content["title"] == "Computer Science Professor"
 
         # Check third document
         doc2 = docs[2]
-        assert doc2.id == "sample_speakers-2"
+        assert doc2.id == "sample-speakers-2"
         assert doc2.content["name"] == "Dr. Alice Wong"
 
     @pytest.mark.asyncio
@@ -74,9 +74,9 @@ class TestLoadCSV:
         """Test that document IDs follow correct format."""
         docs = await load_csv(str(temp_csv))
 
-        assert docs[0].id == "test_data-0"
-        assert docs[1].id == "test_data-1"
-        assert docs[2].id == "test_data-2"
+        assert docs[0].id == "test-data-0"
+        assert docs[1].id == "test-data-1"
+        assert docs[2].id == "test-data-2"
 
     @pytest.mark.asyncio
     async def test_doc_type_inferred_from_filename(self, temp_csv):
@@ -84,9 +84,9 @@ class TestLoadCSV:
         docs = await load_csv(str(temp_csv))
 
         # temp_csv is "test_data.csv", so doc_type should be "test_data"
-        assert docs[0].id == "test_data-0"
-        assert docs[1].id == "test_data-1"
-        assert docs[2].id == "test_data-2"
+        assert docs[0].id == "test-data-0"
+        assert docs[1].id == "test-data-1"
+        assert docs[2].id == "test-data-2"
 
     @pytest.mark.asyncio
     async def test_content_dict_contains_all_fields(self, temp_csv):
