@@ -52,6 +52,7 @@ limiter = Limiter(key_func=get_remote_address)
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.info_agent: Optional[InfoAgent] = None
     app.state.ready = False
+    rag_service = None
 
     chat_service = os.getenv("CHAT_SERVICE")
     embed_service = os.getenv("EMBED_SERVICE") or chat_service
@@ -71,12 +72,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             # Set up paths
             data_dir = Path(__file__).parent / "data"
 
-            # Use factory method to create RAG service
-            rag_service = await GenericRAGService.from_service(
+            # Create RAG service using context manager
+            rag_service = GenericRAGService(
                 service_name=embed_service,
                 model=model,
                 data_dir=data_dir
             )
+            await rag_service.__aenter__()
             logger.info(f"RAG loaded: {len(rag_service.documents)} documents, {rag_service.index.ntotal} vectors")
 
             # Initialize MCP client with chat service

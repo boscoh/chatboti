@@ -57,9 +57,9 @@ async def build_embeddings(
     print(f"• CSV: {csv_path}")
     print()
 
-    # Use factory method to create RAG service
+    # Create RAG service using context manager
     print(f"→ Connecting to {service}...")
-    async with await GenericRAGService.from_service(
+    async with GenericRAGService(
         service_name=service,
         model=model,
         data_dir=data_dir,
@@ -115,13 +115,13 @@ async def search_rag(
         print("✗ Error: EMBED_SERVICE and EMBED_MODEL must be set")
         return 1
 
-    # Convert string paths to Path objects for factory method
+    # Convert string paths to Path objects
     data_dir = Path(__file__).parent / "data"
     index_path_obj = Path(index_path) if index_path else None
     metadata_path_obj = Path(metadata_path) if metadata_path else None
 
-    # Use factory method to load RAG service
-    async with await GenericRAGService.from_service(
+    # Create RAG service using context manager
+    async with GenericRAGService(
         service_name=service,
         model=model,
         data_dir=data_dir,

@@ -43,12 +43,13 @@ async def lifespan(app):
     try:
         logger.info(f"Initializing RAG service with embed_service: {embed_service}")
 
-        # Use factory method to create RAG service
-        rag_service = await GenericRAGService.from_service(
+        # Create RAG service using constructor and context manager
+        rag_service = GenericRAGService(
             service_name=embed_service,
             model=model,
             data_dir=data_dir
         )
+        await rag_service.__aenter__()
         logger.info(f"RAG service initialized: {len(rag_service.documents)} documents, {rag_service.index.ntotal} vectors")
     except Exception as e:
         logger.error(f"Failed to initialize RAG service: {e}", exc_info=True)

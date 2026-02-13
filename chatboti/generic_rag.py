@@ -21,46 +21,62 @@ class GenericRAGService:
 
     def __init__(
         self,
-        index_path: Path,
-        metadata_path: Path,
-        embedding_dim: int = 1536,
-        embed_client = None,
-        _owns_client: bool = False
+        service_name: Optional[str] = None,
+        model: Optional[str] = None,
+        data_dir: Optional[Path] = None,
+        index_path: Optional[Path] = None,
+        metadata_path: Optional[Path] = None,
+        embedding_dim: Optional[int] = None,
+        embed_client = None
     ):
-        """Initialize RAG service.
+        """Initialize RAG service (lazy - call via context manager for async setup).
 
-        :param index_path: Path to FAISS index file
-        :param metadata_path: Path to metadata JSON file
-        :param embedding_dim: Embedding dimension
-        :param embed_client: Embedding client (e.g., OpenAI, Ollama)
-        :param _owns_client: Internal flag - whether this instance owns the client lifecycle
+        High-level API (auto-creates client):
+            async with GenericRAGService(service_name="ollama", model="nomic-embed-text") as rag:
+                results = await rag.search("query")
+
+        Low-level API (bring your own client):
+            async with GenericRAGService(
+                index_path=path,
+                metadata_path=path,
+                embed_client=client
+            ) as rag:
+                results = await rag.search("query")
+
+        :param service_name: Service name (e.g., 'ollama', 'openai') - high-level API
+        :param model: Model name - high-level API
+        :param data_dir: Data directory (default: chatboti/data) - high-level API
+        :param index_path: Path to FAISS index file - overrides auto-detection
+        :param metadata_path: Path to metadata JSON file - overrides auto-detection
+        :param embedding_dim: Embedding dimension - auto-detected if not provided
+        :param embed_client: Pre-connected embedding client - low-level API
         """
+        # Determine initialization mode
+        if service_name or model:
+            self._init_mode = 'service'
+            self.service_name = service_name
+            self.model = model
+            self.data_dir = data_dir
+        elif embed_client:
+            self._init_mode = 'direct'
+        else:
+            raise ValueError(
+                "Must provide either (service_name, model) for high-level API "
+                "or (embed_client, index_path, metadata_path) for low-level API"
+            )
+
+        # Store parameters (initialization happens in __aenter__)
         self.index_path = index_path
         self.metadata_path = metadata_path
         self.embed_client = embed_client
         self.embedding_dim = embedding_dim
-        self.model_name = getattr(embed_client, 'model', None)
-        self._owns_client = _owns_client
+        self.model_name = None
+        self._initialized = False
 
-        # Load or create FAISS index
-        if index_path.exists():
-            self.index = faiss.read_index(str(index_path))
-        else:
-            self.index = faiss.IndexFlatIP(embedding_dim)
-
-        # Load or create JSON metadata
-        if metadata_path.exists():
-            data = json.load(open(metadata_path))
-            self.chunk_refs: List[ChunkRef] = [ChunkRef(**r) for r in data['chunk_refs']]
-            self.documents: Dict[str, Document] = {d['id']: Document.from_dict(d) for d in data['documents']}
-            # Load model info if present
-            self.model_name = data.get('model_name', self.model_name)
-            stored_dim = data.get('embedding_dim')
-            if stored_dim and stored_dim != embedding_dim:
-                print(f"⚠ Warning: Stored dimension {stored_dim} != provided {embedding_dim}")
-        else:
-            self.chunk_refs = []
-            self.documents = {}
+        # These will be initialized in __aenter__
+        self.index = None
+        self.chunk_refs = []
+        self.documents = {}
 
     @staticmethod
     def make_model_slug(model_name: str) -> str:
@@ -84,31 +100,23 @@ class GenericRAGService:
         test_embedding = await embed_client.embed("test")
         return len(test_embedding)
 
-    @classmethod
-    async def from_service(
-        cls,
-        service_name: str,
-        model: Optional[str] = None,
-        data_dir: Optional[Path] = None,
-        index_path: Optional[Path] = None,
-        metadata_path: Optional[Path] = None
-    ) -> "GenericRAGService":
-        """Factory method to create RAG service from service name.
+    async def __aenter__(self):
+        """Async context manager entry - performs async initialization."""
+        if self._initialized:
+            return self
 
-        This method handles:
-        - Loading model configuration
-        - Creating model slug for file paths
-        - Connecting embed client
-        - Detecting embedding dimensions
-        - Loading existing RAG or creating new one
+        if self._init_mode == 'service':
+            # High-level API: create client and detect everything
+            await self._init_from_service()
+        else:
+            # Low-level API: use provided client and paths
+            await self._init_direct()
 
-        :param service_name: Service name (e.g., 'ollama', 'openai', 'bedrock')
-        :param model: Model name (optional, will load from config if not provided)
-        :param data_dir: Data directory (default: chatboti/data)
-        :param index_path: Path to FAISS index (overrides data_dir default)
-        :param metadata_path: Path to metadata JSON (overrides data_dir default)
-        :return: Initialized GenericRAGService instance
-        """
+        self._initialized = True
+        return self
+
+    async def _init_from_service(self):
+        """Initialize from service name (high-level API)."""
         from microeval.llm import get_llm_client, load_config
 
         # Load model configuration
@@ -116,54 +124,87 @@ class GenericRAGService:
         embed_models = model_config.get("embed_models", {})
 
         # Get model name
-        if not model:
-            model = os.getenv("EMBED_MODEL") or embed_models.get(service_name)
-        if not model:
+        if not self.model:
+            self.model = os.getenv("EMBED_MODEL") or embed_models.get(self.service_name)
+        if not self.model:
             raise ValueError(
-                f"Model not specified and EMBED_MODEL not set for service '{service_name}'. "
+                f"Model not specified and EMBED_MODEL not set for service '{self.service_name}'. "
                 f"Available models in config: {list(embed_models.keys())}"
             )
 
         # Create model slug for file paths
-        model_slug = cls.make_model_slug(model)
+        model_slug = self.make_model_slug(self.model)
 
         # Set up paths
-        if not data_dir:
-            # Default to chatboti/data
+        if not self.data_dir:
             import chatboti
-            data_dir = Path(chatboti.__file__).parent / "data"
+            self.data_dir = Path(chatboti.__file__).parent / "data"
 
-        if not index_path:
-            index_path = data_dir / f"vectors-{model_slug}.faiss"
-        if not metadata_path:
-            metadata_path = data_dir / f"metadata-{model_slug}.json"
+        if not self.index_path:
+            self.index_path = self.data_dir / f"vectors-{model_slug}.faiss"
+        if not self.metadata_path:
+            self.metadata_path = self.data_dir / f"metadata-{model_slug}.json"
 
         # Create and connect embed client
-        embed_client = get_llm_client(service_name, model=model)
-        await embed_client.connect()
+        self.embed_client = get_llm_client(self.service_name, model=self.model)
+        await self.embed_client.connect()
+        self._owns_client = True
 
         # Detect or load embedding dimension
-        if metadata_path.exists():
-            # Load from metadata
-            with open(metadata_path) as f:
+        if self.metadata_path.exists():
+            with open(self.metadata_path) as f:
                 metadata = json.load(f)
-                embedding_dim = metadata.get('embedding_dim', 768)
+                self.embedding_dim = metadata.get('embedding_dim', 768)
         else:
-            # Detect by running test query
-            embedding_dim = await cls.detect_embedding_dim(embed_client)
+            self.embedding_dim = await self.detect_embedding_dim(self.embed_client)
 
-        # Create service instance (marks that it owns the client)
-        return cls(
-            index_path=index_path,
-            metadata_path=metadata_path,
-            embedding_dim=embedding_dim,
-            embed_client=embed_client,
-            _owns_client=True
-        )
+        # Load or create index and metadata
+        self._load_index_and_metadata()
 
-    async def __aenter__(self):
-        """Async context manager entry."""
-        return self
+    async def _init_direct(self):
+        """Initialize from provided client (low-level API)."""
+        if not self.embed_client:
+            raise ValueError("embed_client is required for low-level API")
+        if not self.index_path or not self.metadata_path:
+            raise ValueError("index_path and metadata_path are required for low-level API")
+
+        self._owns_client = False
+        self.model_name = getattr(self.embed_client, 'model', None)
+
+        # Auto-detect dimension if not provided
+        if not self.embedding_dim:
+            if self.metadata_path.exists():
+                with open(self.metadata_path) as f:
+                    metadata = json.load(f)
+                    self.embedding_dim = metadata.get('embedding_dim', 768)
+            else:
+                self.embedding_dim = await self.detect_embedding_dim(self.embed_client)
+
+        # Load or create index and metadata
+        self._load_index_and_metadata()
+
+    def _load_index_and_metadata(self):
+        """Load or create FAISS index and metadata (sync operation)."""
+        self.model_name = getattr(self.embed_client, 'model', None)
+
+        # Load or create FAISS index
+        if self.index_path.exists():
+            self.index = faiss.read_index(str(self.index_path))
+        else:
+            self.index = faiss.IndexFlatIP(self.embedding_dim)
+
+        # Load or create JSON metadata
+        if self.metadata_path.exists():
+            data = json.load(open(self.metadata_path))
+            self.chunk_refs = [ChunkRef(**r) for r in data['chunk_refs']]
+            self.documents = {d['id']: Document.from_dict(d) for d in data['documents']}
+            self.model_name = data.get('model_name', self.model_name)
+            stored_dim = data.get('embedding_dim')
+            if stored_dim and stored_dim != self.embedding_dim:
+                print(f"⚠ Warning: Stored dimension {stored_dim} != provided {self.embedding_dim}")
+        else:
+            self.chunk_refs = []
+            self.documents = {}
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Async context manager exit - cleanup embed client if we own it."""
