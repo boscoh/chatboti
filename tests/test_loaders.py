@@ -45,14 +45,14 @@ class TestLoadCSV:
     @pytest.mark.asyncio
     async def test_load_with_sample_csv(self, sample_csv_path):
         """Test loading documents from sample_speakers.csv."""
-        docs = await load_csv(str(sample_csv_path), "speaker")
+        docs = await load_csv(str(sample_csv_path))
 
         # Check correct number of documents
         assert len(docs) == 3
 
         # Check first document
         doc0 = docs[0]
-        assert doc0.id == "speaker-0"
+        assert doc0.id == "sample_speakers-0"
         assert doc0.content["name"] == "Dr. Jane Smith"
         assert doc0.content["title"] == "AI Research Lead"
         assert "machine learning" in doc0.content["bio"]
@@ -60,23 +60,23 @@ class TestLoadCSV:
 
         # Check second document
         doc1 = docs[1]
-        assert doc1.id == "speaker-1"
+        assert doc1.id == "sample_speakers-1"
         assert doc1.content["name"] == "Prof. John Doe"
         assert doc1.content["title"] == "Computer Science Professor"
 
         # Check third document
         doc2 = docs[2]
-        assert doc2.id == "speaker-2"
+        assert doc2.id == "sample_speakers-2"
         assert doc2.content["name"] == "Dr. Alice Wong"
 
     @pytest.mark.asyncio
     async def test_document_id_format(self, temp_csv):
         """Test that document IDs follow correct format."""
-        docs = await load_csv(str(temp_csv), "person")
+        docs = await load_csv(str(temp_csv))
 
-        assert docs[0].id == "person-0"
-        assert docs[1].id == "person-1"
-        assert docs[2].id == "person-2"
+        assert docs[0].id == "test_data-0"
+        assert docs[1].id == "test_data-1"
+        assert docs[2].id == "test_data-2"
 
     @pytest.mark.asyncio
     async def test_doc_type_inferred_from_filename(self, temp_csv):
@@ -91,7 +91,7 @@ class TestLoadCSV:
     @pytest.mark.asyncio
     async def test_content_dict_contains_all_fields(self, temp_csv):
         """Test that content dict contains all CSV fields."""
-        docs = await load_csv(str(temp_csv), "person")
+        docs = await load_csv(str(temp_csv))
 
         # Check all fields present
         assert set(docs[0].content.keys()) == {"name", "age", "bio", "notes"}
@@ -103,7 +103,7 @@ class TestLoadCSV:
     @pytest.mark.asyncio
     async def test_chunks_created_for_all_fields_by_default(self, temp_csv):
         """Test that chunks are created for all non-empty fields by default."""
-        docs = await load_csv(str(temp_csv), "person")
+        docs = await load_csv(str(temp_csv))
 
         # First row: name, age, bio have values (notes is empty)
         assert "name" in docs[0].chunks
@@ -126,7 +126,7 @@ class TestLoadCSV:
     @pytest.mark.asyncio
     async def test_chunks_created_for_specific_embed_fields(self, temp_csv):
         """Test that only specified embed_fields get chunks."""
-        docs = await load_csv(str(temp_csv), "person", embed_fields=["name", "bio"])
+        docs = await load_csv(str(temp_csv), embed_fields=["name", "bio"])
 
         # Only name and bio should have chunks
         assert "name" in docs[0].chunks
@@ -142,7 +142,7 @@ class TestLoadCSV:
     @pytest.mark.asyncio
     async def test_chunks_have_unassigned_faiss_id(self, temp_csv):
         """Test that all chunks have faiss_id=-1 (unassigned)."""
-        docs = await load_csv(str(temp_csv), "person")
+        docs = await load_csv(str(temp_csv))
 
         for doc in docs:
             for chunk in doc.chunks.values():
@@ -154,7 +154,7 @@ class TestLoadCSV:
     @pytest.mark.asyncio
     async def test_get_chunk_text_integration(self, sample_csv_path):
         """Test that loaded documents can retrieve chunk text via get_chunk_text()."""
-        docs = await load_csv(str(sample_csv_path), "speaker", embed_fields=["bio", "abstract"])
+        docs = await load_csv(str(sample_csv_path), embed_fields=["bio", "abstract"])
 
         # Test get_chunk_text for bio field
         bio_text = docs[0].get_chunk_text("bio")
@@ -174,7 +174,7 @@ class TestLoadCSV:
     @pytest.mark.asyncio
     async def test_get_chunk_text_returns_correct_field_values(self, temp_csv):
         """Test that get_chunk_text returns exact field values."""
-        docs = await load_csv(str(temp_csv), "person")
+        docs = await load_csv(str(temp_csv))
 
         # Test exact value retrieval
         assert docs[0].get_chunk_text("name") == "Alice"
@@ -187,7 +187,7 @@ class TestLoadCSV:
     @pytest.mark.asyncio
     async def test_embed_fields_none_means_all_fields(self, temp_csv):
         """Test that embed_fields=None results in all non-empty fields being embedded."""
-        docs = await load_csv(str(temp_csv), "person", embed_fields=None)
+        docs = await load_csv(str(temp_csv), embed_fields=None)
 
         # Should behave same as default (all non-empty fields)
         assert "name" in docs[0].chunks
@@ -198,7 +198,7 @@ class TestLoadCSV:
     @pytest.mark.asyncio
     async def test_embed_fields_with_empty_list(self, temp_csv):
         """Test that embed_fields=[] falls back to all non-empty fields."""
-        docs = await load_csv(str(temp_csv), "person", embed_fields=[])
+        docs = await load_csv(str(temp_csv), embed_fields=[])
 
         # Empty list is falsy, so should fall back to all non-empty fields
         assert "name" in docs[0].chunks
@@ -209,7 +209,7 @@ class TestLoadCSV:
     @pytest.mark.asyncio
     async def test_embed_fields_with_nonexistent_field(self, temp_csv):
         """Test behavior when embed_fields contains fields not in CSV."""
-        docs = await load_csv(str(temp_csv), "person", embed_fields=["name", "nonexistent"])
+        docs = await load_csv(str(temp_csv), embed_fields=["name", "nonexistent"])
 
         # Should only create chunk for name
         assert "name" in docs[0].chunks
@@ -218,7 +218,7 @@ class TestLoadCSV:
     @pytest.mark.asyncio
     async def test_multiple_documents_from_same_csv(self, sample_csv_path):
         """Test loading multiple documents maintains independence."""
-        docs = await load_csv(str(sample_csv_path), "speaker", embed_fields=["bio"])
+        docs = await load_csv(str(sample_csv_path), embed_fields=["bio"])
 
         # Each document should be independent
         assert len(docs) == 3

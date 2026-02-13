@@ -187,13 +187,12 @@ class GenericRAGService:
 
         self.documents[doc.id] = doc
 
-    async def build_embeddings_from_documents(self, source: str, doc_type: Optional[str] = None) -> None:
+    async def build_embeddings_from_documents(self, source: str) -> None:
         """Load documents from source and build embeddings.
 
         :param source: File path or pattern (e.g., "papers.json", "docs/*.md")
-        :param doc_type: Document type identifier (default: inferred from filename)
         """
-        documents = await load_documents(source, doc_type)
+        documents = await load_documents(source)
         for doc in documents:
             await self.add_document(doc)
         self.save()

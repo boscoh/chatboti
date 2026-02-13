@@ -7,19 +7,17 @@ from typing import List, Optional
 from chatboti.document import Document, DocumentChunk
 
 
-async def load_csv(source: str, doc_type: Optional[str] = None, embed_fields: Optional[List[str]] = None) -> List[Document]:
+async def load_csv(source: str, embed_fields: Optional[List[str]] = None) -> List[Document]:
     """Load CSV rows as documents.
 
     Each row becomes a Document with content dict,
     chunks created for specified embed_fields.
 
     :param source: Path to CSV file
-    :param doc_type: Document type identifier (default: inferred from filename)
     :param embed_fields: Fields to embed (default: all text fields)
     :return: List of documents with chunks
     """
-    if doc_type is None:
-        doc_type = Path(source).stem
+    doc_type = Path(source).stem
 
     documents = []
     with open(source) as f:
@@ -43,17 +41,16 @@ async def load_csv(source: str, doc_type: Optional[str] = None, embed_fields: Op
     return documents
 
 
-async def load_documents(source: str, doc_type: Optional[str] = None, embed_fields: Optional[List[str]] = None) -> List[Document]:
+async def load_documents(source: str, embed_fields: Optional[List[str]] = None) -> List[Document]:
     """Load documents from source, dispatching to appropriate loader.
 
     :param source: File path
-    :param doc_type: Document type identifier (default: inferred from filename)
     :param embed_fields: Fields to embed for CSV files (default: all text fields)
     :return: List of documents with chunks
     """
     ext = Path(source).suffix.lower()
 
     if ext == '.csv':
-        return await load_csv(source, doc_type, embed_fields)
+        return await load_csv(source, embed_fields)
     else:
         raise ValueError(f"Unsupported file type: {ext}")
