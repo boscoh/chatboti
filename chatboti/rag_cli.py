@@ -76,7 +76,7 @@ async def build_embeddings(
 
         # Build embeddings
         print(f"→ Building embeddings from {csv_path}...")
-        await rag.build_embeddings_from_documents(str(csv_path), "speaker")
+        await rag.build_embeddings_from_documents(str(csv_path))
 
         # Summary
         print()
