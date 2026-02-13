@@ -55,8 +55,7 @@ class GenericRAGService:
         self.chunk_refs = []
         self.documents = {}
 
-    @staticmethod
-    def make_model_slug(model_name: str) -> str:
+    def make_model_slug(self, model_name: str) -> str:
         """Convert model name to filesystem-safe slug.
 
         :param model_name: Model name (e.g., 'nomic-embed-text', 'text-embedding-3-small')
@@ -67,8 +66,7 @@ class GenericRAGService:
         slug = re.sub(r'-+', '-', slug).strip('-')
         return slug
 
-    @staticmethod
-    async def detect_embedding_dim(embed_client) -> int:
+    async def detect_embedding_dim(self, embed_client) -> int:
         """Detect embedding dimension by running a test query.
 
         :param embed_client: Embedding client
