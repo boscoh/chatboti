@@ -55,24 +55,26 @@ class GenericRAGService:
         self.chunk_refs = []
         self.documents = {}
 
-    def make_model_slug(self, model_name: str) -> str:
+    def make_model_slug(self) -> str:
         """Convert model name to filesystem-safe slug.
 
-        :param model_name: Model name (e.g., 'nomic-embed-text', 'text-embedding-3-small')
+        Uses self.model to generate slug.
+
         :return: Slug (e.g., 'nomic-embed-text', 'text-embedding-3-small')
         """
-        slug = re.sub(r':latest$', '', model_name)
+        slug = re.sub(r':latest$', '', self.model)
         slug = re.sub(r'[^a-z0-9]+', '-', slug.lower())
         slug = re.sub(r'-+', '-', slug).strip('-')
         return slug
 
-    async def detect_embedding_dim(self, embed_client) -> int:
+    async def detect_embedding_dim(self) -> int:
         """Detect embedding dimension by running a test query.
 
-        :param embed_client: Embedding client
+        Uses self.embed_client to detect dimensions.
+
         :return: Embedding dimension
         """
-        test_embedding = await embed_client.embed("test")
+        test_embedding = await self.embed_client.embed("test")
         return len(test_embedding)
 
     async def __aenter__(self):
@@ -96,7 +98,7 @@ class GenericRAGService:
             )
 
         # Create model slug for file paths
-        model_slug = self.make_model_slug(self.model)
+        model_slug = self.make_model_slug()
 
         # Set up paths
         if not self.data_dir:
@@ -118,7 +120,7 @@ class GenericRAGService:
                 metadata = json.load(f)
                 self.embedding_dim = metadata.get('embedding_dim', 768)
         else:
-            self.embedding_dim = await self.detect_embedding_dim(self.embed_client)
+            self.embedding_dim = await self.detect_embedding_dim()
 
         # Load or create index and metadata
         self._load_index_and_metadata()
