@@ -9,7 +9,7 @@ import faiss
 import numpy as np
 from collections import defaultdict
 
-from chatboti.document import Document, DocumentChunk, ChunkRef, ChunkResult
+from chatboti.document import Document, ChunkRef, ChunkResult
 from chatboti.loaders import load_documents
 
 

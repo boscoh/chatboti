@@ -1,6 +1,6 @@
 """Document and chunk data structures for unified RAG system."""
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional, Dict
 
 
