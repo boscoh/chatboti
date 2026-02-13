@@ -336,14 +336,24 @@ class TestGenericRAGServiceStorageWrappers:
 class TestGenericRAGServiceDocumentManagement:
     """Test document management functionality."""
 
-    def test_add_document_without_embeddings(self, tmp_path):
-        """Test add_document() without embed_client (embeddings not implemented)."""
+    @pytest.mark.asyncio
+    async def test_add_document_with_embeddings(self, tmp_path):
+        """Test add_document() with embed_client generates embeddings."""
         index_path = tmp_path / "test.index"
         metadata_path = tmp_path / "test_meta.json"
 
+        # Mock embed_client
+        mock_embed_client = Mock()
+        mock_embed_client.embed = AsyncMock(side_effect=[
+            [0.1] * 768,  # First chunk embedding
+            [0.2] * 768   # Second chunk embedding
+        ])
+
         service = GenericRAGService(
             index_path=index_path,
-            metadata_path=metadata_path
+            metadata_path=metadata_path,
+            embedding_dim=768,
+            embed_client=mock_embed_client
         )
 
         # Create document with chunks
@@ -357,7 +367,12 @@ class TestGenericRAGServiceDocumentManagement:
         )
 
         # Add document
-        service.add_document(doc)
+        await service.add_document(doc)
+
+        # Verify embed_client.embed() was called for each chunk
+        assert mock_embed_client.embed.call_count == 2
+        mock_embed_client.embed.assert_any_call("Test")
+        mock_embed_client.embed.assert_any_call("Content")
 
         # Verify document stored
         assert "test_doc" in service.documents
@@ -374,14 +389,24 @@ class TestGenericRAGServiceDocumentManagement:
         assert doc.chunks["title"].faiss_id == 0
         assert doc.chunks["body"].faiss_id == 1
 
-    def test_add_document_tracks_chunks_in_chunk_refs(self, tmp_path):
+        # Verify embeddings added to FAISS index
+        assert service.index.ntotal == 2
+
+    @pytest.mark.asyncio
+    async def test_add_document_tracks_chunks_in_chunk_refs(self, tmp_path):
         """Test that document chunks are tracked in chunk_refs."""
         index_path = tmp_path / "test.index"
         metadata_path = tmp_path / "test_meta.json"
 
+        # Mock embed_client
+        mock_embed_client = Mock()
+        mock_embed_client.embed = AsyncMock(return_value=[0.1] * 768)
+
         service = GenericRAGService(
             index_path=index_path,
-            metadata_path=metadata_path
+            metadata_path=metadata_path,
+            embedding_dim=768,
+            embed_client=mock_embed_client
         )
 
         # Add first document
@@ -390,7 +415,7 @@ class TestGenericRAGServiceDocumentManagement:
             content={"field1": "value1"},
             chunks={"field1": DocumentChunk(faiss_id=-1)}
         )
-        service.add_document(doc1)
+        await service.add_document(doc1)
 
         # Add second document
         doc2 = Document(
@@ -401,7 +426,7 @@ class TestGenericRAGServiceDocumentManagement:
                 "field3": DocumentChunk(faiss_id=-1)
             }
         )
-        service.add_document(doc2)
+        await service.add_document(doc2)
 
         # Verify chunk_refs structure
         assert len(service.chunk_refs) == 3
@@ -411,14 +436,21 @@ class TestGenericRAGServiceDocumentManagement:
         assert service.chunk_refs[1].chunk_key == "field2"
         assert service.chunk_refs[2].chunk_key == "field3"
 
-    def test_save_persists_to_disk(self, tmp_path):
+    @pytest.mark.asyncio
+    async def test_save_persists_to_disk(self, tmp_path):
         """Test that save() persists index and metadata to disk."""
         index_path = tmp_path / "test.index"
         metadata_path = tmp_path / "test_meta.json"
 
+        # Mock embed_client
+        mock_embed_client = Mock()
+        mock_embed_client.embed = AsyncMock(return_value=[0.1] * 768)
+
         service = GenericRAGService(
             index_path=index_path,
-            metadata_path=metadata_path
+            metadata_path=metadata_path,
+            embedding_dim=768,
+            embed_client=mock_embed_client
         )
 
         # Add document
@@ -427,7 +459,7 @@ class TestGenericRAGServiceDocumentManagement:
             content={"field": "value"},
             chunks={"field": DocumentChunk(faiss_id=-1)}
         )
-        service.add_document(doc)
+        await service.add_document(doc)
 
         # Save
         service.save()
@@ -471,11 +503,7 @@ class TestGenericRAGServiceSearch:
             content={"field": "test content"},
             chunks={"field": DocumentChunk(faiss_id=-1)}
         )
-        service.add_document(doc)
-
-        # Add embedding to index manually (since embed is not implemented)
-        embedding = np.array([[0.1] * 768], dtype=np.float32)
-        service.index.add(embedding)
+        await service.add_document(doc)
 
         # Search
         results = await service.search("test query", k=1)
@@ -512,11 +540,7 @@ class TestGenericRAGServiceSearch:
             full_text="Full document text goes here",
             chunks={"field": DocumentChunk(faiss_id=-1)}
         )
-        service.add_document(doc)
-
-        # Add embedding
-        embedding = np.array([[0.1] * 768], dtype=np.float32)
-        service.index.add(embedding)
+        await service.add_document(doc)
 
         # Search with include_documents=True
         results = await service.search("test query", k=1, include_documents=True)
@@ -551,19 +575,14 @@ class TestGenericRAGServiceSearch:
                 "body": DocumentChunk(faiss_id=-1)
             }
         )
-        service.add_document(doc1)
+        await service.add_document(doc1)
 
         doc2 = Document(
             id="doc2",
             content={"title": "Second Title"},
             chunks={"title": DocumentChunk(faiss_id=-1)}
         )
-        service.add_document(doc2)
-
-        # Add embeddings
-        for _ in range(3):
-            embedding = np.random.rand(1, 768).astype(np.float32)
-            service.index.add(embedding)
+        await service.add_document(doc2)
 
         # Search
         results = await service.search("test query", k=3)
@@ -615,7 +634,8 @@ class TestGenericRAGServiceLoaderIntegration:
         with pytest.raises(ValueError, match="Unsupported file type"):
             service._get_loader("test.pdf")
 
-    def test_build_embeddings_from_csv(self, tmp_path):
+    @pytest.mark.asyncio
+    async def test_build_embeddings_from_csv(self, tmp_path):
         """Test build_embeddings_from_documents() with CSV file."""
         index_path = tmp_path / "test.index"
         metadata_path = tmp_path / "test_meta.json"
@@ -627,18 +647,24 @@ class TestGenericRAGServiceLoaderIntegration:
             f.write("Alice,Software engineer\n")
             f.write("Bob,Data scientist\n")
 
+        # Mock embed_client
+        mock_embed_client = Mock()
+        mock_embed_client.embed = AsyncMock(return_value=[0.1] * 768)
+
         service = GenericRAGService(
             index_path=index_path,
-            metadata_path=metadata_path
+            metadata_path=metadata_path,
+            embedding_dim=768,
+            embed_client=mock_embed_client
         )
 
-        # Load documents using CSV loader directly (not async)
+        # Load documents using CSV loader
         loader = service._get_loader(str(csv_path))
-        documents = loader.load(str(csv_path), "person")
+        documents = await loader.load(str(csv_path), "person")
 
         # Add documents to service
         for doc in documents:
-            service.add_document(doc)
+            await service.add_document(doc)
 
         service.save()
 

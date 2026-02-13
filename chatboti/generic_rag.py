@@ -9,6 +9,7 @@ from collections import defaultdict
 
 from chatboti.document import Document, DocumentChunk, ChunkRef, ChunkResult
 from chatboti.loaders import CSVDocumentLoader, DocumentLoader
+from chatboti.embed_client import EmbedClient
 
 
 class GenericRAGService:
@@ -22,7 +23,7 @@ class GenericRAGService:
         index_path: Path,
         metadata_path: Path,
         embedding_dim: int = 1536,
-        embed_client=None
+        embed_client: Optional[EmbedClient] = None
     ):
         """Initialize RAG service.
 
@@ -50,18 +51,26 @@ class GenericRAGService:
             self.chunk_refs = []
             self.documents = {}
 
-    def add_document(self, doc: Document) -> None:
+    async def add_document(self, doc: Document) -> None:
         """Add document and its chunk embeddings to index.
 
-        NOTE: Requires embed_client.embed() to be implemented.
+        :param doc: Document with chunks to add
         """
-        # TODO: Implement embedding once embed_client.embed() is available
         for chunk_key, chunk in doc.chunks.items():
             faiss_id = len(self.chunk_refs)
-            # embedding = self.embed_client.embed(doc.get_chunk_text(chunk_key))
-            # self.index.add(embedding)
+
+            # Generate embedding
+            chunk_text = doc.get_chunk_text(chunk_key)
+            embedding_list = await self.embed_client.embed(chunk_text)
+            embedding = np.array(embedding_list, dtype=np.float32).reshape(1, -1)
+
+            # Add to FAISS index
+            self.index.add(embedding)
+
+            # Track metadata
             self.chunk_refs.append(ChunkRef(document_id=doc.id, chunk_key=chunk_key))
             chunk.faiss_id = faiss_id
+
         self.documents[doc.id] = doc
 
     def _get_loader(self, source: str) -> DocumentLoader:
@@ -84,7 +93,7 @@ class GenericRAGService:
         loader = self._get_loader(source)
         documents = await loader.load(source, doc_type)
         for doc in documents:
-            self.add_document(doc)
+            await self.add_document(doc)
         self.save()
 
     def save(self) -> None:
