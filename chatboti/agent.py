@@ -280,7 +280,13 @@ class InfoAgent:
         CRITICAL: You MUST call tools directly - NEVER explain what tool to call or describe the format.
         ALWAYS use the actual tool call mechanism - DO NOT write text describing what you would call.
 
-        IMPORTANT: Use get_matching_speaker_talk_and_bio LIBERALLY and MULTIPLE TIMES to gather comprehensive information.
+        IMPORTANT: Use get_matching_speakers LIBERALLY with the 'n' parameter to gather comprehensive information.
+
+        USING THE 'n' PARAMETER:
+        - For comparisons: get_matching_speakers(query, n=3-5) to see multiple options
+        - For comprehensive answers: Use n=3 to get diverse perspectives
+        - For focused answers: Use n=1 for the single best match
+        - ALWAYS prefer n=3+ for "compare", "all", "best" queries
 
         EXPLORATION STRATEGY FOR COMPLEX QUERIES:
         1. BREAK DOWN the query into multiple search angles
@@ -306,9 +312,10 @@ class InfoAgent:
         5. SYNTHESIZE ALL FINDINGS into a complete answer
 
         EXAMPLES:
-        - Query: "AI and cloud speakers" → Search: "AI", "machine learning", "cloud computing", "cloud architecture"
-        - Query: "compare Python vs JavaScript" → Search: "Python", "JavaScript", "Python development", "JavaScript development"
-        - Query: "best speakers for beginners" → Use list_all_speakers, then search multiple topics
+        - Query: "AI and cloud speakers" → get_matching_speakers("AI", n=3), get_matching_speakers("cloud", n=3)
+        - Query: "compare Python vs JavaScript" → get_matching_speakers("Python", n=3), get_matching_speakers("JavaScript", n=3)
+        - Query: "who can speak about testing?" → get_matching_speakers("testing", n=5) to see all options
+        - Query: "best speaker for beginners in AI" → get_matching_speakers("AI beginner friendly", n=3)
 
         REMEMBER: Making 10 tool calls is ENCOURAGED for thorough answers!
 

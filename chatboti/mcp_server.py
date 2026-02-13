@@ -68,13 +68,13 @@ mcp = FastMCP("Simple MCP", lifespan=lifespan)
 
 
 @mcp.tool()
-async def get_matching_speaker_talk_and_bio(query: str) -> Dict[str, Any]:
+async def get_matching_speakers(query: str, n: int = 3) -> Dict[str, Any]:
     """
-    Find the most relevant speaker for a given topic using AI-powered semantic search.
+    Find the top N most relevant speakers for a given topic using AI-powered semantic search.
 
-    Use this tool when you need to find a speaker who can talk about a specific topic,
+    Use this tool when you need to find speakers who can talk about a specific topic,
     technology, or subject area. The tool analyzes speaker bios and abstracts to find
-    the best semantic match for your query.
+    the best semantic matches for your query.
 
     Examples of good queries:
     - "machine learning and AI"
@@ -84,36 +84,41 @@ async def get_matching_speaker_talk_and_bio(query: str) -> Dict[str, Any]:
     - "cybersecurity and privacy"
 
     Args:
-        query: A description of the topic, technology, or expertise area you need a speaker for
+        query: A description of the topic, technology, or expertise area you need speakers for
+        n: Number of top matching speakers to return (default: 3, max recommended: 5)
 
     Returns:
-        Dict containing the best matching speaker with their bio, abstract, and relevance details
+        Dict containing the top N matching speakers with their bios, abstracts, and relevance details
     """
     try:
-        # Use generic RAG search to find best matching document
-        results = await rag_service.search(query, k=1, include_documents=True)
+        # Use generic RAG search to find top N matching documents
+        results = await rag_service.search(query, k=n, include_documents=True)
 
         if not results:
             return {
                 "success": False,
-                "error": "No matching speaker found",
-                "query": query
+                "error": "No matching speakers found",
+                "query": query,
+                "n": n
             }
 
-        # Extract speaker info from the top result's document
-        top_result = results[0]
-        speaker_doc = top_result.document
-        speaker_content = speaker_doc.content if isinstance(speaker_doc.content, dict) else {}
+        # Extract speaker info from all results
+        speakers = []
+        for result in results:
+            speaker_doc = result.document
+            speaker_content = speaker_doc.content if isinstance(speaker_doc.content, dict) else {}
+            speakers.append(speaker_content)
 
         return {
             "success": True,
-            "speaker": speaker_content,
+            "speakers": speakers,
+            "count": len(speakers),
             "query": query,
             "total_speakers_searched": len(rag_service.documents),
         }
     except Exception as e:
-        logger.error(f"Error in get_best_speaker: {e}", exc_info=True)
-        return {"success": False, "error": str(e), "query": query}
+        logger.error(f"Error in get_matching_speakers: {e}", exc_info=True)
+        return {"success": False, "error": str(e), "query": query, "n": n}
 
 
 @mcp.tool()
