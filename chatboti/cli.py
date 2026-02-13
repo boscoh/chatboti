@@ -11,7 +11,13 @@ from cyclopts import App
 
 from chatboti.server import run_server
 from chatboti.agent import amain as agent_amain
-from chatboti.rag_cli import build_embeddings as build_rag_new, search_rag
+from chatboti.rag_cli import (
+    build_embeddings as build_rag_new,
+    search_rag,
+    convert_to_hdf5,
+    convert_from_hdf5,
+    show_hdf5_info
+)
 from chatboti.docker import main as run_docker_main
 from chatboti.logger import setup_logging
 
@@ -93,13 +99,56 @@ def search_rag_cmd(
     ))
 
 
-@app.command(sort_key=7)
+@app.command(name="convert-to-hdf5", sort_key=5)
+def convert_to_hdf5_cmd(
+    index_path: str,
+    metadata_path: str,
+    output_path: str
+):
+    """Convert FAISS+JSON format to HDF5 single-file format.
+
+    :param index_path: Path to FAISS index file (.faiss)
+    :param metadata_path: Path to metadata JSON file
+    :param output_path: Path to output HDF5 file (.h5)
+    """
+    asyncio.run(convert_to_hdf5(index_path, metadata_path, output_path))
+
+
+@app.command(name="convert-from-hdf5", sort_key=6)
+def convert_from_hdf5_cmd(
+    input_path: str,
+    index_path: str = "",
+    metadata_path: str = ""
+):
+    """Convert HDF5 format to FAISS+JSON format.
+
+    :param input_path: Path to HDF5 file (.h5)
+    :param index_path: Path to output FAISS index file (default: chatboti/data/vectors-{model}.faiss)
+    :param metadata_path: Path to output metadata JSON file (default: chatboti/data/metadata-{model}.json)
+    """
+    asyncio.run(convert_from_hdf5(
+        input_path,
+        index_path if index_path else None,
+        metadata_path if metadata_path else None
+    ))
+
+
+@app.command(name="hdf5-info", sort_key=7)
+def hdf5_info_cmd(hdf5_path: str):
+    """Display HDF5 file metadata and statistics.
+
+    :param hdf5_path: Path to HDF5 file (.h5)
+    """
+    asyncio.run(show_hdf5_info(hdf5_path))
+
+
+@app.command(sort_key=8)
 def docker():
     """Build and run Docker container with AWS credentials."""
     run_docker_main()
 
 
-@app.command(sort_key=8)
+@app.command(sort_key=9)
 def version():
     """Show version."""
     print("chatboti 0.1.0")
