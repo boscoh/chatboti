@@ -24,6 +24,8 @@ from slowapi.util import get_remote_address
 
 from chatboti.agent import InfoAgent
 from chatboti.rag import RAGService
+from chatboti.generic_rag import GenericRAGService
+from microeval.llm import get_llm_client
 
 model_config = load_config()
 chat_models = model_config["chat_models"]
@@ -63,9 +65,44 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         try:
             # Pre-load embeddings during startup
             logger.info(f"Pre-loading embeddings with {embed_service}...")
-            rag_service = RAGService(llm_service=embed_service)
-            await rag_service.connect()
-            logger.info("Embeddings loaded successfully")
+
+            # Get model from config
+            model = os.getenv("EMBED_MODEL") or embed_models.get(embed_service)
+            if not model:
+                raise ValueError(f"EMBED_MODEL not set for service {embed_service}")
+
+            # Create model slug for file paths
+            from chatboti.rag_cli import make_model_slug
+            model_slug = make_model_slug(model)
+
+            # Set up paths
+            data_dir = Path(__file__).parent / "data"
+            index_path = data_dir / f"vectors-{model_slug}.faiss"
+            metadata_path = data_dir / f"metadata-{model_slug}.json"
+
+            if not index_path.exists() or not metadata_path.exists():
+                raise FileNotFoundError(
+                    f"RAG index not found at {index_path}. "
+                    f"Run 'chatboti build-rag' to generate embeddings first."
+                )
+
+            # Load embedding dimension from metadata
+            import json
+            with open(metadata_path) as f:
+                metadata = json.load(f)
+                embedding_dim = metadata.get('embedding_dim', 768)
+
+            # Create embed client and load RAG
+            embed_client = get_llm_client(embed_service, model=model)
+            await embed_client.connect()
+
+            rag_service = GenericRAGService(
+                index_path=index_path,
+                metadata_path=metadata_path,
+                embedding_dim=embedding_dim,
+                embed_client=embed_client
+            )
+            logger.info(f"RAG loaded: {len(rag_service.documents)} documents, {rag_service.index.ntotal} vectors")
 
             # Initialize MCP client with chat service
             # Note: Don't use async with here - manual lifecycle management avoids
