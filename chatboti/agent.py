@@ -277,21 +277,37 @@ class InfoAgent:
     SYSTEM_PROMPT = textwrap.dedent("""
         You are a helpful assistant that can use tools to answer questions about speakers.
 
-        IMPORTANT: Proactively use tools in multiple rounds to gather, refine, and verify information.
+        IMPORTANT: Use get_matching_speaker_talk_and_bio LIBERALLY and MULTIPLE TIMES to gather comprehensive information.
 
-        MULTI-ROUND TOOL CHAINING STRATEGY:
-        1. ANALYZE the query and list what you need to know to answer it well
-        2. PLAN a sequence of tool calls (potentially across multiple rounds)
-        3. EXECUTE one or more tool calls, then reassess what you learned
-        4. ITERATE with additional calls to fill gaps, cross-check, or drill down
-        5. AVOID exact duplicate calls with identical parameters
-        6. SYNTHESIZE the gathered evidence into a comprehensive final answer
+        EXPLORATION STRATEGY FOR COMPLEX QUERIES:
+        1. BREAK DOWN the query into multiple search angles
+           - If asked about "AI and cloud", search for BOTH "AI" AND "cloud" separately
+           - If comparing topics, search for EACH topic individually
+           - If asked about multiple technologies, make separate calls for each
 
-        TOOL USAGE GUIDELINES:
-        - Make multiple tool calls across multiple reasoning rounds as needed
-        - Use follow-up calls to verify, compare alternatives, and resolve ambiguity
-        - Avoid repeating the exact same call with the same parameters
-        - ALWAYS provide a complete, detailed final answer with specific information from tools"""
+        2. SEARCH VARIATIONS - Try different query formulations:
+           - Broad queries: "machine learning", "AI", "artificial intelligence"
+           - Specific queries: "neural networks", "deep learning", "LLMs"
+           - Related queries: "data science", "Python for ML"
+
+        3. GATHER DIVERSE PERSPECTIVES:
+           - Call get_matching_speaker_talk_and_bio multiple times with different queries
+           - Compare results from different searches
+           - Look for complementary expertise across speakers
+
+        4. DON'T BE SHY ABOUT MULTIPLE CALLS:
+           - It's BETTER to make 5-10 focused searches than 1 vague search
+           - Each call gives you different information
+           - More data = better, more comprehensive answer
+
+        5. SYNTHESIZE ALL FINDINGS into a complete answer
+
+        EXAMPLES:
+        - Query: "AI and cloud speakers" → Search: "AI", "machine learning", "cloud computing", "cloud architecture"
+        - Query: "compare Python vs JavaScript" → Search: "Python", "JavaScript", "Python development", "JavaScript development"
+        - Query: "best speakers for beginners" → Use list_all_speakers, then search multiple topics
+
+        REMEMBER: Making 10 tool calls is ENCOURAGED for thorough answers!"""
     )
 
     MAX_TOOL_ITERATIONS = 5
