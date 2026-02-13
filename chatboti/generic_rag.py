@@ -77,6 +77,15 @@ class GenericRAGService:
         test_embedding = await self.embed_client.embed("test")
         return len(test_embedding)
 
+    async def get_embedding(self, text: str) -> np.ndarray:
+        """Get text embedding as numpy array.
+
+        :param text: Text to embed
+        :return: Embedding array with shape (1, embedding_dim)
+        """
+        embedding_list = await self.embed_client.embed(text)
+        return np.array(embedding_list, dtype=np.float32).reshape(1, -1)
+
     async def __aenter__(self):
         """Async context manager entry - performs async initialization."""
         if self._initialized:
@@ -167,8 +176,7 @@ class GenericRAGService:
 
             # Generate embedding
             chunk_text = doc.get_chunk_text(chunk_key)
-            embedding_list = await self.embed_client.embed(chunk_text)
-            embedding = np.array(embedding_list, dtype=np.float32).reshape(1, -1)
+            embedding = await self.get_embedding(chunk_text)
 
             # Add to FAISS index
             self.index.add(embedding)
@@ -285,7 +293,7 @@ class GenericRAGService:
         :return: List of chunk results with text
         """
         # 1. Embed query → shape (1, embedding_dim) for batch processing
-        query_emb = np.array(await self.embed_client.embed(query), dtype=np.float32).reshape(1, -1)
+        query_emb = await self.get_embedding(query)
 
         # 2. Vector search returns (distances, indices)
         # Shape: (n_queries, k) where n_queries=1, k=number of results
