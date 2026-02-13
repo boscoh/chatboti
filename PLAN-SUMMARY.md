@@ -126,9 +126,58 @@ class ChunkResult:
     document_id: str
     chunk_key: str
     text: str
+    document_text: Optional[str] = None  # Full document text if include_documents=True
 
 class DocumentLoader:
-    def load(self, source: str) -> List[Document]: ...
+    """Base class for loading documents from various sources."""
+
+    def load(self, source: str, doc_type: str) -> List[Document]:
+        """Load documents from source.
+
+        :param source: File path
+        :param doc_type: Document type identifier
+        :return: List of documents with chunks
+        """
+        raise NotImplementedError
+
+class CSVDocumentLoader(DocumentLoader):
+    """Load documents from CSV files with field-level embeddings."""
+
+    def __init__(self, embed_fields: List[str] = None):
+        """Initialize CSV loader.
+
+        :param embed_fields: Fields to embed (default: all text fields)
+        """
+        self.embed_fields = embed_fields
+
+    def load(self, source: str, doc_type: str) -> List[Document]:
+        """Load CSV rows as documents.
+
+        For speakers.csv: Each row becomes a Document with content dict,
+        chunks created for specified embed_fields (bio, abstract).
+        """
+        # Read CSV
+        import csv
+        documents = []
+        with open(source) as f:
+            reader = csv.DictReader(f)
+            for i, row in enumerate(reader):
+                # Create document with content dict
+                doc = Document(
+                    id=f"{doc_type}-{i}",
+                    content=dict(row),
+                    chunks={}
+                )
+
+                # Create chunks for embed fields
+                embed_fields = self.embed_fields or [k for k, v in row.items() if v]
+                for field in embed_fields:
+                    if field in row and row[field]:
+                        doc.chunks[field] = DocumentChunk(faiss_id=-1)  # Assigned later
+
+                documents.append(doc)
+
+        return documents
 
 class GenericRAGService:
     """RAG service with FAISS index and JSON metadata storage.
@@ -179,6 +228,17 @@ class GenericRAGService:
             chunk.faiss_id = faiss_id
         self.documents[doc.id] = doc
 
+    def _get_loader(self, source: str) -> DocumentLoader:
+        """Get appropriate loader based on file extension.
+
+        :param source: File path
+        :return: Document loader instance
+        """
+        ext = Path(source).suffix.lower()
+        if ext == '.csv':
+            return CSVDocumentLoader()
+        raise ValueError(f"Unsupported file type: {ext}. Only .csv supported currently.")
+
     async def build_embeddings_from_documents(self, source: str, doc_type: str) -> None:
         """Load documents from source and build embeddings.
 
@@ -213,13 +273,48 @@ class GenericRAGService:
         """
         return [self.chunk_refs[fid] for fid in faiss_ids]
 
-    def _get_documents(self, doc_ids: List[str]) -> Dict[str, Document]:
-        """Fetch documents (override in subclasses).
+    def _get_chunk_texts(self, refs: List[ChunkRef]) -> Dict[ChunkRef, str]:
+        """Fetch only text needed for chunks (override in subclasses).
+
+        :param refs: Chunk references
+        :return: Dict mapping ref to chunk text
+        """
+        # Group by document for efficient fetching
+        from collections import defaultdict
+        refs_by_doc = defaultdict(list)
+        for ref in refs:
+            refs_by_doc[ref.document_id].append(ref)
+
+        # Fetch and extract text
+        result = {}
+        for doc_id, doc_refs in refs_by_doc.items():
+            doc = self.documents[doc_id]
+            for ref in doc_refs:
+                chunk = doc.chunks[ref.chunk_key]
+                if chunk.i_start is not None:
+                    # Chunk-level: slice from full_text
+                    result[ref] = doc.full_text[chunk.i_start:chunk.i_end]
+                else:
+                    # Field-level: get from content
+                    result[ref] = doc.content[ref.chunk_key]
+        return result
+
+    def _get_document_texts(self, doc_ids: List[str]) -> Dict[str, str]:
+        """Fetch full document text (override in subclasses).
 
         :param doc_ids: List of document IDs
-        :return: Dict of document_id to Document
+        :return: Dict mapping document_id to full text
         """
-        return {doc_id: self.documents[doc_id] for doc_id in doc_ids}
+        result = {}
+        for doc_id in doc_ids:
+            doc = self.documents[doc_id]
+            # Return full_text if available, otherwise JSON of content
+            if doc.full_text:
+                result[doc_id] = doc.full_text
+            else:
+                import json
+                result[doc_id] = json.dumps(doc.content, indent=2)
+        return result
 
     def _save_metadata(self) -> None:
         """Save metadata to JSON (override in subclasses)."""
@@ -230,11 +325,12 @@ class GenericRAGService:
         with open(self.metadata_path, 'w') as f:
             json.dump(data, f, indent=2)
 
-    async def search(self, query: str, k: int = 5) -> List[ChunkResult]:
+    async def search(self, query: str, k: int = 5, include_documents: bool = False) -> List[ChunkResult]:
         """Search for relevant chunks.
 
         :param query: Search query text
         :param k: Number of results to return
+        :param include_documents: Include full document in results
         :return: List of chunk results with text
         """
         # 1. Embed query → shape (1, embedding_dim) for batch processing
@@ -249,21 +345,25 @@ class GenericRAGService:
         # 3. Fetch chunk references (extract [0] since single query: (1, k) → (k,))
         refs: List[ChunkRef] = self._get_chunk_refs(faiss_ids[0].tolist())
 
-        # 4. Fetch unique parent documents
-        doc_ids = list(set(ref.document_id for ref in refs))
-        docs = self._get_documents(doc_ids)
+        # 4. Fetch chunk texts (optimized)
+        chunk_texts = self._get_chunk_texts(refs)
 
-        # 5. Reconstruct chunk text
-        results = []
-        for ref in refs:
-            doc = docs[ref.document_id]
-            results.append(ChunkResult(
+        # 5. Optionally fetch full document texts
+        document_texts = None
+        if include_documents:
+            doc_ids = list(set(ref.document_id for ref in refs))
+            document_texts = self._get_document_texts(doc_ids)
+
+        # 6. Build results
+        return [
+            ChunkResult(
                 document_id=ref.document_id,
                 chunk_key=ref.chunk_key,
-                text=doc.get_chunk_text(ref.chunk_key)
-            ))
-
-        return results
+                text=chunk_texts[ref],
+                document_text=document_texts[ref.document_id] if document_texts else None
+            )
+            for ref in refs
+        ]
 
 class SQLiteRAGService(GenericRAGService):
     """RAG service with SQLite metadata storage (for >1K documents)."""
@@ -325,8 +425,25 @@ class SQLiteRAGService(GenericRAGService):
         ).fetchall()
         return [ChunkRef(document_id=r[0], chunk_key=r[1]) for r in rows]
 
+    def _get_document_texts(self, doc_ids: List[str]) -> Dict[str, str]:
+        """Fetch full document texts from SQLite (optimized)."""
+        placeholders = ','.join('?' * len(doc_ids))
+        rows = self.conn.execute(
+            f"SELECT id, full_text, content FROM documents WHERE id IN ({placeholders})",
+            doc_ids
+        ).fetchall()
+        result = {}
+        for row in rows:
+            doc_id, full_text, content = row
+            # Return full_text if available, otherwise JSON of content
+            if full_text:
+                result[doc_id] = full_text
+            else:
+                result[doc_id] = content  # Already JSON string in SQLite
+        return result
+
     def _get_documents(self, doc_ids: List[str]) -> Dict[str, Document]:
-        """Fetch from SQLite."""
+        """Fetch full documents from SQLite (for operations needing Document objects)."""
         placeholders = ','.join('?' * len(doc_ids))
         rows = self.conn.execute(
             f"SELECT * FROM documents WHERE id IN ({placeholders})",
