@@ -313,7 +313,7 @@ class GenericRAGService:
                 chunk_key=ref.chunk_key,
                 text=chunk_texts[ref],
                 document_text=document_texts[ref.document_id] if document_texts else None,
-                document=self.documents[ref.document_id] if include_documents else None
+                content=self.documents[ref.document_id].content if include_documents else None
             )
             for ref in refs
         ]

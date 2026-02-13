@@ -105,8 +105,7 @@ async def get_matching_speakers(query: str, n: int = 3) -> Dict[str, Any]:
         # Extract speaker info from all results
         speakers = []
         for result in results:
-            speaker_doc = result.document
-            speaker_content = speaker_doc.content if isinstance(speaker_doc.content, dict) else {}
+            speaker_content = result.content or {}
             speakers.append(speaker_content)
 
         return {

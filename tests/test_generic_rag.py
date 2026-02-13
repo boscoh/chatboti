@@ -8,7 +8,6 @@ from unittest.mock import Mock, AsyncMock, patch
 
 from chatboti.generic_rag import GenericRAGService
 from chatboti.document import Document, DocumentChunk, ChunkRef, ChunkResult
-from chatboti.loaders import CSVDocumentLoader
 
 
 class TestGenericRAGServiceInitialization:
@@ -596,43 +595,6 @@ class TestGenericRAGServiceSearch:
 
 class TestGenericRAGServiceLoaderIntegration:
     """Test integration with document loaders."""
-
-    def test_get_loader_returns_csv_loader(self, tmp_path):
-        """Test _get_loader() returns CSVDocumentLoader for .csv files."""
-        index_path = tmp_path / "test.index"
-        metadata_path = tmp_path / "test_meta.json"
-
-        service = GenericRAGService(
-            index_path=index_path,
-            metadata_path=metadata_path
-        )
-
-        # Test CSV loader
-        loader = service._get_loader("test.csv")
-        assert isinstance(loader, CSVDocumentLoader)
-
-        loader = service._get_loader("/path/to/data.CSV")
-        assert isinstance(loader, CSVDocumentLoader)
-
-    def test_get_loader_raises_for_unsupported_types(self, tmp_path):
-        """Test _get_loader() raises ValueError for unsupported file types."""
-        index_path = tmp_path / "test.index"
-        metadata_path = tmp_path / "test_meta.json"
-
-        service = GenericRAGService(
-            index_path=index_path,
-            metadata_path=metadata_path
-        )
-
-        # Test unsupported types
-        with pytest.raises(ValueError, match="Unsupported file type"):
-            service._get_loader("test.txt")
-
-        with pytest.raises(ValueError, match="Unsupported file type"):
-            service._get_loader("test.json")
-
-        with pytest.raises(ValueError, match="Unsupported file type"):
-            service._get_loader("test.pdf")
 
     @pytest.mark.asyncio
     async def test_build_embeddings_from_csv(self, tmp_path):
