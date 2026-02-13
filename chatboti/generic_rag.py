@@ -34,6 +34,8 @@ class GenericRAGService:
         self.index_path = index_path
         self.metadata_path = metadata_path
         self.embed_client = embed_client
+        self.embedding_dim = embedding_dim
+        self.model_name = getattr(embed_client, 'model', None)
 
         # Load or create FAISS index
         if index_path.exists():
@@ -46,6 +48,11 @@ class GenericRAGService:
             data = json.load(open(metadata_path))
             self.chunk_refs: List[ChunkRef] = [ChunkRef(**r) for r in data['chunk_refs']]
             self.documents: Dict[str, Document] = {d['id']: Document.from_dict(d) for d in data['documents']}
+            # Load model info if present
+            self.model_name = data.get('model_name', self.model_name)
+            stored_dim = data.get('embedding_dim')
+            if stored_dim and stored_dim != embedding_dim:
+                print(f"⚠ Warning: Stored dimension {stored_dim} != provided {embedding_dim}")
         else:
             self.chunk_refs = []
             self.documents = {}
@@ -161,6 +168,8 @@ class GenericRAGService:
     def _save_metadata(self) -> None:
         """Save metadata to JSON (override in subclasses)."""
         data = {
+            'model_name': self.model_name,
+            'embedding_dim': self.embedding_dim,
             'chunk_refs': [{'document_id': r.document_id, 'chunk_key': r.chunk_key} for r in self.chunk_refs],
             'documents': [doc.to_dict() for doc in self.documents.values()]
         }

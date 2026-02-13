@@ -1,4 +1,6 @@
 {
+  "model_name": "nomic-embed-text",
+  "embedding_dim": 768,
   "chunk_refs": [
     {
       "document_id": "speaker-0",

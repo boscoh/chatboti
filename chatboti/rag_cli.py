@@ -1,9 +1,23 @@
 """CLI commands for GenericRAGService."""
 
 import os
+import re
 from pathlib import Path
 from dotenv import load_dotenv
 from microeval.llm import get_llm_client, load_config
+
+
+def make_model_slug(model_name: str) -> str:
+    """Convert model name to filesystem-safe slug.
+
+    :param model_name: Model name (e.g., 'nomic-embed-text', 'text-embedding-3-small')
+    :return: Slug (e.g., 'nomic-embed-text', 'text-embedding-3-small')
+    """
+    # Replace non-alphanumeric with hyphens, remove :latest suffix
+    slug = re.sub(r':latest$', '', model_name)
+    slug = re.sub(r'[^a-z0-9]+', '-', slug.lower())
+    slug = re.sub(r'-+', '-', slug).strip('-')
+    return slug
 
 
 async def detect_embedding_dim(embed_client) -> int:
@@ -34,25 +48,7 @@ async def build_embeddings(
 
     load_dotenv()
 
-    # Default paths in chatboti/data directory
-    data_dir = Path(__file__).parent / "data"
-    if not csv_path:
-        csv_path = str(data_dir / "2025-09-02-speaker-bio.csv")
-    if not index_path:
-        index_path = str(data_dir / "vectors.faiss")
-    if not metadata_path:
-        metadata_path = str(data_dir / "metadata.json")
-
-    csv_path = Path(csv_path)
-    index_path = Path(index_path)
-    metadata_path = Path(metadata_path)
-
-    # Check if CSV exists
-    if not csv_path.exists():
-        print(f"✗ Error: CSV file not found at {csv_path}")
-        return 1
-
-    # Get service and model from config
+    # Get service and model from config first (needed for default paths)
     model_config = load_config()
     embed_models = model_config.get("embed_models", {})
 
@@ -66,6 +62,27 @@ async def build_embeddings(
     if not model:
         print(f"✗ Error: EMBED_MODEL not set for service '{service}'")
         print(f"   Available models in config: {embed_models}")
+        return 1
+
+    # Create model-specific filenames
+    model_slug = make_model_slug(model)
+
+    # Default paths in chatboti/data directory with model slug
+    data_dir = Path(__file__).parent / "data"
+    if not csv_path:
+        csv_path = str(data_dir / "2025-09-02-speaker-bio.csv")
+    if not index_path:
+        index_path = str(data_dir / f"vectors-{model_slug}.faiss")
+    if not metadata_path:
+        metadata_path = str(data_dir / f"metadata-{model_slug}.json")
+
+    csv_path = Path(csv_path)
+    index_path = Path(index_path)
+    metadata_path = Path(metadata_path)
+
+    # Check if CSV exists
+    if not csv_path.exists():
+        print(f"✗ Error: CSV file not found at {csv_path}")
         return 1
 
     print(f"• Service: {service}")
@@ -130,21 +147,6 @@ async def search_rag(
 
     load_dotenv()
 
-    # Default paths in chatboti/data directory
-    data_dir = Path(__file__).parent / "data"
-    if not index_path:
-        index_path = str(data_dir / "vectors.faiss")
-    if not metadata_path:
-        metadata_path = str(data_dir / "metadata.json")
-
-    index_path = Path(index_path)
-    metadata_path = Path(metadata_path)
-
-    # Check if files exist
-    if not index_path.exists() or not metadata_path.exists():
-        print(f"✗ Error: RAG not found. Run 'chatboti build-rag' first.")
-        return 1
-
     # Get service and model from config
     model_config = load_config()
     embed_models = model_config.get("embed_models", {})
@@ -154,6 +156,25 @@ async def search_rag(
 
     if not service or not model:
         print("✗ Error: EMBED_SERVICE and EMBED_MODEL must be set")
+        return 1
+
+    # Create model-specific filenames
+    model_slug = make_model_slug(model)
+
+    # Default paths in chatboti/data directory with model slug
+    data_dir = Path(__file__).parent / "data"
+    if not index_path:
+        index_path = str(data_dir / f"vectors-{model_slug}.faiss")
+    if not metadata_path:
+        metadata_path = str(data_dir / f"metadata-{model_slug}.json")
+
+    index_path = Path(index_path)
+    metadata_path = Path(metadata_path)
+
+    # Check if files exist
+    if not index_path.exists() or not metadata_path.exists():
+        print(f"✗ Error: RAG not found at {index_path}")
+        print(f"   Run 'chatboti build-rag' first with EMBED_SERVICE={service} EMBED_MODEL={model}")
         return 1
 
     # Create embed client
