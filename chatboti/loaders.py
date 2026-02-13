@@ -9,7 +9,7 @@ from chatboti.document import Document, DocumentChunk
 class DocumentLoader:
     """Base class for loading documents from various sources."""
 
-    def load(self, source: str, doc_type: str) -> List[Document]:
+    async def load(self, source: str, doc_type: str) -> List[Document]:
         """Load documents from source.
 
         :param source: File path
@@ -29,7 +29,7 @@ class CSVDocumentLoader(DocumentLoader):
         """
         self.embed_fields = embed_fields
 
-    def load(self, source: str, doc_type: str) -> List[Document]:
+    async def load(self, source: str, doc_type: str) -> List[Document]:
         """Load CSV rows as documents.
 
         For speakers.csv: Each row becomes a Document with content dict,
