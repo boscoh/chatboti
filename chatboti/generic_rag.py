@@ -187,21 +187,13 @@ class GenericRAGService:
 
         self.documents[doc.id] = doc
 
-    def _get_loader(self, source: str) -> DocumentLoader:
-        """Get document loader instance.
-
-        :param source: File path
-        :return: Document loader instance
-        """
-        return DocumentLoader()
-
     async def build_embeddings_from_documents(self, source: str, doc_type: str) -> None:
         """Load documents from source and build embeddings.
 
         :param source: File path or pattern (e.g., "papers.json", "docs/*.md")
         :param doc_type: Document type identifier
         """
-        loader = self._get_loader(source)
+        loader = DocumentLoader()
         documents = await loader.load(source, doc_type)
         for doc in documents:
             await self.add_document(doc)
