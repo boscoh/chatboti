@@ -56,15 +56,6 @@ class GenericRAGService:
         self.chunk_refs = []
         self.documents = {}
 
-    def make_model_slug(self) -> str:
-        """Convert model name to filesystem-safe slug.
-
-        Uses self.model to generate slug.
-
-        :return: Slug (e.g., 'nomic-embed-text', 'text-embedding-3-small')
-        """
-        return make_slug(self.model, strip_latest=True)
-
     async def detect_embedding_dim(self) -> int:
         """Detect embedding dimension by running a test query.
 
@@ -105,7 +96,7 @@ class GenericRAGService:
             )
 
         # Create model slug for file paths
-        model_slug = self.make_model_slug()
+        model_slug = make_slug(self.model, strip_latest=True)
 
         # Set up paths
         if not self.data_dir:
