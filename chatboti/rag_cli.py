@@ -130,15 +130,32 @@ async def search_rag(
     ) as rag:
         print(f"✓ Loaded RAG: {len(rag.documents)} documents, {rag.index.ntotal} vectors\n")
 
-        # Search
+        # Search with documents included
         print(f"→ Searching for: '{query}'")
-        results = await rag.search(query, k=k)
+        results = await rag.search(query, k=k, include_documents=True)
 
         print(f"• Found {len(results)} results:\n")
         for i, result in enumerate(results, 1):
-            print(f"{i}. Document: {result.document_id}")
-            print(f"   Field: {result.chunk_key}")
-            print(f"   Text: {result.text[:200]}...")
+            print(f"{'='*70}")
+            print(f"Result {i}:")
+            print(f"{'='*70}")
+            print(f"document_id: {result.document_id}")
+            print(f"chunk_key: {result.chunk_key}")
+            print(f"\nChunk text:")
+            print(f"  {result.text}")
+
+            if result.document:
+                print(f"\nDocument content:")
+                if isinstance(result.document.content, dict):
+                    for key, value in result.document.content.items():
+                        print(f"  {key}: {value}")
+                else:
+                    print(f"  {result.document.content}")
+
+            if result.document_text:
+                print(f"\nFull document text (first 300 chars):")
+                print(f"  {result.document_text[:300]}...")
+
             print()
 
     return 0
