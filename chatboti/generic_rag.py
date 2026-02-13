@@ -1,13 +1,11 @@
 """Generic RAG service with FAISS index and JSON metadata storage."""
 
 import os
-import re
 from pathlib import Path
 from typing import List, Dict, Optional
 import json
 import faiss
 import numpy as np
-from collections import defaultdict
 
 from chatboti.document import Document, ChunkRef, ChunkResult
 from chatboti.loaders import load_documents
@@ -263,12 +261,9 @@ class GenericRAGService:
         if not valid_ids:
             return []
 
-        # 4. Fetch chunk references
-        refs: List[ChunkRef] = self.get_chunk_refs(valid_ids)
-
         # 5. Build results
         results = []
-        for ref in refs:
+        for ref in self.get_chunk_refs(valid_ids):
             doc = self.documents[ref.document_id]
             result = ChunkResult(
                 document_id=ref.document_id,
