@@ -5,7 +5,7 @@ import os
 import pytest
 from pathlib import Path
 
-from chatboti.loaders import load_documents, load_csv
+from chatboti.loaders import load_documents, load_csv, infer_doc_type
 from chatboti.document import Document, DocumentChunk
 
 
@@ -17,6 +17,12 @@ class TestLoadDocuments:
         """Test that unsupported file types raise ValueError."""
         with pytest.raises(ValueError, match="Unsupported file type"):
             await load_documents("dummy.txt", "test")
+
+    def test_infer_doc_type(self):
+        """Test doc_type inference from filename."""
+        assert infer_doc_type("speakers.csv") == "speakers"
+        assert infer_doc_type("/path/to/papers.csv") == "papers"
+        assert infer_doc_type("data/users.json") == "users"
 
 
 class TestLoadCSV:
@@ -77,6 +83,16 @@ class TestLoadCSV:
         assert docs[0].id == "person-0"
         assert docs[1].id == "person-1"
         assert docs[2].id == "person-2"
+
+    @pytest.mark.asyncio
+    async def test_doc_type_inferred_from_filename(self, temp_csv):
+        """Test that doc_type is inferred from filename when not provided."""
+        docs = await load_csv(str(temp_csv))
+
+        # temp_csv is "test_data.csv", so doc_type should be "test_data"
+        assert docs[0].id == "test_data-0"
+        assert docs[1].id == "test_data-1"
+        assert docs[2].id == "test_data-2"
 
     @pytest.mark.asyncio
     async def test_content_dict_contains_all_fields(self, temp_csv):
