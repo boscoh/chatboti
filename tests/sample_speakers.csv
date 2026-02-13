@@ -1,0 +1,4 @@
+name,title,bio,abstract
+Dr. Jane Smith,AI Research Lead,"Dr. Smith has 15 years of experience in machine learning and natural language processing. She leads the AI research team at TechCorp.","This talk explores recent advances in transformer architectures and their applications to multi-modal learning tasks."
+Prof. John Doe,Computer Science Professor,"Prof. Doe teaches at MIT and specializes in distributed systems. He has published over 100 papers on scalability and performance.","We'll discuss novel approaches to building fault-tolerant distributed systems that can handle millions of concurrent users."
+Dr. Alice Wong,Data Science Director,"Dr. Wong pioneered several breakthrough techniques in time series analysis. She currently directs the data science division at DataCo.","Learn how advanced statistical methods can improve forecasting accuracy in financial markets and supply chain management."
