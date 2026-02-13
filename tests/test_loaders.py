@@ -79,11 +79,11 @@ class TestLoadCSV:
         assert docs[2].id == "test-data-2"
 
     @pytest.mark.asyncio
-    async def test_doc_type_inferred_from_filename(self, temp_csv):
-        """Test that doc_type is inferred from filename when not provided."""
+    async def test_prefix_inferred_from_filename(self, temp_csv):
+        """Test that ID prefix is inferred from filename."""
         docs = await load_csv(str(temp_csv))
 
-        # temp_csv is "test_data.csv", so doc_type should be "test_data"
+        # temp_csv is "test_data.csv", so prefix should be "test-data"
         assert docs[0].id == "test-data-0"
         assert docs[1].id == "test-data-1"
         assert docs[2].id == "test-data-2"

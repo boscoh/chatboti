@@ -20,8 +20,8 @@ async def load_csv(source: str, embed_fields: Optional[List[str]] = None) -> Lis
     """
     # Convert filename to slug (alphanumeric with dashes)
     stem = Path(source).stem
-    doc_type = re.sub(r'[^a-z0-9]+', '-', stem.lower())
-    doc_type = re.sub(r'-+', '-', doc_type).strip('-')
+    prefix = re.sub(r'[^a-z0-9]+', '-', stem.lower())
+    prefix = re.sub(r'-+', '-', prefix).strip('-')
 
     documents = []
     with open(source) as f:
@@ -29,7 +29,7 @@ async def load_csv(source: str, embed_fields: Optional[List[str]] = None) -> Lis
         for i, row in enumerate(reader):
             # Create document with content dict
             doc = Document(
-                id=f"{doc_type}-{i}",
+                id=f"{prefix}-{i}",
                 content=dict(row),
                 chunks={}
             )
