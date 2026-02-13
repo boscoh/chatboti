@@ -200,30 +200,20 @@ class GenericRAGService:
         """
         return [self.chunk_refs[fid] for fid in faiss_ids]
 
-    def get_chunk_texts(self, refs: List[ChunkRef]) -> Dict[ChunkRef, str]:
-        """Fetch only text needed for chunks (override in subclasses).
+    def get_chunk_text(self, ref: ChunkRef) -> str:
+        """Fetch text for a single chunk (override in subclasses).
 
-        :param refs: Chunk references
-        :return: Dict mapping ref to chunk text
+        :param ref: Chunk reference
+        :return: Chunk text
         """
-        # Group by document for efficient fetching
-        refs_by_doc = defaultdict(list)
-        for ref in refs:
-            refs_by_doc[ref.document_id].append(ref)
-
-        # Fetch and extract text
-        result = {}
-        for doc_id, doc_refs in refs_by_doc.items():
-            doc = self.documents[doc_id]
-            for ref in doc_refs:
-                chunk = doc.chunks[ref.chunk_key]
-                if chunk.i_start is not None:
-                    # Chunk-level: slice from full_text
-                    result[ref] = doc.full_text[chunk.i_start:chunk.i_end]
-                else:
-                    # Field-level: get from content
-                    result[ref] = doc.content[ref.chunk_key]
-        return result
+        doc = self.documents[ref.document_id]
+        chunk = doc.chunks[ref.chunk_key]
+        if chunk.i_start is not None:
+            # Chunk-level: slice from full_text
+            return doc.full_text[chunk.i_start:chunk.i_end]
+        else:
+            # Field-level: get from content
+            return doc.content[ref.chunk_key]
 
     def get_document_texts(self, doc_ids: List[str]) -> Dict[str, str]:
         """Fetch full document text (override in subclasses).
@@ -276,23 +266,18 @@ class GenericRAGService:
         # 4. Fetch chunk references
         refs: List[ChunkRef] = self.get_chunk_refs(valid_ids)
 
-        # 5. Fetch chunk texts (optimized)
-        chunk_texts = self.get_chunk_texts(refs)
-
-        # 6. Optionally fetch full documents
-        document_texts = None
-        if include_documents:
-            doc_ids = list(set(ref.document_id for ref in refs))
-            document_texts = self.get_document_texts(doc_ids)
-
-        # 7. Build results
-        return [
-            ChunkResult(
+        # 5. Build results
+        results = []
+        for ref in refs:
+            doc = self.documents[ref.document_id]
+            result = ChunkResult(
                 document_id=ref.document_id,
                 chunk_key=ref.chunk_key,
-                text=chunk_texts[ref],
-                document_text=document_texts[ref.document_id] if document_texts else None,
-                content=self.documents[ref.document_id].content if include_documents else None
+                text=self.get_chunk_text(ref)
             )
-            for ref in refs
-        ]
+            if doc.full_text:
+                result.document_text = doc.full_text
+            if include_documents and doc.content:
+                result.content = doc.content
+            results.append(result)
+        return results
