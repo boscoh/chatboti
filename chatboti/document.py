@@ -47,7 +47,8 @@ class Document:
         content: Optional[Dict[str, str]] = None,
         full_text: str = "",
         metadata: Optional[dict] = None,
-        chunks: Optional[Dict[str, DocumentChunk]] = None
+        chunks: Optional[Dict[str, DocumentChunk]] = None,
+        source: str = ""
     ):
         """Initialize a document.
 
@@ -56,12 +57,14 @@ class Document:
         :param full_text: Complete text for chunk-level chunking
         :param metadata: Source, timestamp, and other metadata
         :param chunks: Mapping of field names or indices to chunks
+        :param source: Original source file path
         """
         self.id = id
         self.content = content if content is not None else {}
         self.full_text = full_text
         self.metadata = metadata if metadata is not None else {}
         self.chunks = chunks if chunks is not None else {}
+        self.source = source
 
     def get_chunk_text(self, key: str) -> str:
         """Get chunk text by field name or index.
@@ -103,6 +106,7 @@ class Document:
             "content": self.content,
             "full_text": self.full_text,
             "metadata": self.metadata,
+            "source": self.source,
             "chunks": {
                 key: {
                     "faiss_id": chunk.faiss_id,
@@ -134,5 +138,6 @@ class Document:
             content=data.get("content", {}),
             full_text=data.get("full_text", ""),
             metadata=data.get("metadata", {}),
-            chunks=chunks
+            chunks=chunks,
+            source=data.get("source", "")
         )

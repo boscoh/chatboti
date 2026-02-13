@@ -30,7 +30,8 @@ async def load_csv(source: str, embed_fields: Optional[List[str]] = None) -> Lis
             doc = Document(
                 id=f"{prefix}-{i}",
                 content=dict(row),
-                chunks={}
+                chunks={},
+                source=source
             )
 
             # Create chunks for embed fields
