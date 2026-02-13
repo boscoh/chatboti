@@ -10,7 +10,7 @@ import numpy as np
 from collections import defaultdict
 
 from chatboti.document import Document, DocumentChunk, ChunkRef, ChunkResult
-from chatboti.loaders import DocumentLoader
+from chatboti.loaders import load_documents
 
 
 class GenericRAGService:
@@ -193,8 +193,7 @@ class GenericRAGService:
         :param source: File path or pattern (e.g., "papers.json", "docs/*.md")
         :param doc_type: Document type identifier
         """
-        loader = DocumentLoader()
-        documents = await loader.load(source, doc_type)
+        documents = await load_documents(source, doc_type)
         for doc in documents:
             await self.add_document(doc)
         self.save()
