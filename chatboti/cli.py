@@ -11,7 +11,6 @@ from cyclopts import App
 
 from chatboti.server import run_server
 from chatboti.agent import amain as agent_amain
-from chatboti.rag import build_embeddings as rag_amain, search_loop
 from chatboti.rag_cli import build_embeddings as build_rag_new, search_rag
 from chatboti.docker import main as run_docker_main
 from chatboti.logger import setup_logging
@@ -49,19 +48,7 @@ def cli_chat():
     asyncio.run(agent_amain(service))
 
 
-@app.command(sort_key=3)
-def rag():
-    """Generate embeddings for RAG."""
-    asyncio.run(rag_amain())
-
-
-@app.command(sort_key=4)
-def search():
-    """Interactive search loop to query the RAG database."""
-    asyncio.run(search_loop())
-
-
-@app.command(name="build-rag", sort_key=5)
+@app.command(name="build-rag", sort_key=3)
 def build_rag(
     csv_path: str = "",
     index_path: str = "",
@@ -82,7 +69,7 @@ def build_rag(
     ))
 
 
-@app.command(name="search-rag", sort_key=6)
+@app.command(name="search-rag", sort_key=4)
 def search_rag_cmd(
     query: str,
     k: int = 5,

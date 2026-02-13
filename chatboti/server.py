@@ -23,7 +23,6 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
 from chatboti.agent import InfoAgent
-from chatboti.rag import RAGService
 from chatboti.generic_rag import GenericRAGService
 
 model_config = load_config()
