@@ -312,7 +312,7 @@ class GenericRAGService:
         # 5. Fetch chunk texts (optimized)
         chunk_texts = self._get_chunk_texts(refs)
 
-        # 6. Optionally fetch full document texts
+        # 6. Optionally fetch full documents
         document_texts = None
         if include_documents:
             doc_ids = list(set(ref.document_id for ref in refs))
@@ -324,7 +324,8 @@ class GenericRAGService:
                 document_id=ref.document_id,
                 chunk_key=ref.chunk_key,
                 text=chunk_texts[ref],
-                document_text=document_texts[ref.document_id] if document_texts else None
+                document_text=document_texts[ref.document_id] if document_texts else None,
+                document=self.documents[ref.document_id] if include_documents else None
             )
             for ref in refs
         ]

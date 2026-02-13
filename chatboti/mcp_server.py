@@ -102,7 +102,7 @@ async def get_best_speaker(query: str) -> Dict[str, Any]:
 
         # Extract speaker info from the top result's document
         top_result = results[0]
-        speaker_doc = rag_service.documents[top_result.document_id]
+        speaker_doc = top_result.document
         speaker_content = speaker_doc.content if isinstance(speaker_doc.content, dict) else {}
 
         # Format speaker data to match old API

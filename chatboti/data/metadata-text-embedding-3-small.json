@@ -1,0 +1,1286 @@
+{
+  "model_name": "text-embedding-3-small",
+  "embedding_dim": 1536,
+  "chunk_refs": [
+    {
+      "document_id": "speaker-0",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "speaker-0",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "speaker-0",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "speaker-0",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "speaker-0",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "speaker-0",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "speaker-0",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "speaker-0",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "speaker-0",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "speaker-1",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "speaker-1",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "speaker-1",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "speaker-1",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "speaker-1",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "speaker-1",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "speaker-1",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "speaker-1",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "speaker-1",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "speaker-2",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "speaker-2",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "speaker-2",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "speaker-2",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "speaker-2",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "speaker-2",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "speaker-2",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "speaker-2",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "speaker-2",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "speaker-3",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "speaker-3",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "speaker-3",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "speaker-3",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "speaker-3",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "speaker-3",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "speaker-3",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "speaker-3",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "speaker-3",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "speaker-4",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "speaker-4",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "speaker-4",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "speaker-4",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "speaker-4",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "speaker-4",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "speaker-4",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "speaker-4",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "speaker-4",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "speaker-5",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "speaker-5",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "speaker-5",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "speaker-5",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "speaker-5",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "speaker-5",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "speaker-5",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "speaker-5",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "speaker-5",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "speaker-6",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "speaker-6",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "speaker-6",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "speaker-6",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "speaker-6",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "speaker-6",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "speaker-6",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "speaker-6",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "speaker-6",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "speaker-7",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "speaker-7",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "speaker-7",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "speaker-7",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "speaker-7",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "speaker-7",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "speaker-7",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "speaker-7",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "speaker-7",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "speaker-8",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "speaker-8",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "speaker-8",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "speaker-8",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "speaker-8",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "speaker-8",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "speaker-8",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "speaker-8",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "speaker-8",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "speaker-9",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "speaker-9",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "speaker-9",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "speaker-9",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "speaker-9",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "speaker-9",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "speaker-9",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "speaker-9",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "speaker-10",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "speaker-10",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "speaker-10",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "speaker-10",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "speaker-10",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "speaker-10",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "speaker-10",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "speaker-10",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "speaker-10",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "speaker-11",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "speaker-11",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "speaker-11",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "speaker-11",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "speaker-11",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "speaker-11",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "speaker-11",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "speaker-11",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "speaker-11",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "speaker-12",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "speaker-12",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "speaker-12",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "speaker-12",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "speaker-12",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "speaker-12",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "speaker-12",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "speaker-12",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "speaker-12",
+      "chunk_key": "Social Media Handles"
+    }
+  ],
+  "documents": [
+    {
+      "id": "speaker-0",
+      "content": {
+        "Country": "Germany & UK",
+        "Name": "Jonathan Pass\u00e9 and Shodhan Sheth",
+        "Role": "Lead Developer and Principal Developer",
+        "Final title": "Incremental Modernization through CodeConcise",
+        "Final abstract (Max. 150 words)": "In today\u2019s competitive market, legacy systems often hinder the rapid delivery of products and services that align with evolving customer expectations. As a result, legacy modernization is not only more critical\u2013but also more urgent\u2013than ever.\n\nJoin us to explore how we are using a combination of deterministic techniques and AI to identify the core business capabilities buried within legacy systems. By uncovering \u201cseams\u201d in the code, we decompose modernization into manageable \u201cthin slices\u201d that can be delivered incrementally. This approach democratises modernization by providing continuous value and feedback throughout the journey\u2013rather than deferring ROI until the end of a multi-year transformation programme.",
+        "Bio (Max. 120 words)": "Jonathan is a software engineer with a passion for building tools that make technologists more powerful. Over the course of his career, he\u2019s worked across diverse industries, from automotive to retail, insurance to healthcare  always with a focus on creating platforms that enable others to push the boundaries of what\u2019s possible.\nIn the last two years, Jonathan has been diving  into Generative AI, developing software tools that put this breakthrough technology at the core of how engineers design, build, and innovate. \n\nShodhan looks after service design for the modernization portfolio in Thoughtworks - where has been for the last 18 years! He has played all sorts of tech roles in the past across industry verticals and is also currently responsible for building internal Thoughtworks accelerators in the modernization space",
+        "Mail adress": "jpasse@thoughtworks.com\nssheth@thoughtworks.com",
+        "Headshot": "Upload here",
+        "Social Media Handles": "https://www.linkedin.com/in/jonathan-passe-618579127/\n\n\n\n\nhttps://www.linkedin.com/in/shodhansheth/"
+      },
+      "full_text": "",
+      "metadata": {},
+      "chunks": {
+        "Country": {
+          "faiss_id": 0,
+          "i_start": null,
+          "i_end": null
+        },
+        "Name": {
+          "faiss_id": 1,
+          "i_start": null,
+          "i_end": null
+        },
+        "Role": {
+          "faiss_id": 2,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final title": {
+          "faiss_id": 3,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final abstract (Max. 150 words)": {
+          "faiss_id": 4,
+          "i_start": null,
+          "i_end": null
+        },
+        "Bio (Max. 120 words)": {
+          "faiss_id": 5,
+          "i_start": null,
+          "i_end": null
+        },
+        "Mail adress": {
+          "faiss_id": 6,
+          "i_start": null,
+          "i_end": null
+        },
+        "Headshot": {
+          "faiss_id": 7,
+          "i_start": null,
+          "i_end": null
+        },
+        "Social Media Handles": {
+          "faiss_id": 8,
+          "i_start": null,
+          "i_end": null
+        }
+      }
+    },
+    {
+      "id": "speaker-1",
+      "content": {
+        "Country": "Spain",
+        "Name": "\u00d3scar Cobles Montes",
+        "Role": "Senior Infrastructure Consultant",
+        "Final title": "Policy-Aware Infrastructure Generation: Using an MCP Server to Bridge OPA and AI for Terraform",
+        "Final abstract (Max. 150 words)": "As developers use AI agents to generate Terraform configurations, ensuring compliance with internal policies becomes a critical challenge. This talk presents a new approach: integrating an MCP (Model Context Protocol) server that connects AI agents with existing OPA (Open Policy Agent) policies. By querying these policies, the server extracts real-time constraints\u2014such as allowed instance types, required tags, or open ports\u2014and feeds them back into the generation prompt. This allows developers to request infrastructure in natural language (\u201cI need a server on AWS\u201d) and receive compliant Terraform code by default. The session includes a prototype demo and explores how this pattern bridges policy, AI, and Infrastructure as Code inside modern developer workflows.",
+        "Bio (Max. 120 words)": "\u00d3scar is a Senior Software Engineer and Cloud Architect with over 14 years of experience building and automating cloud infrastructure at scale. He specializes in Infrastructure as Code, cloud governance, and platform automation. Throughout his career, he has supported enterprise clients in adopting DevOps practices, improving developer experience, and ensuring policy compliance across cloud environments. \n\nA few months ago, \u00d3scar joined the Thoughtworks family, where he continues to explore the intersection of AI, infrastructure, and developer enablement. This is his first time speaking at XConf, where he\u2019s excited to share a new approach to policy-aware infrastructure generation using AI agents.",
+        "Mail adress": "oscar.coblesmontes@thoughtworks.com",
+        "Headshot": "Upload here",
+        "Social Media Handles": "https://www.linkedin.com/in/oscar-cobles-80020354/"
+      },
+      "full_text": "",
+      "metadata": {},
+      "chunks": {
+        "Country": {
+          "faiss_id": 9,
+          "i_start": null,
+          "i_end": null
+        },
+        "Name": {
+          "faiss_id": 10,
+          "i_start": null,
+          "i_end": null
+        },
+        "Role": {
+          "faiss_id": 11,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final title": {
+          "faiss_id": 12,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final abstract (Max. 150 words)": {
+          "faiss_id": 13,
+          "i_start": null,
+          "i_end": null
+        },
+        "Bio (Max. 120 words)": {
+          "faiss_id": 14,
+          "i_start": null,
+          "i_end": null
+        },
+        "Mail adress": {
+          "faiss_id": 15,
+          "i_start": null,
+          "i_end": null
+        },
+        "Headshot": {
+          "faiss_id": 16,
+          "i_start": null,
+          "i_end": null
+        },
+        "Social Media Handles": {
+          "faiss_id": 17,
+          "i_start": null,
+          "i_end": null
+        }
+      }
+    },
+    {
+      "id": "speaker-2",
+      "content": {
+        "Country": "Germany",
+        "Name": "Sarah Schmid",
+        "Role": "1337 (Lead) Developer",
+        "Final title": "Is clean code dead ? ",
+        "Final abstract (Max. 150 words)": "In today\u2019s fast-paced development world, conversations about Clean Code have become rare \u2014 but is it really less important? This talk is a reminder of why \"good\" code quality still matters, simple ideas to write better code and how to encourage others. Let\u2019s bring Clean Code back onto the table!",
+        "Bio (Max. 120 words)": "Sarah is a Software Developer, a Thoughtworker for over six years and a clean code enthusiast. She has worked on a wide varienty of products and projects, from Co-Delivery to Enablement, and enjoys introducting modern software development practices and perspectives into different technical contexts and into teams.\nOutside of work Sarah is a mother to a two-year old who is keeping her very busy, but when she has some time off she enjoys getting creative in various crafts and DIY projects.",
+        "Mail adress": "sarah.schmid@thoughtworks.com",
+        "Headshot": "Upload here",
+        "Social Media Handles": "https://www.linkedin.com/in/sasahamburg"
+      },
+      "full_text": "",
+      "metadata": {},
+      "chunks": {
+        "Country": {
+          "faiss_id": 18,
+          "i_start": null,
+          "i_end": null
+        },
+        "Name": {
+          "faiss_id": 19,
+          "i_start": null,
+          "i_end": null
+        },
+        "Role": {
+          "faiss_id": 20,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final title": {
+          "faiss_id": 21,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final abstract (Max. 150 words)": {
+          "faiss_id": 22,
+          "i_start": null,
+          "i_end": null
+        },
+        "Bio (Max. 120 words)": {
+          "faiss_id": 23,
+          "i_start": null,
+          "i_end": null
+        },
+        "Mail adress": {
+          "faiss_id": 24,
+          "i_start": null,
+          "i_end": null
+        },
+        "Headshot": {
+          "faiss_id": 25,
+          "i_start": null,
+          "i_end": null
+        },
+        "Social Media Handles": {
+          "faiss_id": 26,
+          "i_start": null,
+          "i_end": null
+        }
+      }
+    },
+    {
+      "id": "speaker-3",
+      "content": {
+        "Country": "UK",
+        "Name": "Jen Wallace",
+        "Role": "Lead Developer",
+        "Final title": "Fight the big ball of mud with business capability mapping",
+        "Final abstract (Max. 150 words)": "Are your systems drifting into a Big Ball of Mud? In this talk, I\u2019ll show how Business Capability Mapping can uncover and resolve unclear domain boundaries in large, multi-team projects - without disrupting progress. I\u2019ll share how we applied this approach across 10+ teams to gain alignment, reduce complexity and keep our architecture clean and scalable. Walk away with practical techniques to break free from architectural chaos, keep your teams aligned and your projects on track.",
+        "Bio (Max. 120 words)": "Jen is a Technical Lead and aspiring architect, currently working as a consultant with Thoughtworks. With over a dozen years of experience, Jen has led teams across numerous domains and technology stacks, and has worked with clients worldwide. Her interests include building diverse, high performing teams and bridging the business-technical gap - helping engineers effectively communicate their ideas, architectures and designs with non-technical stakeholders and vice-versa. Jen is also an active advocate for greater diversity, equity and inclusion in the technology industry, volunteering her time and experience to further the cause. In her free time, Jen immerses herself in tabletop games, video games and horror movies.",
+        "Mail adress": "jen.wallace@thoughtworks.com",
+        "Headshot": "Upload here",
+        "Social Media Handles": "https://www.linkedin.com/in/jenniferewallace/"
+      },
+      "full_text": "",
+      "metadata": {},
+      "chunks": {
+        "Country": {
+          "faiss_id": 27,
+          "i_start": null,
+          "i_end": null
+        },
+        "Name": {
+          "faiss_id": 28,
+          "i_start": null,
+          "i_end": null
+        },
+        "Role": {
+          "faiss_id": 29,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final title": {
+          "faiss_id": 30,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final abstract (Max. 150 words)": {
+          "faiss_id": 31,
+          "i_start": null,
+          "i_end": null
+        },
+        "Bio (Max. 120 words)": {
+          "faiss_id": 32,
+          "i_start": null,
+          "i_end": null
+        },
+        "Mail adress": {
+          "faiss_id": 33,
+          "i_start": null,
+          "i_end": null
+        },
+        "Headshot": {
+          "faiss_id": 34,
+          "i_start": null,
+          "i_end": null
+        },
+        "Social Media Handles": {
+          "faiss_id": 35,
+          "i_start": null,
+          "i_end": null
+        }
+      }
+    },
+    {
+      "id": "speaker-4",
+      "content": {
+        "Country": "Italy",
+        "Name": "Sara Michelazzo",
+        "Role": "Head of Strategy and Innovation, Global IT Services",
+        "Final title": "AI in action: Boost productivity and deliver business value with practical tools",
+        "Final abstract (Max. 150 words)": "Thoughtworks is undergoing a bold AI transformation, integrating tools like Gemini, NotebookLM, and Agentic AI to boost both individual and enterprise productivity. In this session, we\u2019ll share hands-on experiences\u2014what worked, what didn\u2019t, and how we\u2019re navigating change. Expect live demos of AI-augmented workflows in Sales and Knowledge Management, including intelligent research for account planning, strategic meeting prep, and rapid proposal creation. We\u2019ll also unpack our adoption strategies. Designed for practitioners and leaders alike, this talk offers practical lessons, adoption tactics, and clear impact metrics\u2014ideal for anyone looking to integrate AI into daily workflows and drive real business value.",
+        "Bio (Max. 120 words)": "Sara is the Head of Strategy and Innovation at Thoughtworks, where she leads AI-driven transformation initiatives across global IT. With over a decade of experience in technology and operations, she is currently focused on redefining Knowledge Management and enterprise productivity using tools like Gemini, NotebookLM, and AI agents. Sara works closely with executive leadership to scale AI adoption and has pioneered initiatives that blend cutting-edge technology with measurable business impact. A frequent speaker at industry events, she brings a pragmatic yet visionary approach to digital transformation.",
+        "Mail adress": "smichel@thoughtworks.com",
+        "Headshot": "Upload here",
+        "Social Media Handles": "https://www.linkedin.com/in/saramichelazzo/?"
+      },
+      "full_text": "",
+      "metadata": {},
+      "chunks": {
+        "Country": {
+          "faiss_id": 36,
+          "i_start": null,
+          "i_end": null
+        },
+        "Name": {
+          "faiss_id": 37,
+          "i_start": null,
+          "i_end": null
+        },
+        "Role": {
+          "faiss_id": 38,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final title": {
+          "faiss_id": 39,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final abstract (Max. 150 words)": {
+          "faiss_id": 40,
+          "i_start": null,
+          "i_end": null
+        },
+        "Bio (Max. 120 words)": {
+          "faiss_id": 41,
+          "i_start": null,
+          "i_end": null
+        },
+        "Mail adress": {
+          "faiss_id": 42,
+          "i_start": null,
+          "i_end": null
+        },
+        "Headshot": {
+          "faiss_id": 43,
+          "i_start": null,
+          "i_end": null
+        },
+        "Social Media Handles": {
+          "faiss_id": 44,
+          "i_start": null,
+          "i_end": null
+        }
+      }
+    },
+    {
+      "id": "speaker-5",
+      "content": {
+        "Country": "Spain",
+        "Name": "Paola Reyes",
+        "Role": "Lead Developer",
+        "Final title": "The Paradox of TDD and Pairing: Why it's so difficult, but so worthwhile",
+        "Final abstract (Max. 150 words)": "This talk dives into the real-world experience of adopting Test-Driven Development (TDD) and pair programming. It's not a theoretical overview, but a candid look at the challenges and triumphs of integrating these practices into daily workflow. I'll be sharing my personal journey over six years, from the initial frustration of fundamentally changing my coding approach to the eventual realization of its profound benefits.\n\nWe'll dissect the 'paradox' \u2013 that initial struggle that many encounter, and how to push through it, gaining practical insights into overcoming the mental shift required for TDD, and learn how to navigate the complexities of effective pairing. We'll explore concrete examples of how these techniques can lead to more robust, maintainable code and a significantly more collaborative team environment, leaving with actionable strategies to implement TDD and pairing, empowering you to improve their coding practices and team dynamics and ways to elevate the team's collaborative power. We'll explore together how to transform coding from a solitary struggle to a shared success and ownership.",
+        "Bio (Max. 120 words)": "Sharing knowledge is one of the greatest professional satisfactions. With almost six years at Thoughtworks, I've discovered that my passion for technology multiplies when I transmit it to others. I firmly believe in the power of collaborative learning and seek to create spaces where everyone can grow and develop.",
+        "Mail adress": "paola.reyesmontalvo@thoughtworks.com",
+        "Headshot": "Upload here",
+        "Social Media Handles": "www.linkedin.com/in/paolareyesmontalvo"
+      },
+      "full_text": "",
+      "metadata": {},
+      "chunks": {
+        "Country": {
+          "faiss_id": 45,
+          "i_start": null,
+          "i_end": null
+        },
+        "Name": {
+          "faiss_id": 46,
+          "i_start": null,
+          "i_end": null
+        },
+        "Role": {
+          "faiss_id": 47,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final title": {
+          "faiss_id": 48,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final abstract (Max. 150 words)": {
+          "faiss_id": 49,
+          "i_start": null,
+          "i_end": null
+        },
+        "Bio (Max. 120 words)": {
+          "faiss_id": 50,
+          "i_start": null,
+          "i_end": null
+        },
+        "Mail adress": {
+          "faiss_id": 51,
+          "i_start": null,
+          "i_end": null
+        },
+        "Headshot": {
+          "faiss_id": 52,
+          "i_start": null,
+          "i_end": null
+        },
+        "Social Media Handles": {
+          "faiss_id": 53,
+          "i_start": null,
+          "i_end": null
+        }
+      }
+    },
+    {
+      "id": "speaker-6",
+      "content": {
+        "Country": "UK",
+        "Name": "Kief Morris",
+        "Role": "Distinguished Engineer",
+        "Final title": "Application-Driven Infrastructure",
+        "Final abstract (Max. 150 words)": "Even with automated delivery pipelines, cloud, and infrastructure as code, managing environments and infrastructure is often a major drag for software delivery effectiveness. This talk describes an approach to building infrastructure as composable components that application teams can provision and configure themselves, changing the dynamic away from ticket-driven infrastructure silos.",
+        "Bio (Max. 120 words)": "Kief Morris (he/him) is an Infrastructure Automation Architect who helps infrastructure teams move from hand-crafted infrastructure management that creates friction and toil to a platform approach that focuses on enabling users to deliver better outcomes faster. An infrastructure platform approach involves adopting a composable infrastructure architecture and self-service environment management, which needs changes to team workflows and topologies.\n\nKief is the author of the O\u2019Reilly book Infrastructure as Code and a Distinguished Infrastructure Engineer at Thoughtworks. He has been working across development and operations teams and automating infrastructure management since the dot-com era. He has worked with digital scaleups and enterprises in many industries around the globe.",
+        "Mail adress": "kmorris@thoughtworks.com",
+        "Headshot": "Upload here",
+        "Social Media Handles": "https://github.com/kief\n\nhttps://www.linkedin.com/in/kiefmorris/\n\nhttps://infrastructure-as-code.com/ "
+      },
+      "full_text": "",
+      "metadata": {},
+      "chunks": {
+        "Country": {
+          "faiss_id": 54,
+          "i_start": null,
+          "i_end": null
+        },
+        "Name": {
+          "faiss_id": 55,
+          "i_start": null,
+          "i_end": null
+        },
+        "Role": {
+          "faiss_id": 56,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final title": {
+          "faiss_id": 57,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final abstract (Max. 150 words)": {
+          "faiss_id": 58,
+          "i_start": null,
+          "i_end": null
+        },
+        "Bio (Max. 120 words)": {
+          "faiss_id": 59,
+          "i_start": null,
+          "i_end": null
+        },
+        "Mail adress": {
+          "faiss_id": 60,
+          "i_start": null,
+          "i_end": null
+        },
+        "Headshot": {
+          "faiss_id": 61,
+          "i_start": null,
+          "i_end": null
+        },
+        "Social Media Handles": {
+          "faiss_id": 62,
+          "i_start": null,
+          "i_end": null
+        }
+      }
+    },
+    {
+      "id": "speaker-7",
+      "content": {
+        "Country": "Germany",
+        "Name": "Barosch Demir and Dima Fateev",
+        "Role": "Lead Developer and (?)",
+        "Final title": "Streaming: Real-Time Architecture for Connected Products in Automotive",
+        "Final abstract (Max. 150 words)": "The EU Data Act establishes a legal foundation for fair access to and use of data, with a strong emphasis on transparency, user control and seamless data exchange - particularly for connected products and services. As developers, we play a key role in turning these regulatory principles into robust, real-world systems. In this talk, we\u2019ll break down the core concepts of the EU Data Act and explore their impact on modern data architectures. Using the automotive domain as a practical example, we\u2019ll present a scalable streaming solution designed to support real-time data access. The architecture leverages event-driven microservices, MQTT for efficient and lightweight communication, secure APIs, and access control mechanisms to ensure both performance and compliance. We\u2019ll share lessons learned, practical challenges, and the tools that helped us deliver a future-ready, regulation-aligned system.",
+        "Bio (Max. 120 words)": "Joining Thoughtworks in 2019 marked the start of a transformative journey for Barosch. While training in Xi\u2019an, China, he discovered the foundational values of teamwork, engineering excellence, and inclusive leadership. These early lessons helped shape his approach to problem-solving and collaboration with others. Over the years, he has contributed across diverse domains including Retail, BFSI, Energy, and Automotive. Currently, he leads a team of six engineers focused on real-time data streaming solutions. Barosch is passionate about building scalable systems and fostering environments where diverse perspectives drive innovation. His journey\u2014from a junior developer to a lead\u2014reflects a commitment to continuous growth, cross-cultural collaboration, and impactful engineering",
+        "Mail adress": "barosch.demir@thoughtworks.com\ndima.fateev@thoughtworks.com",
+        "Headshot": "Upload here",
+        "Social Media Handles": "www.linkedin.com/in/baran-demir-69091922a"
+      },
+      "full_text": "",
+      "metadata": {},
+      "chunks": {
+        "Country": {
+          "faiss_id": 63,
+          "i_start": null,
+          "i_end": null
+        },
+        "Name": {
+          "faiss_id": 64,
+          "i_start": null,
+          "i_end": null
+        },
+        "Role": {
+          "faiss_id": 65,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final title": {
+          "faiss_id": 66,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final abstract (Max. 150 words)": {
+          "faiss_id": 67,
+          "i_start": null,
+          "i_end": null
+        },
+        "Bio (Max. 120 words)": {
+          "faiss_id": 68,
+          "i_start": null,
+          "i_end": null
+        },
+        "Mail adress": {
+          "faiss_id": 69,
+          "i_start": null,
+          "i_end": null
+        },
+        "Headshot": {
+          "faiss_id": 70,
+          "i_start": null,
+          "i_end": null
+        },
+        "Social Media Handles": {
+          "faiss_id": 71,
+          "i_start": null,
+          "i_end": null
+        }
+      }
+    },
+    {
+      "id": "speaker-8",
+      "content": {
+        "Country": "Spain",
+        "Name": "Emma Manna",
+        "Role": "Senior Developer",
+        "Final title": "Training Without Sharing: Is Federated Learning the Answer to Data Privacy in AI?",
+        "Final abstract (Max. 150 words)": "In sectors like healthcare, data is abundant but often unusable due to strict privacy regulations. Federated learning offers a promising solution: training models locally on sensitive data and sharing only the learned parameters, not the data itself. This talk introduces the core concepts behind federated learning and explores its practical potential and limitations. Within the scope of natural language processing, detecting domain-specific medical terms in patient records, we will examine how federated approaches can benefit from sensitive datasets without compromising privacy. Through a series of performed experiments, we\u2019ll highlight the strengths and limitations of federated learning, as well as learnings that can help assessing its suitability for other use cases.",
+        "Bio (Max. 120 words)": "Emma is a passionate software engineer that has been working as a consultant at ThoughtWorks since 2022. As a recent graduate with a strong foundation in software development, Emma brings a fresh perspective to complex technical challenges.\n\nDuring her final year of university, Emma was actively involved in a research group, focusing on a Natural Language Processing (NLP) project within the medical field. This experience ignited a particular interest in the cutting-edge area of Federated Learning.",
+        "Mail adress": "emma.manna@thoughtworks.com",
+        "Headshot": "Upload here",
+        "Social Media Handles": "https://www.linkedin.com/in/emmamannaloyarte/"
+      },
+      "full_text": "",
+      "metadata": {},
+      "chunks": {
+        "Country": {
+          "faiss_id": 72,
+          "i_start": null,
+          "i_end": null
+        },
+        "Name": {
+          "faiss_id": 73,
+          "i_start": null,
+          "i_end": null
+        },
+        "Role": {
+          "faiss_id": 74,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final title": {
+          "faiss_id": 75,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final abstract (Max. 150 words)": {
+          "faiss_id": 76,
+          "i_start": null,
+          "i_end": null
+        },
+        "Bio (Max. 120 words)": {
+          "faiss_id": 77,
+          "i_start": null,
+          "i_end": null
+        },
+        "Mail adress": {
+          "faiss_id": 78,
+          "i_start": null,
+          "i_end": null
+        },
+        "Headshot": {
+          "faiss_id": 79,
+          "i_start": null,
+          "i_end": null
+        },
+        "Social Media Handles": {
+          "faiss_id": 80,
+          "i_start": null,
+          "i_end": null
+        }
+      }
+    },
+    {
+      "id": "speaker-9",
+      "content": {
+        "Country": "Italy",
+        "Name": "Matteo Vaccari",
+        "Role": "Technical Principal",
+        "Final title": "\"Port & Mend\" over Rewrite. Reducing the cost & risk of dealing with legacy code",
+        "Final abstract (Max. 150 words)": "Many legacy rewrite projects end up not delivering the expected benefits, while the legacy is still running and keeping the business alive.\n\nAn alternative is to port & mend the legacy code. We may need to adapt it to new hardware, modern libraries or new operating systems. \"\"Porting\"\" means taking the old code and making the minimal changes necessary to make it run in a new home. \n\n\"\"Mending\"\" is the humble act of giving old code some respect and care; fixing what needs fixing, refactoring what needs refactoring, and being happy when it comes back to life: maintainable, deployable, updatable and well tested.\n\nThere's a place for all approaches; sometimes a rewrite is what's needed, but often a simple \"\"port & mend\"\" approach is applicable, and when it is, it's less risky and cheaper. Advances in AI are making port & mend much cheaper and more accessible. \n\nThis talk is based on actual experience.",
+        "Bio (Max. 120 words)": "Matteo joined Thoughtworks as a developer 10 years ago, after a past as Extreme Programming coach. He worked on a number of software modernization efforts. His goal is to help organizations deliver better software, faster. He tries to make professional programming an enjoyable and fulfilling experience, for both developers and customers. Matteo's preferred tools are well known, but not that easy to apply in practice: Extreme Programming, Lean Thinking and TDD.",
+        "Mail adress": "mvaccari@thoughtworks.com",
+        "Headshot": "Upload here",
+        "Social Media Handles": ""
+      },
+      "full_text": "",
+      "metadata": {},
+      "chunks": {
+        "Country": {
+          "faiss_id": 81,
+          "i_start": null,
+          "i_end": null
+        },
+        "Name": {
+          "faiss_id": 82,
+          "i_start": null,
+          "i_end": null
+        },
+        "Role": {
+          "faiss_id": 83,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final title": {
+          "faiss_id": 84,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final abstract (Max. 150 words)": {
+          "faiss_id": 85,
+          "i_start": null,
+          "i_end": null
+        },
+        "Bio (Max. 120 words)": {
+          "faiss_id": 86,
+          "i_start": null,
+          "i_end": null
+        },
+        "Mail adress": {
+          "faiss_id": 87,
+          "i_start": null,
+          "i_end": null
+        },
+        "Headshot": {
+          "faiss_id": 88,
+          "i_start": null,
+          "i_end": null
+        }
+      }
+    },
+    {
+      "id": "speaker-10",
+      "content": {
+        "Country": "UK & Germany",
+        "Name": "Fabian Nonnenmacher",
+        "Role": "Principal AI Engineer & Lead Developer",
+        "Final title": "Unlock the full potential of Generative AI with Agent Platforms",
+        "Final abstract (Max. 150 words)": "Many organizations are integrating Generative AI tools in an ad-hoc manner, missing the opportunity to build a strategic, unified capability. This talk offers a blueprint for enterprises ready to unlock the full potential of Generative AI agents.\n\nWe'll delve into the essential platform capabilities needed to support the entire agent lifecycle, from service creation and deployment to robust evaluations and fine-tuning. This platform empowers product teams to organically create and share AI tools and agents, enriching existing offerings and making them discoverable company-wide.\n\nWe'll also spotlight the Model Context Protocol (MCP) and show how it allows various AI agents to work together seamlessly throughout your organization. To round things out, we'll tackle the enterprise challenges you can't ignore \u2013 security, auditing, and practical governance that enables rather than blocks innovation.",
+        "Bio (Max. 120 words)": "Ben is a results-driven AI/Engineering leader with a track record of building high-performing teams and shipping business-critical AI, ML and data products at scale. He has deep expertise across the full data lifecycle from research to production deployment. Ben is adept at defining technical strategy, driving execution and partnering cross-functionally to deliver measurable impact.\n\nFabian joined ThoughtWorks five years ago as a Backend Software Developer, bringing a powerful blend of technical skill and a deep product mindset. This drive led him to excel in both developer and Business Analyst roles, always delivering impactful solutions. As a Business Analyst, he recently played a key role in delivering an MLOps Platform, empowering multiple teams to successfully launch their projects. His latest efforts were centered on preparing this platform to unlock the full potential of Generative AI.",
+        "Mail adress": "fabian.nonnenmacher@thoughtworks.com",
+        "Headshot": "Upload here",
+        "Social Media Handles": "https://www.linkedin.com/in/benomahony/ \n\nhttps://www.linkedin.com/in/fnonnenmacher/ "
+      },
+      "full_text": "",
+      "metadata": {},
+      "chunks": {
+        "Country": {
+          "faiss_id": 89,
+          "i_start": null,
+          "i_end": null
+        },
+        "Name": {
+          "faiss_id": 90,
+          "i_start": null,
+          "i_end": null
+        },
+        "Role": {
+          "faiss_id": 91,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final title": {
+          "faiss_id": 92,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final abstract (Max. 150 words)": {
+          "faiss_id": 93,
+          "i_start": null,
+          "i_end": null
+        },
+        "Bio (Max. 120 words)": {
+          "faiss_id": 94,
+          "i_start": null,
+          "i_end": null
+        },
+        "Mail adress": {
+          "faiss_id": 95,
+          "i_start": null,
+          "i_end": null
+        },
+        "Headshot": {
+          "faiss_id": 96,
+          "i_start": null,
+          "i_end": null
+        },
+        "Social Media Handles": {
+          "faiss_id": 97,
+          "i_start": null,
+          "i_end": null
+        }
+      }
+    },
+    {
+      "id": "speaker-11",
+      "content": {
+        "Country": "Germany",
+        "Name": "Satish Kumar Nadarajan",
+        "Role": "Lead Infrastructure Consultant",
+        "Final title": "Pairing with the Machine: How AI Agents are Rewriting the Rules of Software Development",
+        "Final abstract (Max. 150 words)": "What if your coding partner could understand your codebase, recall architectural decisions, and evolve with your workflow?\n\nIn this talk, we explore how autonomous AI agents are reshaping software development by acting as intelligent pair programmers. Going beyond GitHub Copilot, these agents can reason across project context, suggest design improvements, surface decisions from team memory, and actively engage in architectural discussions.\n\nI\u2019ll walk through the building blocks\u2014LLMs, memory systems, retrieval-augmented generation (RAG), and tool orchestration\u2014using real-world prototypes integrated into VSCode.\n\nWe'll also address challenges like hallucinations, dependency drift, and trust.\n\nWhether you're an engineer, tech lead, or platform builder, this talk shows how AI-native development is no longer science fiction\u2014it\u2019s your next teammate.",
+        "Bio (Max. 120 words)": "Satish Kumar is a Lead Infrastructure Consultant at Thoughtworks, with over 15 years of experience in DevOps, cloud architecture, and platform engineering. He has led modernization and automation programs across Europe and India, influencing app modernization, SRE, and developer enablement at scale. Passionate about developer experience, Satish now focuses on integrating AI agents into engineering workflows to enhance productivity, collaboration, and system resilience.",
+        "Mail adress": "satish.nadarajan@thoughtworks.com",
+        "Headshot": "Upload here",
+        "Social Media Handles": "https://www.linkedin.com/in/schatzcloud/"
+      },
+      "full_text": "",
+      "metadata": {},
+      "chunks": {
+        "Country": {
+          "faiss_id": 98,
+          "i_start": null,
+          "i_end": null
+        },
+        "Name": {
+          "faiss_id": 99,
+          "i_start": null,
+          "i_end": null
+        },
+        "Role": {
+          "faiss_id": 100,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final title": {
+          "faiss_id": 101,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final abstract (Max. 150 words)": {
+          "faiss_id": 102,
+          "i_start": null,
+          "i_end": null
+        },
+        "Bio (Max. 120 words)": {
+          "faiss_id": 103,
+          "i_start": null,
+          "i_end": null
+        },
+        "Mail adress": {
+          "faiss_id": 104,
+          "i_start": null,
+          "i_end": null
+        },
+        "Headshot": {
+          "faiss_id": 105,
+          "i_start": null,
+          "i_end": null
+        },
+        "Social Media Handles": {
+          "faiss_id": 106,
+          "i_start": null,
+          "i_end": null
+        }
+      }
+    },
+    {
+      "id": "speaker-12",
+      "content": {
+        "Country": "UK",
+        "Name": "Holly Cummins",
+        "Role": "External keynote",
+        "Final title": "Things you thought you didn\u2019t need to care about that have a big impact on your job",
+        "Final abstract (Max. 150 words)": "Development is about working with computers, right? Well, not quite. Development is all about working with computers (easy), and working with people (hard). Oh, and it\u2019s about physics.\n\nThings like the speed of light and thermodynamics influence APIs, because they influence hardware and networking. If, like Holly, you slept through statistics modules in university, it will be a surprise to discover how statistics has changed our development workflows. Finally, we mustn\u2019t forget economics. The end of zero-interest-rates has changed the employment landscape for many of us. In this wide-ranging talk, Holly will cover why the end of Moore\u2019s law means we might finally need to get to grips with concurrent programming, why is Loom a good idea now when green threads were a bad idea, why is AOT a good idea now when it used to be a bad idea, and how much you should care about business studies, finance, and statistics.",
+        "Bio (Max. 120 words)": "Holly Cummins is a Senior Principal Software Engineer on the Red Hat Quarkus team and a Java Champion. Over her career, Holly has been a full-stack javascript developer, a build architect, a client-facing consultant, a JVM performance engineer, and an innovation leader. Holly has led projects to understand climate risks, count fish, help a blind athlete run ultra-marathons in the desert solo, and invent stories (although not at all the same time). She gets worked up about sustainability, technical empathy, extreme programming, the importance of proper testing, and automating all the things. You can find her at http://hollycummins.com, or follow her on socials at @holly_cummins.",
+        "Mail adress": "-",
+        "Headshot": "Upload here",
+        "Social Media Handles": "http://hollycummins.com"
+      },
+      "full_text": "",
+      "metadata": {},
+      "chunks": {
+        "Country": {
+          "faiss_id": 107,
+          "i_start": null,
+          "i_end": null
+        },
+        "Name": {
+          "faiss_id": 108,
+          "i_start": null,
+          "i_end": null
+        },
+        "Role": {
+          "faiss_id": 109,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final title": {
+          "faiss_id": 110,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final abstract (Max. 150 words)": {
+          "faiss_id": 111,
+          "i_start": null,
+          "i_end": null
+        },
+        "Bio (Max. 120 words)": {
+          "faiss_id": 112,
+          "i_start": null,
+          "i_end": null
+        },
+        "Mail adress": {
+          "faiss_id": 113,
+          "i_start": null,
+          "i_end": null
+        },
+        "Headshot": {
+          "faiss_id": 114,
+          "i_start": null,
+          "i_end": null
+        },
+        "Social Media Handles": {
+          "faiss_id": 115,
+          "i_start": null,
+          "i_end": null
+        }
+      }
+    }
+  ]
+}

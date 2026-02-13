@@ -31,6 +31,7 @@ class ChunkResult:
     chunk_key: str
     text: str
     document_text: Optional[str] = None
+    document: Optional['Document'] = None
 
 
 class Document:
