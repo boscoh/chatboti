@@ -112,13 +112,13 @@ class GenericRAGService:
             self.embedding_dim = len(test_embedding)
 
         # Load or create index and metadata
-        self.load_index_and_metadata()
+        self.initialize_search_backend()
 
         self._initialized = True
         return self
 
-    def load_index_and_metadata(self):
-        """Load or create FAISS index and metadata (sync operation)."""
+    def initialize_search_backend(self):
+        """Load or create search backend (FAISS index) and metadata (sync operation)."""
         self.model_name = getattr(self.embed_client, 'model', None)
 
         # Load or create FAISS index
