@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import json
 import logging
 import os
 import sys
@@ -10,7 +9,7 @@ from typing import Any, Dict
 
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
-from microeval.llm import get_llm_client, load_config
+from microeval.llm import load_config
 
 from chatboti.generic_rag import GenericRAGService
 from chatboti.logger import setup_logging
@@ -28,33 +27,11 @@ if not chat_service:
     raise ValueError("CHAT_SERVICE environment variable is not set")
 embed_service = os.getenv("EMBED_SERVICE") or chat_service
 
-# Get model and create paths
+# Get model
 model = os.getenv("EMBED_MODEL") or embed_models.get(embed_service)
-if not model:
-    raise ValueError(f"EMBED_MODEL not set for service {embed_service}")
 
-# Import model slug function
-from chatboti.rag_cli import make_model_slug
-model_slug = make_model_slug(model)
-
-# Set up paths
+# Set up data directory
 data_dir = Path(__file__).parent / "data"
-index_path = data_dir / f"vectors-{model_slug}.faiss"
-metadata_path = data_dir / f"metadata-{model_slug}.json"
-
-# Load embedding dimension from metadata
-if not metadata_path.exists():
-    raise FileNotFoundError(
-        f"RAG index not found at {metadata_path}. "
-        f"Run 'chatboti build-rag' to generate embeddings first."
-    )
-
-with open(metadata_path) as f:
-    metadata = json.load(f)
-    embedding_dim = metadata.get('embedding_dim', 768)
-
-# Create embed client
-embed_client = get_llm_client(embed_service, model=model)
 
 # Create RAG service (will be initialized in lifespan)
 rag_service = None
@@ -66,16 +43,11 @@ async def lifespan(app):
     try:
         logger.info(f"Initializing RAG service with embed_service: {embed_service}")
 
-        # Connect embed client
-        await embed_client.connect()
-        logger.info(f"Embed client connected: {embed_service}:{model}")
-
-        # Create and load RAG service
-        rag_service = GenericRAGService(
-            index_path=index_path,
-            metadata_path=metadata_path,
-            embedding_dim=embedding_dim,
-            embed_client=embed_client
+        # Use factory method to create RAG service
+        rag_service = await GenericRAGService.from_service(
+            service_name=embed_service,
+            model=model,
+            data_dir=data_dir
         )
         logger.info(f"RAG service initialized: {len(rag_service.documents)} documents, {rag_service.index.ntotal} vectors")
     except Exception as e:
@@ -83,8 +55,9 @@ async def lifespan(app):
         raise
     yield
     try:
-        if embed_client:
-            await embed_client.close()
+        # Close RAG service (which closes the embed client)
+        if rag_service:
+            await rag_service.__aexit__(None, None, None)
         logger.info("RAG service closed successfully")
     except Exception as e:
         logger.warning(f"Error during RAG service cleanup: {e}")

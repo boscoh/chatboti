@@ -1,5 +1,7 @@
 """Generic RAG service with FAISS index and JSON metadata storage."""
 
+import os
+import re
 from pathlib import Path
 from typing import List, Dict, Optional
 import json
@@ -22,7 +24,8 @@ class GenericRAGService:
         index_path: Path,
         metadata_path: Path,
         embedding_dim: int = 1536,
-        embed_client = None
+        embed_client = None,
+        _owns_client: bool = False
     ):
         """Initialize RAG service.
 
@@ -30,12 +33,14 @@ class GenericRAGService:
         :param metadata_path: Path to metadata JSON file
         :param embedding_dim: Embedding dimension
         :param embed_client: Embedding client (e.g., OpenAI, Ollama)
+        :param _owns_client: Internal flag - whether this instance owns the client lifecycle
         """
         self.index_path = index_path
         self.metadata_path = metadata_path
         self.embed_client = embed_client
         self.embedding_dim = embedding_dim
         self.model_name = getattr(embed_client, 'model', None)
+        self._owns_client = _owns_client
 
         # Load or create FAISS index
         if index_path.exists():
@@ -56,6 +61,115 @@ class GenericRAGService:
         else:
             self.chunk_refs = []
             self.documents = {}
+
+    @staticmethod
+    def make_model_slug(model_name: str) -> str:
+        """Convert model name to filesystem-safe slug.
+
+        :param model_name: Model name (e.g., 'nomic-embed-text', 'text-embedding-3-small')
+        :return: Slug (e.g., 'nomic-embed-text', 'text-embedding-3-small')
+        """
+        slug = re.sub(r':latest$', '', model_name)
+        slug = re.sub(r'[^a-z0-9]+', '-', slug.lower())
+        slug = re.sub(r'-+', '-', slug).strip('-')
+        return slug
+
+    @staticmethod
+    async def detect_embedding_dim(embed_client) -> int:
+        """Detect embedding dimension by running a test query.
+
+        :param embed_client: Embedding client
+        :return: Embedding dimension
+        """
+        test_embedding = await embed_client.embed("test")
+        return len(test_embedding)
+
+    @classmethod
+    async def from_service(
+        cls,
+        service_name: str,
+        model: Optional[str] = None,
+        data_dir: Optional[Path] = None,
+        index_path: Optional[Path] = None,
+        metadata_path: Optional[Path] = None
+    ) -> "GenericRAGService":
+        """Factory method to create RAG service from service name.
+
+        This method handles:
+        - Loading model configuration
+        - Creating model slug for file paths
+        - Connecting embed client
+        - Detecting embedding dimensions
+        - Loading existing RAG or creating new one
+
+        :param service_name: Service name (e.g., 'ollama', 'openai', 'bedrock')
+        :param model: Model name (optional, will load from config if not provided)
+        :param data_dir: Data directory (default: chatboti/data)
+        :param index_path: Path to FAISS index (overrides data_dir default)
+        :param metadata_path: Path to metadata JSON (overrides data_dir default)
+        :return: Initialized GenericRAGService instance
+        """
+        from microeval.llm import get_llm_client, load_config
+
+        # Load model configuration
+        model_config = load_config()
+        embed_models = model_config.get("embed_models", {})
+
+        # Get model name
+        if not model:
+            model = os.getenv("EMBED_MODEL") or embed_models.get(service_name)
+        if not model:
+            raise ValueError(
+                f"Model not specified and EMBED_MODEL not set for service '{service_name}'. "
+                f"Available models in config: {list(embed_models.keys())}"
+            )
+
+        # Create model slug for file paths
+        model_slug = cls.make_model_slug(model)
+
+        # Set up paths
+        if not data_dir:
+            # Default to chatboti/data
+            import chatboti
+            data_dir = Path(chatboti.__file__).parent / "data"
+
+        if not index_path:
+            index_path = data_dir / f"vectors-{model_slug}.faiss"
+        if not metadata_path:
+            metadata_path = data_dir / f"metadata-{model_slug}.json"
+
+        # Create and connect embed client
+        embed_client = get_llm_client(service_name, model=model)
+        await embed_client.connect()
+
+        # Detect or load embedding dimension
+        if metadata_path.exists():
+            # Load from metadata
+            with open(metadata_path) as f:
+                metadata = json.load(f)
+                embedding_dim = metadata.get('embedding_dim', 768)
+        else:
+            # Detect by running test query
+            embedding_dim = await cls.detect_embedding_dim(embed_client)
+
+        # Create service instance (marks that it owns the client)
+        return cls(
+            index_path=index_path,
+            metadata_path=metadata_path,
+            embedding_dim=embedding_dim,
+            embed_client=embed_client,
+            _owns_client=True
+        )
+
+    async def __aenter__(self):
+        """Async context manager entry."""
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Async context manager exit - cleanup embed client if we own it."""
+        if self._owns_client and self.embed_client:
+            await self.embed_client.close()
+        return False
 
     async def add_document(self, doc: Document) -> None:
         """Add document and its chunk embeddings to index.
