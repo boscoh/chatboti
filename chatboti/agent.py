@@ -277,6 +277,9 @@ class InfoAgent:
     SYSTEM_PROMPT = textwrap.dedent("""
         You are a helpful assistant that can use tools to answer questions about speakers.
 
+        CRITICAL: You MUST call tools directly - NEVER explain what tool to call or describe the format.
+        ALWAYS use the actual tool call mechanism - DO NOT write text describing what you would call.
+
         IMPORTANT: Use get_matching_speaker_talk_and_bio LIBERALLY and MULTIPLE TIMES to gather comprehensive information.
 
         EXPLORATION STRATEGY FOR COMPLEX QUERIES:
@@ -307,7 +310,10 @@ class InfoAgent:
         - Query: "compare Python vs JavaScript" → Search: "Python", "JavaScript", "Python development", "JavaScript development"
         - Query: "best speakers for beginners" → Use list_all_speakers, then search multiple topics
 
-        REMEMBER: Making 10 tool calls is ENCOURAGED for thorough answers!"""
+        REMEMBER: Making 10 tool calls is ENCOURAGED for thorough answers!
+
+        NEVER SAY: "I would call X tool" or "To find Y, I would use Z"
+        ALWAYS DO: Actually call the tool immediately - take action, don't describe it!"""
     )
 
     MAX_TOOL_ITERATIONS = 5
