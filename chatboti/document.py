@@ -17,7 +17,7 @@ class DocumentChunk:
     i_end: Optional[int] = None
 
 
-@dataclass
+@dataclass(frozen=True)
 class ChunkRef:
     """Maps faiss_id to document location."""
     document_id: str
