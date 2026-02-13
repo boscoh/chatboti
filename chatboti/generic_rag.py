@@ -56,16 +56,6 @@ class GenericRAGService:
         self.chunk_refs = []
         self.documents = {}
 
-    async def detect_embedding_dim(self) -> int:
-        """Detect embedding dimension by running a test query.
-
-        Uses self.embed_client to detect dimensions.
-
-        :return: Embedding dimension
-        """
-        test_embedding = await self.embed_client.embed("test")
-        return len(test_embedding)
-
     async def get_embedding(self, text: str) -> np.ndarray:
         """Get text embedding as numpy array.
 
@@ -118,7 +108,8 @@ class GenericRAGService:
                 metadata = json.load(f)
                 self.embedding_dim = metadata.get('embedding_dim', 768)
         else:
-            self.embedding_dim = await self.detect_embedding_dim()
+            test_embedding = await self.embed_client.embed("test")
+            self.embedding_dim = len(test_embedding)
 
         # Load or create index and metadata
         self.load_index_and_metadata()
