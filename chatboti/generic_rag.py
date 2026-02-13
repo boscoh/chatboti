@@ -10,7 +10,7 @@ import numpy as np
 from collections import defaultdict
 
 from chatboti.document import Document, DocumentChunk, ChunkRef, ChunkResult
-from chatboti.loaders import CSVDocumentLoader, DocumentLoader
+from chatboti.loaders import DocumentLoader
 
 
 class GenericRAGService:
@@ -132,12 +132,12 @@ class GenericRAGService:
             self.embedding_dim = await self.detect_embedding_dim()
 
         # Load or create index and metadata
-        self._load_index_and_metadata()
+        self.load_index_and_metadata()
 
         self._initialized = True
         return self
 
-    def _load_index_and_metadata(self):
+    def load_index_and_metadata(self):
         """Load or create FAISS index and metadata (sync operation)."""
         self.model_name = getattr(self.embed_client, 'model', None)
 
@@ -188,15 +188,12 @@ class GenericRAGService:
         self.documents[doc.id] = doc
 
     def _get_loader(self, source: str) -> DocumentLoader:
-        """Get appropriate loader based on file extension.
+        """Get document loader instance.
 
         :param source: File path
         :return: Document loader instance
         """
-        ext = Path(source).suffix.lower()
-        if ext == '.csv':
-            return CSVDocumentLoader()
-        raise ValueError(f"Unsupported file type: {ext}. Only .csv supported currently.")
+        return DocumentLoader()
 
     async def build_embeddings_from_documents(self, source: str, doc_type: str) -> None:
         """Load documents from source and build embeddings.
@@ -213,18 +210,19 @@ class GenericRAGService:
     def save(self) -> None:
         """Persist index and metadata to disk."""
         faiss.write_index(self.index, str(self.index_path))
-        self._save_metadata()
+        self.save_metadata()
 
-    def _vector_search(self, query_emb: np.ndarray, k: int) -> tuple[np.ndarray, np.ndarray]:
+    def vector_search(self, query_emb: np.ndarray, k: int) -> tuple[np.ndarray, np.ndarray]:
         """Vector similarity search wrapper (override for cloud backends).
 
         :param query_emb: Query embedding shape (1, dim)
         :param k: Number of results
-        :return: (distances, faiss_ids) both shape (1, k)
+        :return: (distances, faiss_ids) both shape (k,) - first result set
         """
-        return self.index.search(query_emb, k)
+        distances, faiss_ids = self.index.search(query_emb, k)
+        return distances[0], faiss_ids[0]
 
-    def _get_chunk_refs(self, faiss_ids: List[int]) -> List[ChunkRef]:
+    def get_chunk_refs(self, faiss_ids: List[int]) -> List[ChunkRef]:
         """Fetch chunk references (override in subclasses).
 
         :param faiss_ids: List of FAISS indices
@@ -232,7 +230,7 @@ class GenericRAGService:
         """
         return [self.chunk_refs[fid] for fid in faiss_ids]
 
-    def _get_chunk_texts(self, refs: List[ChunkRef]) -> Dict[ChunkRef, str]:
+    def get_chunk_texts(self, refs: List[ChunkRef]) -> Dict[ChunkRef, str]:
         """Fetch only text needed for chunks (override in subclasses).
 
         :param refs: Chunk references
@@ -257,7 +255,7 @@ class GenericRAGService:
                     result[ref] = doc.content[ref.chunk_key]
         return result
 
-    def _get_document_texts(self, doc_ids: List[str]) -> Dict[str, str]:
+    def get_document_texts(self, doc_ids: List[str]) -> Dict[str, str]:
         """Fetch full document text (override in subclasses).
 
         :param doc_ids: List of document IDs
@@ -273,7 +271,7 @@ class GenericRAGService:
                 result[doc_id] = json.dumps(doc.content, indent=2)
         return result
 
-    def _save_metadata(self) -> None:
+    def save_metadata(self) -> None:
         """Save metadata to JSON (override in subclasses)."""
         data = {
             'model_name': self.model_name,
@@ -295,28 +293,27 @@ class GenericRAGService:
         # 1. Embed query → shape (1, embedding_dim) for batch processing
         query_emb = await self.get_embedding(query)
 
-        # 2. Vector search returns (distances, indices)
-        # Shape: (n_queries, k) where n_queries=1, k=number of results
-        # distances[0]: k distances to nearest neighbors (float32)
-        # faiss_ids[0]: k indices into vector index (int64)
-        distances, faiss_ids = self._vector_search(query_emb, k)
+        # 2. Vector search returns (distances, faiss_ids) each shape (k,)
+        # distances: k distances to nearest neighbors (float32)
+        # faiss_ids: k indices into vector index (int64)
+        distances, faiss_ids = self.vector_search(query_emb, k)
 
         # 3. Filter out -1 indices (returned when index is empty or not enough results)
-        valid_ids = [fid for fid in faiss_ids[0].tolist() if fid >= 0]
+        valid_ids = [fid for fid in faiss_ids.tolist() if fid >= 0]
         if not valid_ids:
             return []
 
         # 4. Fetch chunk references
-        refs: List[ChunkRef] = self._get_chunk_refs(valid_ids)
+        refs: List[ChunkRef] = self.get_chunk_refs(valid_ids)
 
         # 5. Fetch chunk texts (optimized)
-        chunk_texts = self._get_chunk_texts(refs)
+        chunk_texts = self.get_chunk_texts(refs)
 
         # 6. Optionally fetch full documents
         document_texts = None
         if include_documents:
             doc_ids = list(set(ref.document_id for ref in refs))
-            document_texts = self._get_document_texts(doc_ids)
+            document_texts = self.get_document_texts(doc_ids)
 
         # 7. Build results
         return [

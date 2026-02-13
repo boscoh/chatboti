@@ -5,36 +5,23 @@ import os
 import pytest
 from pathlib import Path
 
-from chatboti.loaders import DocumentLoader, CSVDocumentLoader
+from chatboti.loaders import DocumentLoader
 from chatboti.document import Document, DocumentChunk
 
 
 class TestDocumentLoader:
-    """Test DocumentLoader base class."""
+    """Test DocumentLoader monolithic class."""
 
     @pytest.mark.asyncio
-    async def test_base_class_is_abstract(self):
-        """Test that DocumentLoader.load() raises NotImplementedError."""
+    async def test_unsupported_file_type(self):
+        """Test that unsupported file types raise ValueError."""
         loader = DocumentLoader()
-        with pytest.raises(NotImplementedError):
+        with pytest.raises(ValueError, match="Unsupported file type"):
             await loader.load("dummy.txt", "test")
 
-    @pytest.mark.asyncio
-    async def test_custom_loader_can_override(self):
-        """Test that custom loader can override load() method."""
-        class CustomLoader(DocumentLoader):
-            async def load(self, source: str, doc_type: str):
-                return [Document(id=f"{doc_type}-custom", content={"data": "test"})]
 
-        loader = CustomLoader()
-        docs = await loader.load("dummy.txt", "custom")
-        assert len(docs) == 1
-        assert docs[0].id == "custom-custom"
-        assert docs[0].content["data"] == "test"
-
-
-class TestCSVDocumentLoader:
-    """Test CSVDocumentLoader class."""
+class TestDocumentLoaderCSV:
+    """Test DocumentLoader class."""
 
     @pytest.fixture
     def sample_csv_path(self):
@@ -59,7 +46,7 @@ class TestCSVDocumentLoader:
     @pytest.mark.asyncio
     async def test_load_with_sample_csv(self, sample_csv_path):
         """Test loading documents from sample_speakers.csv."""
-        loader = CSVDocumentLoader()
+        loader = DocumentLoader()
         docs = await loader.load(str(sample_csv_path), "speaker")
 
         # Check correct number of documents
@@ -87,7 +74,7 @@ class TestCSVDocumentLoader:
     @pytest.mark.asyncio
     async def test_document_id_format(self, temp_csv):
         """Test that document IDs follow correct format."""
-        loader = CSVDocumentLoader()
+        loader = DocumentLoader()
         docs = await loader.load(str(temp_csv), "person")
 
         assert docs[0].id == "person-0"
@@ -97,7 +84,7 @@ class TestCSVDocumentLoader:
     @pytest.mark.asyncio
     async def test_content_dict_contains_all_fields(self, temp_csv):
         """Test that content dict contains all CSV fields."""
-        loader = CSVDocumentLoader()
+        loader = DocumentLoader()
         docs = await loader.load(str(temp_csv), "person")
 
         # Check all fields present
@@ -110,7 +97,7 @@ class TestCSVDocumentLoader:
     @pytest.mark.asyncio
     async def test_chunks_created_for_all_fields_by_default(self, temp_csv):
         """Test that chunks are created for all non-empty fields by default."""
-        loader = CSVDocumentLoader()
+        loader = DocumentLoader()
         docs = await loader.load(str(temp_csv), "person")
 
         # First row: name, age, bio have values (notes is empty)
@@ -134,7 +121,7 @@ class TestCSVDocumentLoader:
     @pytest.mark.asyncio
     async def test_chunks_created_for_specific_embed_fields(self, temp_csv):
         """Test that only specified embed_fields get chunks."""
-        loader = CSVDocumentLoader(embed_fields=["name", "bio"])
+        loader = DocumentLoader(embed_fields=["name", "bio"])
         docs = await loader.load(str(temp_csv), "person")
 
         # Only name and bio should have chunks
@@ -151,7 +138,7 @@ class TestCSVDocumentLoader:
     @pytest.mark.asyncio
     async def test_chunks_have_unassigned_faiss_id(self, temp_csv):
         """Test that all chunks have faiss_id=-1 (unassigned)."""
-        loader = CSVDocumentLoader()
+        loader = DocumentLoader()
         docs = await loader.load(str(temp_csv), "person")
 
         for doc in docs:
@@ -164,7 +151,7 @@ class TestCSVDocumentLoader:
     @pytest.mark.asyncio
     async def test_get_chunk_text_integration(self, sample_csv_path):
         """Test that loaded documents can retrieve chunk text via get_chunk_text()."""
-        loader = CSVDocumentLoader(embed_fields=["bio", "abstract"])
+        loader = DocumentLoader(embed_fields=["bio", "abstract"])
         docs = await loader.load(str(sample_csv_path), "speaker")
 
         # Test get_chunk_text for bio field
@@ -185,7 +172,7 @@ class TestCSVDocumentLoader:
     @pytest.mark.asyncio
     async def test_get_chunk_text_returns_correct_field_values(self, temp_csv):
         """Test that get_chunk_text returns exact field values."""
-        loader = CSVDocumentLoader()
+        loader = DocumentLoader()
         docs = await loader.load(str(temp_csv), "person")
 
         # Test exact value retrieval
@@ -199,7 +186,7 @@ class TestCSVDocumentLoader:
     @pytest.mark.asyncio
     async def test_embed_fields_none_means_all_fields(self, temp_csv):
         """Test that embed_fields=None results in all non-empty fields being embedded."""
-        loader = CSVDocumentLoader(embed_fields=None)
+        loader = DocumentLoader(embed_fields=None)
         docs = await loader.load(str(temp_csv), "person")
 
         # Should behave same as default (all non-empty fields)
@@ -211,7 +198,7 @@ class TestCSVDocumentLoader:
     @pytest.mark.asyncio
     async def test_embed_fields_with_empty_list(self, temp_csv):
         """Test that embed_fields=[] falls back to all non-empty fields."""
-        loader = CSVDocumentLoader(embed_fields=[])
+        loader = DocumentLoader(embed_fields=[])
         docs = await loader.load(str(temp_csv), "person")
 
         # Empty list is falsy, so should fall back to all non-empty fields
@@ -223,7 +210,7 @@ class TestCSVDocumentLoader:
     @pytest.mark.asyncio
     async def test_embed_fields_with_nonexistent_field(self, temp_csv):
         """Test behavior when embed_fields contains fields not in CSV."""
-        loader = CSVDocumentLoader(embed_fields=["name", "nonexistent"])
+        loader = DocumentLoader(embed_fields=["name", "nonexistent"])
         docs = await loader.load(str(temp_csv), "person")
 
         # Should only create chunk for name
@@ -233,7 +220,7 @@ class TestCSVDocumentLoader:
     @pytest.mark.asyncio
     async def test_multiple_documents_from_same_csv(self, sample_csv_path):
         """Test loading multiple documents maintains independence."""
-        loader = CSVDocumentLoader(embed_fields=["bio"])
+        loader = DocumentLoader(embed_fields=["bio"])
         docs = await loader.load(str(sample_csv_path), "speaker")
 
         # Each document should be independent
