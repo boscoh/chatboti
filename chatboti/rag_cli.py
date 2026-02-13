@@ -1,7 +1,9 @@
 """CLI commands for GenericRAGService."""
 
 import os
+import json
 from pathlib import Path
+from rich.pretty import pprint
 from dotenv import load_dotenv
 from microeval.llm import load_config
 
@@ -139,23 +141,14 @@ async def search_rag(
             print(f"{'='*70}")
             print(f"Result {i}:")
             print(f"{'='*70}")
-            print(f"document_id: {result.document_id}")
-            print(f"chunk_key: {result.chunk_key}")
-            print(f"\nChunk text:")
-            print(f"  {result.text}")
-
-            if result.document:
-                print(f"\nDocument content:")
-                if isinstance(result.document.content, dict):
-                    for key, value in result.document.content.items():
-                        print(f"  {key}: {value}")
-                else:
-                    print(f"  {result.document.content}")
-
             if result.document_text:
-                print(f"\nFull document text (first 300 chars):")
-                print(f"  {result.document_text[:300]}...")
-
+                try:
+                    doc_json = json.loads(result.document_text)
+                    pprint(doc_json)
+                except (json.JSONDecodeError, TypeError):
+                    print(result.document_text)
+            else:
+                print("(no document_text)")
             print()
 
     return 0
