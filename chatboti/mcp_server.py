@@ -18,6 +18,17 @@ logger = logging.getLogger(__name__)
 
 load_dotenv()
 
+
+def get_default_model(models_dict: dict, service: str) -> str:
+    """Get the default model for a service (first in list or string value)."""
+    models = models_dict.get(service, [])
+    if isinstance(models, list) and models:
+        return models[0]
+    elif isinstance(models, str):
+        return models
+    return ""
+
+
 # Load model configuration
 model_config = load_config()
 embed_models = model_config["embed_models"]
@@ -28,7 +39,7 @@ if not chat_service:
 embed_service = os.getenv("EMBED_SERVICE") or chat_service
 
 # Get model
-model = os.getenv("EMBED_MODEL") or embed_models.get(embed_service)
+model = os.getenv("EMBED_MODEL") or get_default_model(embed_models, embed_service)
 
 # Set up data directory
 data_dir = Path(__file__).parent / "data"

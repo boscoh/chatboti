@@ -25,6 +25,16 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 
+def get_default_model(models_dict: dict, service: str) -> str:
+    """Get the default model for a service (first in list or string value)."""
+    models = models_dict.get(service, [])
+    if isinstance(models, list) and models:
+        return models[0]
+    elif isinstance(models, str):
+        return models
+    return ""
+
+
 class InfoAgent:
     def __init__(self, chat_service: Optional[str] = None):
         self.chat_service = chat_service or os.getenv("CHAT_SERVICE")
@@ -39,7 +49,7 @@ class InfoAgent:
         model = (
             os.getenv("CHAT_MODEL")
             or os.getenv(f"{self.chat_service.upper()}_MODEL")
-            or py_.get(chat_models, self.chat_service)
+            or get_default_model(chat_models, self.chat_service)
         )
         if not model:
             raise ValueError(f"Unsupported chat service: {self.chat_service}")

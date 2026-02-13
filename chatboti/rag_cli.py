@@ -8,6 +8,16 @@ from dotenv import load_dotenv
 from microeval.llm import load_config
 
 
+def get_default_model(models_dict: dict, service: str) -> str:
+    """Get the default model for a service (first in list or string value)."""
+    models = models_dict.get(service, [])
+    if isinstance(models, list) and models:
+        return models[0]
+    elif isinstance(models, str):
+        return models
+    return ""
+
+
 async def build_embeddings(
     csv_path: str = None,
     index_path: str = None,
@@ -28,7 +38,7 @@ async def build_embeddings(
     embed_models = model_config.get("embed_models", {})
 
     service = os.getenv("EMBED_SERVICE") or os.getenv("CHAT_SERVICE")
-    model = os.getenv("EMBED_MODEL") or embed_models.get(service)
+    model = os.getenv("EMBED_MODEL") or get_default_model(embed_models, service)
 
     if not service:
         print("✗ Error: EMBED_SERVICE or CHAT_SERVICE must be set")
@@ -111,7 +121,7 @@ async def search_rag(
     embed_models = model_config.get("embed_models", {})
 
     service = os.getenv("EMBED_SERVICE") or os.getenv("CHAT_SERVICE")
-    model = os.getenv("EMBED_MODEL") or embed_models.get(service)
+    model = os.getenv("EMBED_MODEL") or get_default_model(embed_models, service)
 
     if not service or not model:
         print("✗ Error: EMBED_SERVICE and EMBED_MODEL must be set")

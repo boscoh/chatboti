@@ -12,6 +12,16 @@ from chatboti.loaders import load_documents
 from chatboti.utils import make_slug
 
 
+def get_default_model(models_dict: dict, service: str) -> str:
+    """Get the default model for a service (first in list or string value)."""
+    models = models_dict.get(service, [])
+    if isinstance(models, list) and models:
+        return models[0]
+    elif isinstance(models, str):
+        return models
+    return ""
+
+
 class GenericRAGService:
     """RAG service with FAISS index and JSON metadata storage.
 
@@ -76,7 +86,7 @@ class GenericRAGService:
 
         # Get model name
         if not self.model:
-            self.model = os.getenv("EMBED_MODEL") or embed_models.get(self.service_name)
+            self.model = os.getenv("EMBED_MODEL") or get_default_model(embed_models, self.service_name)
         if not self.model:
             raise ValueError(
                 f"Model not specified and EMBED_MODEL not set for service '{self.service_name}'. "

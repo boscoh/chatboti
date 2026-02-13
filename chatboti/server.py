@@ -32,6 +32,16 @@ embed_models = model_config["embed_models"]
 logger = logging.getLogger(__name__)
 
 
+def get_default_model(models_dict: dict, service: str) -> str:
+    """Get the default model for a service (first in list or string value)."""
+    models = models_dict.get(service, [])
+    if isinstance(models, list) and models:
+        return models[0]
+    elif isinstance(models, str):
+        return models
+    return ""
+
+
 class SlimMessage(BaseModel):
     role: str
     content: str
@@ -66,7 +76,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             logger.info(f"Pre-loading embeddings with {embed_service}...")
 
             # Get model from config
-            model = os.getenv("EMBED_MODEL") or embed_models.get(embed_service)
+            model = os.getenv("EMBED_MODEL") or get_default_model(embed_models, embed_service)
 
             # Set up paths
             data_dir = Path(__file__).parent / "data"
@@ -139,11 +149,11 @@ def create_app() -> FastAPI:
             info["chat_model"] = (
                 os.getenv("CHAT_MODEL")
                 or getattr(app.state.info_agent.chat_client, "model", None)
-                or chat_models.get(app.state.info_agent.chat_service)
+                or get_default_model(chat_models, app.state.info_agent.chat_service)
             )
             embed_service = os.getenv("EMBED_SERVICE") or os.getenv("CHAT_SERVICE")
             info["embed_service"] = embed_service
-            info["embed_model"] = embed_models.get(embed_service)
+            info["embed_model"] = get_default_model(embed_models, embed_service)
         return info
 
     @app.get("/")
