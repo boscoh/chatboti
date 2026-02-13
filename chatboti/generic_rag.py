@@ -21,55 +21,32 @@ class GenericRAGService:
 
     def __init__(
         self,
-        service_name: Optional[str] = None,
+        service_name: str,
         model: Optional[str] = None,
         data_dir: Optional[Path] = None,
         index_path: Optional[Path] = None,
-        metadata_path: Optional[Path] = None,
-        embedding_dim: Optional[int] = None,
-        embed_client = None
+        metadata_path: Optional[Path] = None
     ):
         """Initialize RAG service (lazy - call via context manager for async setup).
 
-        High-level API (auto-creates client):
+        Usage:
             async with GenericRAGService(service_name="ollama", model="nomic-embed-text") as rag:
                 results = await rag.search("query")
 
-        Low-level API (bring your own client):
-            async with GenericRAGService(
-                index_path=path,
-                metadata_path=path,
-                embed_client=client
-            ) as rag:
-                results = await rag.search("query")
-
-        :param service_name: Service name (e.g., 'ollama', 'openai') - high-level API
-        :param model: Model name - high-level API
-        :param data_dir: Data directory (default: chatboti/data) - high-level API
-        :param index_path: Path to FAISS index file - overrides auto-detection
-        :param metadata_path: Path to metadata JSON file - overrides auto-detection
-        :param embedding_dim: Embedding dimension - auto-detected if not provided
-        :param embed_client: Pre-connected embedding client - low-level API
+        :param service_name: Service name (e.g., 'ollama', 'openai', 'bedrock')
+        :param model: Model name (optional, will load from EMBED_MODEL env or config)
+        :param data_dir: Data directory (default: chatboti/data)
+        :param index_path: Path to FAISS index file (overrides auto-detection)
+        :param metadata_path: Path to metadata JSON file (overrides auto-detection)
         """
-        # Determine initialization mode
-        if service_name or model:
-            self._init_mode = 'service'
-            self.service_name = service_name
-            self.model = model
-            self.data_dir = data_dir
-        elif embed_client:
-            self._init_mode = 'direct'
-        else:
-            raise ValueError(
-                "Must provide either (service_name, model) for high-level API "
-                "or (embed_client, index_path, metadata_path) for low-level API"
-            )
-
         # Store parameters (initialization happens in __aenter__)
+        self.service_name = service_name
+        self.model = model
+        self.data_dir = data_dir
         self.index_path = index_path
         self.metadata_path = metadata_path
-        self.embed_client = embed_client
-        self.embedding_dim = embedding_dim
+        self.embed_client = None
+        self.embedding_dim = None
         self.model_name = None
         self._initialized = False
 
@@ -105,18 +82,6 @@ class GenericRAGService:
         if self._initialized:
             return self
 
-        if self._init_mode == 'service':
-            # High-level API: create client and detect everything
-            await self._init_from_service()
-        else:
-            # Low-level API: use provided client and paths
-            await self._init_direct()
-
-        self._initialized = True
-        return self
-
-    async def _init_from_service(self):
-        """Initialize from service name (high-level API)."""
         from microeval.llm import get_llm_client, load_config
 
         # Load model configuration
@@ -148,7 +113,6 @@ class GenericRAGService:
         # Create and connect embed client
         self.embed_client = get_llm_client(self.service_name, model=self.model)
         await self.embed_client.connect()
-        self._owns_client = True
 
         # Detect or load embedding dimension
         if self.metadata_path.exists():
@@ -161,27 +125,8 @@ class GenericRAGService:
         # Load or create index and metadata
         self._load_index_and_metadata()
 
-    async def _init_direct(self):
-        """Initialize from provided client (low-level API)."""
-        if not self.embed_client:
-            raise ValueError("embed_client is required for low-level API")
-        if not self.index_path or not self.metadata_path:
-            raise ValueError("index_path and metadata_path are required for low-level API")
-
-        self._owns_client = False
-        self.model_name = getattr(self.embed_client, 'model', None)
-
-        # Auto-detect dimension if not provided
-        if not self.embedding_dim:
-            if self.metadata_path.exists():
-                with open(self.metadata_path) as f:
-                    metadata = json.load(f)
-                    self.embedding_dim = metadata.get('embedding_dim', 768)
-            else:
-                self.embedding_dim = await self.detect_embedding_dim(self.embed_client)
-
-        # Load or create index and metadata
-        self._load_index_and_metadata()
+        self._initialized = True
+        return self
 
     def _load_index_and_metadata(self):
         """Load or create FAISS index and metadata (sync operation)."""
@@ -207,8 +152,8 @@ class GenericRAGService:
             self.documents = {}
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """Async context manager exit - cleanup embed client if we own it."""
-        if self._owns_client and self.embed_client:
+        """Async context manager exit - cleanup embed client."""
+        if self.embed_client:
             await self.embed_client.close()
         return False
 
