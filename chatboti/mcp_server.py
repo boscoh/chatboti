@@ -68,7 +68,7 @@ mcp = FastMCP("Simple MCP", lifespan=lifespan)
 
 
 @mcp.tool()
-async def get_best_speaker(query: str) -> Dict[str, Any]:
+async def get_matching_speaker_talk_and_bio(query: str) -> Dict[str, Any]:
     """
     Find the most relevant speaker for a given topic using AI-powered semantic search.
 
@@ -105,19 +105,9 @@ async def get_best_speaker(query: str) -> Dict[str, Any]:
         speaker_doc = top_result.document
         speaker_content = speaker_doc.content if isinstance(speaker_doc.content, dict) else {}
 
-        # Format speaker data to match old API
-        speaker = {
-            "name": speaker_content.get("Name", ""),
-            "bio_max_120_words": speaker_content.get("Bio (Max. 120 words)", ""),
-            "final_abstract_max_150_words": speaker_content.get("Final abstract (Max. 150 words)", ""),
-            "role": speaker_content.get("Role", ""),
-            "country": speaker_content.get("Country", ""),
-            "final_title": speaker_content.get("Final title", ""),
-        }
-
         return {
             "success": True,
-            "speaker": speaker,
+            "speaker": speaker_content,
             "query": query,
             "total_speakers_searched": len(rag_service.documents),
         }
