@@ -12,6 +12,7 @@ from cyclopts import App
 from chatboti.server import run_server
 from chatboti.agent import amain as agent_amain
 from chatboti.rag import build_embeddings as rag_amain, search_loop
+from chatboti.rag_cli import build_embeddings as build_rag_new, search_rag
 from chatboti.docker import main as run_docker_main
 from chatboti.logger import setup_logging
 
@@ -60,13 +61,58 @@ def search():
     asyncio.run(search_loop())
 
 
-@app.command(sort_key=5)
+@app.command(name="build-rag", sort_key=5)
+def build_rag(
+    csv_path: str = "",
+    index_path: str = "",
+    metadata_path: str = ""
+):
+    """Build RAG embeddings using GenericRAGService.
+
+    All paths default to chatboti/data/ directory.
+
+    :param csv_path: Path to CSV file (default: chatboti/data/2025-09-02-speaker-bio.csv)
+    :param index_path: Path to save FAISS index (default: chatboti/data/vectors.faiss)
+    :param metadata_path: Path to save metadata JSON (default: chatboti/data/metadata.json)
+    """
+    asyncio.run(build_rag_new(
+        csv_path if csv_path else None,
+        index_path if index_path else None,
+        metadata_path if metadata_path else None
+    ))
+
+
+@app.command(name="search-rag", sort_key=6)
+def search_rag_cmd(
+    query: str,
+    k: int = 5,
+    index_path: str = "",
+    metadata_path: str = ""
+):
+    """Search the RAG index.
+
+    Paths default to chatboti/data/ directory.
+
+    :param query: Search query
+    :param k: Number of results to return
+    :param index_path: Path to FAISS index (default: chatboti/data/vectors.faiss)
+    :param metadata_path: Path to metadata JSON (default: chatboti/data/metadata.json)
+    """
+    asyncio.run(search_rag(
+        query,
+        k,
+        index_path if index_path else None,
+        metadata_path if metadata_path else None
+    ))
+
+
+@app.command(sort_key=7)
 def docker():
     """Build and run Docker container with AWS credentials."""
     run_docker_main()
 
 
-@app.command(sort_key=6)
+@app.command(sort_key=8)
 def version():
     """Show version."""
     print("chatboti 0.1.0")
