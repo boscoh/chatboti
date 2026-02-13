@@ -5,7 +5,7 @@ import os
 import pytest
 from pathlib import Path
 
-from chatboti.loaders import load_documents, load_csv, infer_doc_type
+from chatboti.loaders import load_documents, load_csv
 from chatboti.document import Document, DocumentChunk
 
 
@@ -17,12 +17,6 @@ class TestLoadDocuments:
         """Test that unsupported file types raise ValueError."""
         with pytest.raises(ValueError, match="Unsupported file type"):
             await load_documents("dummy.txt", "test")
-
-    def test_infer_doc_type(self):
-        """Test doc_type inference from filename."""
-        assert infer_doc_type("speakers.csv") == "speakers"
-        assert infer_doc_type("/path/to/papers.csv") == "papers"
-        assert infer_doc_type("data/users.json") == "users"
 
 
 class TestLoadCSV:

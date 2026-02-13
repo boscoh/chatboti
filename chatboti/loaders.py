@@ -7,15 +7,6 @@ from typing import List, Optional
 from chatboti.document import Document, DocumentChunk
 
 
-def infer_doc_type(source: str) -> str:
-    """Infer document type from filename.
-
-    :param source: File path
-    :return: Document type (filename stem)
-    """
-    return Path(source).stem
-
-
 async def load_csv(source: str, doc_type: Optional[str] = None, embed_fields: Optional[List[str]] = None) -> List[Document]:
     """Load CSV rows as documents.
 
@@ -28,7 +19,7 @@ async def load_csv(source: str, doc_type: Optional[str] = None, embed_fields: Op
     :return: List of documents with chunks
     """
     if doc_type is None:
-        doc_type = infer_doc_type(source)
+        doc_type = Path(source).stem
 
     documents = []
     with open(source) as f:
