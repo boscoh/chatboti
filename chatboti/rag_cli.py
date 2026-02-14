@@ -5,7 +5,8 @@ import json
 from pathlib import Path
 from rich.pretty import pprint
 from dotenv import load_dotenv
-from microeval.llm import load_config
+from microeval.llm import load_config, get_llm_client
+from chatboti.generic_rag import GenericRAGService
 
 # Try to import HDF5RAGService, but handle gracefully if not available
 try:
@@ -83,11 +84,14 @@ async def build_embeddings(
         print(f"• Format: HDF5")
         print()
 
-        # Create HDF5 RAG service
+        # Create and connect embed client
         print(f"→ Connecting to {service}...")
+        embed_client = get_llm_client(service, model=model)
+        await embed_client.connect()
+
+        # Create HDF5 RAG service
         async with HDF5RAGService(
-            service_name=service,
-            model=model,
+            embed_client=embed_client,
             data_dir=data_dir,
             hdf5_path=Path(index_path)
         ) as rag:
@@ -107,6 +111,9 @@ async def build_embeddings(
             print(f"  ├─ Chunks: {len(rag.chunk_refs)}")
             print(f"  ├─ Vectors: {rag.index.ntotal}")
             print(f"  └─ Saved to: {rag.hdf5_path}")
+
+        # Close embed client
+        await embed_client.close()
     else:
         # Convert string paths to Path objects for factory method
         index_path_obj = Path(index_path) if index_path else None
@@ -117,11 +124,14 @@ async def build_embeddings(
         print(f"• CSV: {csv_path}")
         print()
 
-        # Create RAG service using context manager
+        # Create and connect embed client
         print(f"→ Connecting to {service}...")
+        embed_client = get_llm_client(service, model=model)
+        await embed_client.connect()
+
+        # Create RAG service using context manager
         async with GenericRAGService(
-            service_name=service,
-            model=model,
+            embed_client=embed_client,
             data_dir=data_dir,
             index_path=index_path_obj,
             metadata_path=metadata_path_obj
@@ -143,6 +153,9 @@ async def build_embeddings(
             print(f"  ├─ Chunks: {len(rag.chunk_refs)}")
             print(f"  ├─ Vectors: {rag.index.ntotal}")
             print(f"  └─ Saved to: {rag.index_path} and {rag.metadata_path}")
+
+        # Close embed client
+        await embed_client.close()
 
     return 0
 
@@ -184,11 +197,14 @@ async def search_rag(
             print("   Install h5py: pip install h5py")
             return 1
 
-        # Create HDF5 RAG service
+        # Create and connect embed client
         data_dir = Path(__file__).parent / "data"
+        embed_client = get_llm_client(service, model=model)
+        await embed_client.connect()
+
+        # Create HDF5 RAG service
         async with HDF5RAGService(
-            service_name=service,
-            model=model,
+            embed_client=embed_client,
             data_dir=data_dir,
             hdf5_path=Path(index_path)
         ) as rag:
@@ -212,16 +228,22 @@ async def search_rag(
                 else:
                     print("(no document_text)")
                 print()
+
+        # Close embed client
+        await embed_client.close()
     else:
         # Convert string paths to Path objects
         data_dir = Path(__file__).parent / "data"
         index_path_obj = Path(index_path) if index_path else None
         metadata_path_obj = Path(metadata_path) if metadata_path else None
 
+        # Create and connect embed client
+        embed_client = get_llm_client(service, model=model)
+        await embed_client.connect()
+
         # Create RAG service using context manager
         async with GenericRAGService(
-            service_name=service,
-            model=model,
+            embed_client=embed_client,
             data_dir=data_dir,
             index_path=index_path_obj,
             metadata_path=metadata_path_obj
@@ -246,6 +268,9 @@ async def search_rag(
                 else:
                     print("(no document_text)")
                 print()
+
+        # Close embed client
+        await embed_client.close()
 
     return 0
 
@@ -302,11 +327,14 @@ async def convert_to_hdf5(
 
     data_dir = Path(__file__).parent / "data"
 
+    # Create and connect embed client
+    embed_client = get_llm_client(service, model=model)
+    await embed_client.connect()
+
     # Load from FAISS+JSON
     print("→ Loading FAISS+JSON format...")
     async with GenericRAGService(
-        service_name=service,
-        model=model,
+        embed_client=embed_client,
         data_dir=data_dir,
         index_path=index_path_obj,
         metadata_path=metadata_path_obj
@@ -316,8 +344,7 @@ async def convert_to_hdf5(
         # Save to HDF5
         print(f"→ Converting to HDF5 format...")
         async with HDF5RAGService(
-            service_name=service,
-            model=model,
+            embed_client=embed_client,
             data_dir=data_dir,
             hdf5_path=output_path_obj
         ) as rag_hdf5:
@@ -330,6 +357,9 @@ async def convert_to_hdf5(
             # Save to HDF5
             rag_hdf5.save()
             print(f"✓ Saved to {output_path_obj}")
+
+    # Close embed client
+    await embed_client.close()
 
     print()
     print("✓ Conversion complete!")
@@ -393,11 +423,14 @@ async def convert_from_hdf5(
     print(f"  └─ JSON: {metadata_path_obj}")
     print()
 
+    # Create and connect embed client
+    embed_client = get_llm_client(service, model=model)
+    await embed_client.connect()
+
     # Load from HDF5
     print("→ Loading HDF5 format...")
     async with HDF5RAGService(
-        service_name=service,
-        model=model,
+        embed_client=embed_client,
         data_dir=data_dir,
         hdf5_path=input_path_obj
     ) as rag_hdf5:
@@ -406,8 +439,7 @@ async def convert_from_hdf5(
         # Save to FAISS+JSON
         print(f"→ Converting to FAISS+JSON format...")
         async with GenericRAGService(
-            service_name=service,
-            model=model,
+            embed_client=embed_client,
             data_dir=data_dir,
             index_path=index_path_obj,
             metadata_path=metadata_path_obj
@@ -421,6 +453,9 @@ async def convert_from_hdf5(
             # Save to FAISS+JSON
             rag_faiss.save()
             print(f"✓ Saved to {index_path_obj} and {metadata_path_obj}")
+
+    # Close embed client
+    await embed_client.close()
 
     print()
     print("✓ Conversion complete!")

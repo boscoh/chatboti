@@ -16,7 +16,7 @@ import uvicorn
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
-from microeval.llm import load_config
+from microeval.llm import load_config, get_llm_client
 from pydantic import BaseModel
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -81,10 +81,14 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             # Set up paths
             data_dir = Path(__file__).parent / "data"
 
+            # Create and connect embed client
+            embed_client = get_llm_client(embed_service, model=model)
+            await embed_client.connect()
+            app.state.embed_client = embed_client
+
             # Create RAG service using context manager
             rag_service = GenericRAGService(
-                service_name=embed_service,
-                model=model,
+                embed_client=embed_client,
                 data_dir=data_dir
             )
             await rag_service.__aenter__()
@@ -108,9 +112,14 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
                 await app.state.info_agent.disconnect()
                 app.state.info_agent = None
 
-            # Close RAG service and embed client
+            # Close RAG service
             if rag_service:
                 await rag_service.__aexit__(None, None, None)
+
+            # Close embed client
+            if hasattr(app.state, 'embed_client') and app.state.embed_client:
+                await app.state.embed_client.close()
+                app.state.embed_client = None
         except Exception as e:
             logger.error(f"Failed to initialize during startup: {e}")
             raise

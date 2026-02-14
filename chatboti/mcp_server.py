@@ -9,7 +9,7 @@ from typing import Any, Dict
 
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
-from microeval.llm import load_config
+from microeval.llm import load_config, get_llm_client
 
 from chatboti.generic_rag import GenericRAGService
 from chatboti.logger import setup_logging
@@ -44,20 +44,24 @@ model = os.getenv("EMBED_MODEL") or get_default_model(embed_models, embed_servic
 # Set up data directory
 data_dir = Path(__file__).parent / "data"
 
-# Create RAG service (will be initialized in lifespan)
+# Create RAG service and embed client (will be initialized in lifespan)
 rag_service = None
+embed_client = None
 
 
 @asynccontextmanager
 async def lifespan(app):
-    global rag_service
+    global rag_service, embed_client
     try:
         logger.info(f"Initializing RAG service with embed_service: {embed_service}")
 
+        # Create and connect embed client
+        embed_client = get_llm_client(embed_service, model=model)
+        await embed_client.connect()
+
         # Create RAG service using constructor and context manager
         rag_service = GenericRAGService(
-            service_name=embed_service,
-            model=model,
+            embed_client=embed_client,
             data_dir=data_dir
         )
         await rag_service.__aenter__()
@@ -67,12 +71,17 @@ async def lifespan(app):
         raise
     yield
     try:
-        # Close RAG service (which closes the embed client)
+        # Close RAG service
         if rag_service:
             await rag_service.__aexit__(None, None, None)
         logger.info("RAG service closed successfully")
+
+        # Close embed client
+        if embed_client:
+            await embed_client.close()
+        logger.info("Embed client closed successfully")
     except Exception as e:
-        logger.warning(f"Error during RAG service cleanup: {e}")
+        logger.warning(f"Error during cleanup: {e}")
 
 
 mcp = FastMCP("Simple MCP", lifespan=lifespan)
