@@ -98,7 +98,7 @@ class HDF5RAGService(GenericRAGService):
         with h5py.File(path, 'r') as f:
             # Load metadata from attributes
             self.model_name = f.attrs.get('model_name', self.model_name)
-            self.embedding_dim = f.attrs['embedding_dim']
+            self.embedding_dim = int(f.attrs['embedding_dim'])
 
             # Load vectors and rebuild FAISS index
             if 'vectors' in f:
@@ -192,7 +192,7 @@ class HDF5RAGService(GenericRAGService):
             if n_vectors > 0:
                 vectors = np.zeros((n_vectors, self.embedding_dim), dtype=np.float32)
                 for i in range(n_vectors):
-                    vectors[i] = faiss.vector_to_array(self.index.reconstruct(i))
+                    vectors[i] = self.index.reconstruct(i)
                 f.create_dataset('vectors', data=vectors, compression='gzip')
             else:
                 # Create empty dataset
