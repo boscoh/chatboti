@@ -5,19 +5,19 @@ import time
 from pathlib import Path
 import json
 
+from microeval.llm import get_llm_client
 from chatboti.generic_rag import GenericRAGService
 from chatboti.hdf5_rag import HDF5RAGService
 
 
-async def benchmark_generic_load(index_path: Path, metadata_path: Path, n_runs: int = 5):
+async def benchmark_generic_load(embed_client, index_path: Path, metadata_path: Path, n_runs: int = 5):
     """Benchmark GenericRAGService loading time."""
     times = []
 
     for i in range(n_runs):
         start = time.perf_counter()
         async with GenericRAGService(
-            service_name="ollama",
-            model="nomic-embed-text",
+            embed_client=embed_client,
             index_path=index_path,
             metadata_path=metadata_path
         ) as rag:
@@ -30,15 +30,14 @@ async def benchmark_generic_load(index_path: Path, metadata_path: Path, n_runs: 
     return times
 
 
-async def benchmark_hdf5_load(hdf5_path: Path, n_runs: int = 5):
+async def benchmark_hdf5_load(embed_client, hdf5_path: Path, n_runs: int = 5):
     """Benchmark HDF5RAGService loading time."""
     times = []
 
     for i in range(n_runs):
         start = time.perf_counter()
         async with HDF5RAGService(
-            service_name="ollama",
-            model="nomic-embed-text",
+            embed_client=embed_client,
             hdf5_path=hdf5_path
         ) as rag:
             # Service is loaded in __aenter__
@@ -85,6 +84,11 @@ async def main():
     print("RAG Service Loading Performance Benchmark")
     print("=" * 70)
 
+    # Create and connect embed client (reused for all operations)
+    print("\n⚙ Connecting to embed service...")
+    embed_client = get_llm_client("ollama", model="nomic-embed-text")
+    await embed_client.connect()
+
     # Get file stats
     stats = get_file_stats(faiss_index, faiss_metadata)
     print(f"\nDataset Statistics:")
@@ -101,17 +105,15 @@ async def main():
 
         # Load from FAISS+JSON
         async with GenericRAGService(
-            service_name="ollama",
-            model="nomic-embed-text",
+            embed_client=embed_client,
             index_path=faiss_index,
             metadata_path=faiss_metadata
         ) as rag:
             # Create new HDF5 service (will be empty initially)
             h5_rag = HDF5RAGService.__new__(HDF5RAGService)
-            h5_rag.service_name = "ollama"
-            h5_rag.model = "nomic-embed-text"
+            h5_rag.embed_client = embed_client
             h5_rag.hdf5_path = hdf5_file
-            h5_rag.embed_client = rag.embed_client  # Reuse client
+            h5_rag.data_dir = data_dir
             h5_rag.embedding_dim = rag.embedding_dim
             h5_rag.model_name = rag.model_name
             h5_rag._initialized = True
@@ -136,7 +138,7 @@ async def main():
     print(f"\n{'─' * 70}")
     print("Benchmark 1: GenericRAGService (FAISS + JSON)")
     print(f"{'─' * 70}")
-    faiss_times = await benchmark_generic_load(faiss_index, faiss_metadata, n_runs=5)
+    faiss_times = await benchmark_generic_load(embed_client, faiss_index, faiss_metadata, n_runs=5)
     faiss_avg = sum(faiss_times) / len(faiss_times)
     faiss_min = min(faiss_times)
     faiss_max = max(faiss_times)
@@ -145,7 +147,7 @@ async def main():
     print(f"\n{'─' * 70}")
     print("Benchmark 2: HDF5RAGService (HDF5)")
     print(f"{'─' * 70}")
-    hdf5_times = await benchmark_hdf5_load(hdf5_file, n_runs=5)
+    hdf5_times = await benchmark_hdf5_load(embed_client, hdf5_file, n_runs=5)
     hdf5_avg = sum(hdf5_times) / len(hdf5_times)
     hdf5_min = min(hdf5_times)
     hdf5_max = max(hdf5_times)
@@ -181,6 +183,9 @@ async def main():
         print(f"  HDF5 is {1/size_ratio:.2f}x SMALLER")
 
     print(f"\n{'=' * 70}")
+
+    # Cleanup
+    await embed_client.close()
 
 
 if __name__ == "__main__":

@@ -12,16 +12,6 @@ from chatboti.loaders import load_documents
 from chatboti.utils import make_slug
 
 
-def get_default_model(models_dict: dict, service: str) -> str:
-    """Get the default model for a service (first in list or string value)."""
-    models = models_dict.get(service, [])
-    if isinstance(models, list) and models:
-        return models[0]
-    elif isinstance(models, str):
-        return models
-    return ""
-
-
 class GenericRAGService:
     """RAG service with FAISS index and JSON metadata storage.
 
@@ -30,8 +20,7 @@ class GenericRAGService:
 
     def __init__(
         self,
-        service_name: str,
-        model: Optional[str] = None,
+        embed_client,
         data_dir: Optional[Path] = None,
         index_path: Optional[Path] = None,
         metadata_path: Optional[Path] = None
@@ -39,22 +28,26 @@ class GenericRAGService:
         """Initialize RAG service (lazy - call via context manager for async setup).
 
         Usage:
-            async with GenericRAGService(service_name="ollama", model="nomic-embed-text") as rag:
+            from microeval.llm import get_llm_client
+
+            embed_client = get_llm_client("ollama", model="nomic-embed-text")
+            await embed_client.connect()
+
+            async with GenericRAGService(embed_client=embed_client) as rag:
                 results = await rag.search("query")
 
-        :param service_name: Service name (e.g., 'ollama', 'openai', 'bedrock')
-        :param model: Model name (optional, will load from EMBED_MODEL env or config)
+            await embed_client.close()
+
+        :param embed_client: Connected embedding client (from microeval.llm.get_llm_client)
         :param data_dir: Data directory (default: chatboti/data)
         :param index_path: Path to FAISS index file (overrides auto-detection)
         :param metadata_path: Path to metadata JSON file (overrides auto-detection)
         """
         # Store parameters (initialization happens in __aenter__)
-        self.service_name = service_name
-        self.model = model
+        self.embed_client = embed_client
         self.data_dir = data_dir
         self.index_path = index_path
         self.metadata_path = metadata_path
-        self.embed_client = None
         self.embedding_dim = None
         self.model_name = None
         self._initialized = False
@@ -78,23 +71,14 @@ class GenericRAGService:
         if self._initialized:
             return self
 
-        from microeval.llm import get_llm_client, load_config
-
-        # Load model configuration
-        model_config = load_config()
-        embed_models = model_config.get("embed_models", {})
-
-        # Get model name
-        if not self.model:
-            self.model = os.getenv("EMBED_MODEL") or get_default_model(embed_models, self.service_name)
-        if not self.model:
-            raise ValueError(
-                f"Model not specified and EMBED_MODEL not set for service '{self.service_name}'. "
-                f"Available models in config: {list(embed_models.keys())}"
-            )
+        # Get model name from embed client
+        self.model_name = getattr(self.embed_client, 'model', None)
 
         # Create model slug for file paths
-        model_slug = make_slug(self.model, strip_latest=True)
+        if self.model_name:
+            model_slug = make_slug(self.model_name, strip_latest=True)
+        else:
+            model_slug = "default"
 
         # Set up paths
         if not self.data_dir:
@@ -105,10 +89,6 @@ class GenericRAGService:
             self.index_path = self.data_dir / f"vectors-{model_slug}.faiss"
         if not self.metadata_path:
             self.metadata_path = self.data_dir / f"metadata-{model_slug}.json"
-
-        # Create and connect embed client
-        self.embed_client = get_llm_client(self.service_name, model=self.model)
-        await self.embed_client.connect()
 
         # Detect or load embedding dimension
         if self.metadata_path.exists():
@@ -127,8 +107,6 @@ class GenericRAGService:
 
     def initialize_search_backend(self):
         """Load or create search backend (FAISS index) and metadata (sync operation)."""
-        self.model_name = getattr(self.embed_client, 'model', None)
-
         # Load or create FAISS index
         if self.index_path.exists():
             self.index = faiss.read_index(str(self.index_path))
@@ -149,9 +127,10 @@ class GenericRAGService:
             self.documents = {}
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """Async context manager exit - cleanup embed client."""
-        if self.embed_client:
-            await self.embed_client.close()
+        """Async context manager exit.
+
+        Note: Does not close embed_client since it's managed externally.
+        """
         return False
 
     async def add_document(self, doc: Document) -> None:

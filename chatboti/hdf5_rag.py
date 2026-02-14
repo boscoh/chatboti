@@ -36,29 +36,33 @@ class HDF5RAGService(GenericRAGService):
         /documents (group with nested groups for each document)
 
     Usage:
-        async with HDF5RAGService(service_name="ollama", model="nomic-embed-text",
+        from microeval.llm import get_llm_client
+
+        embed_client = get_llm_client("ollama", model="nomic-embed-text")
+        await embed_client.connect()
+
+        async with HDF5RAGService(embed_client=embed_client,
                                    hdf5_path=Path("embeddings.h5")) as rag:
             results = await rag.search("query")
+
+        await embed_client.close()
     """
 
     def __init__(
         self,
-        service_name: str,
-        model: Optional[str] = None,
+        embed_client,
         data_dir: Optional[Path] = None,
         hdf5_path: Optional[Path] = None
     ):
         """Initialize HDF5 RAG service.
 
-        :param service_name: Service name (e.g., 'ollama', 'openai', 'bedrock')
-        :param model: Model name (optional, will load from EMBED_MODEL env or config)
+        :param embed_client: Connected embedding client (from microeval.llm.get_llm_client)
         :param data_dir: Data directory (default: chatboti/data)
         :param hdf5_path: Path to HDF5 file (overrides auto-detection)
         """
-        # Call parent with dummy paths (we override initialize_search_backend)
+        # Call parent
         super().__init__(
-            service_name=service_name,
-            model=model,
+            embed_client=embed_client,
             data_dir=data_dir,
             index_path=None,  # Not used
             metadata_path=None  # Not used
@@ -73,14 +77,13 @@ class HDF5RAGService(GenericRAGService):
         # Set HDF5 path if not provided
         if not self.hdf5_path:
             from chatboti.utils import make_slug
-            model_slug = make_slug(self.model, strip_latest=True)
+            model_slug = make_slug(self.model_name, strip_latest=True) if self.model_name else "default"
             self.hdf5_path = self.data_dir / f"embeddings-{model_slug}.h5"
 
         return self
 
     def initialize_search_backend(self):
         """Load or create search backend from HDF5 file."""
-        self.model_name = getattr(self.embed_client, 'model', None)
 
         if self.hdf5_path.exists():
             self.load_from_hdf5(self.hdf5_path)
