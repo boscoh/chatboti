@@ -1,9 +1,11 @@
 """Document loaders for various file formats."""
 
+# Standard library
 import csv
 from pathlib import Path
 from typing import List, Optional
 
+# Local
 from chatboti.document import Document, DocumentChunk
 from chatboti.utils import make_slug
 

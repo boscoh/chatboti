@@ -3,21 +3,24 @@
 Chatboti CLI - Command-line interface for Chatboti
 """
 
+# Standard library
 import asyncio
 import os
 import sys
 
+# Third-party
 from cyclopts import App
 
-from chatboti.server import run_server
+# Local
 from chatboti.agent import amain as agent_amain
 from chatboti.rag_cli import (
     build_embeddings as build_rag_new,
-    search_rag,
-    convert_to_hdf5,
     convert_from_hdf5,
-    show_hdf5_info
+    convert_to_hdf5,
+    search_rag,
+    show_hdf5_info,
 )
+from chatboti.server import run_server
 from chatboti.docker import main as run_docker_main
 from chatboti.logger import setup_logging
 

@@ -1,14 +1,19 @@
 """CLI commands for GenericRAGService."""
 
-import os
+# Standard library
 import json
+import os
 from pathlib import Path
-from rich.pretty import pprint
+
+# Third-party
 from dotenv import load_dotenv
-from microeval.llm import load_config, get_llm_client
+from microeval.llm import get_llm_client, load_config
+from rich.pretty import pprint
+
+# Local
 from chatboti.generic_rag import GenericRAGService
 
-# Try to import HDF5RAGService, but handle gracefully if not available
+# Optional HDF5 support
 try:
     from chatboti.hdf5_rag import HDF5RAGService
     HDF5_AVAILABLE = True
@@ -38,8 +43,6 @@ async def build_embeddings(
     :param index_path: Path to save FAISS index (or .h5 for HDF5 format)
     :param metadata_path: Path to save metadata JSON (not used if index_path is .h5)
     """
-    from chatboti.generic_rag import GenericRAGService
-
     load_dotenv()
 
     # Get service and model from config
@@ -173,8 +176,6 @@ async def search_rag(
     :param index_path: Path to FAISS index (or .h5 for HDF5 format)
     :param metadata_path: Path to metadata JSON (not used if index_path is .h5)
     """
-    from chatboti.generic_rag import GenericRAGService
-
     load_dotenv()
 
     # Get service and model from config
@@ -291,8 +292,6 @@ async def convert_to_hdf5(
         print("   Install h5py: pip install h5py")
         return 1
 
-    from chatboti.generic_rag import GenericRAGService
-
     load_dotenv()
 
     # Get service and model from config
@@ -385,8 +384,6 @@ async def convert_from_hdf5(
         print("✗ Error: HDF5 support not available")
         print("   Install h5py: pip install h5py")
         return 1
-
-    from chatboti.generic_rag import GenericRAGService
 
     load_dotenv()
 

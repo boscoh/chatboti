@@ -13,17 +13,20 @@ Advantages:
 See docs/single-file-rag-backend-spec.md section 2.1 for format details.
 """
 
+# Standard library
 import json
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+# Third-party
+import faiss
 import h5py
 import numpy as np
-import faiss
 
+# Local
+from chatboti.document import ChunkRef, Document
 from chatboti.generic_rag import GenericRAGService
-from chatboti.document import Document, ChunkRef
 
 
 class HDF5RAGService(GenericRAGService):

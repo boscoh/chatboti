@@ -1,7 +1,8 @@
 """Document and chunk data structures for unified RAG system."""
 
+# Standard library
 from dataclasses import dataclass
-from typing import Optional, Dict
+from typing import Dict, Optional
 
 
 @dataclass

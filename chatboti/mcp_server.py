@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+# Standard library
 import logging
 import os
 import sys
@@ -7,10 +8,12 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Dict
 
+# Third-party
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
-from microeval.llm import load_config, get_llm_client
+from microeval.llm import get_llm_client, load_config
 
+# Local
 from chatboti.generic_rag import GenericRAGService
 from chatboti.logger import setup_logging
 

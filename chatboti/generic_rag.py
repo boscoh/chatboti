@@ -1,13 +1,17 @@
 """Generic RAG service with FAISS index and JSON metadata storage."""
 
+# Standard library
+import json
 import os
 from pathlib import Path
-from typing import List, Dict, Optional
-import json
+from typing import Dict, List, Optional
+
+# Third-party
 import faiss
 import numpy as np
 
-from chatboti.document import Document, ChunkRef, ChunkResult
+# Local
+from chatboti.document import ChunkRef, ChunkResult, Document
 from chatboti.loaders import load_documents
 from chatboti.utils import make_slug
 

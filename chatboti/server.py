@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """FastAPI server for xConf Assistant's MCP client API."""
 
+# Standard library
 import logging
 import os
 import threading
@@ -11,17 +12,18 @@ from pathlib import Path
 from typing import Any, AsyncIterator, Dict, Optional
 from uuid import uuid4
 
+# Third-party
 import httpx
 import uvicorn
-
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
-from microeval.llm import load_config, get_llm_client
+from microeval.llm import get_llm_client, load_config
 from pydantic import BaseModel
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
+# Local
 from chatboti.agent import InfoAgent
 from chatboti.generic_rag import GenericRAGService
 
