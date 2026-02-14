@@ -1,4 +1,4 @@
-"""Benchmark loading performance: GenericRAGService vs HDF5RAGService."""
+"""Benchmark loading performance: FaissRAGService vs HDF5RAGService."""
 
 import asyncio
 import time
@@ -6,17 +6,17 @@ from pathlib import Path
 import json
 
 from microeval.llm import get_llm_client
-from chatboti.generic_rag import GenericRAGService
+from chatboti.faiss_rag import FaissRAGService
 from chatboti.hdf5_rag import HDF5RAGService
 
 
-async def benchmark_generic_load(embed_client, index_path: Path, metadata_path: Path, n_runs: int = 5):
-    """Benchmark GenericRAGService loading time."""
+async def benchmark_faiss_load(embed_client, index_path: Path, metadata_path: Path, n_runs: int = 5):
+    """Benchmark FaissRAGService loading time."""
     times = []
 
     for i in range(n_runs):
         start = time.perf_counter()
-        async with GenericRAGService(
+        async with FaissRAGService(
             embed_client=embed_client,
             index_path=index_path,
             metadata_path=metadata_path
@@ -104,7 +104,7 @@ async def main():
         start = time.perf_counter()
 
         # Load from FAISS+JSON
-        async with GenericRAGService(
+        async with FaissRAGService(
             embed_client=embed_client,
             index_path=faiss_index,
             metadata_path=faiss_metadata
@@ -134,11 +134,11 @@ async def main():
     print(f"  HDF5 file size: {h5_size:,} bytes ({h5_size/1024:.1f} KB)")
     print(f"  Size ratio (HDF5/FAISS+JSON): {h5_size/stats['total_size']:.2f}x")
 
-    # Benchmark GenericRAGService (FAISS+JSON)
+    # Benchmark FaissRAGService (FAISS+JSON)
     print(f"\n{'─' * 70}")
-    print("Benchmark 1: GenericRAGService (FAISS + JSON)")
+    print("Benchmark 1: FaissRAGService (FAISS + JSON)")
     print(f"{'─' * 70}")
-    faiss_times = await benchmark_generic_load(embed_client, faiss_index, faiss_metadata, n_runs=5)
+    faiss_times = await benchmark_faiss_load(embed_client, faiss_index, faiss_metadata, n_runs=5)
     faiss_avg = sum(faiss_times) / len(faiss_times)
     faiss_min = min(faiss_times)
     faiss_max = max(faiss_times)
@@ -156,7 +156,7 @@ async def main():
     print(f"\n{'=' * 70}")
     print("Summary")
     print(f"{'=' * 70}")
-    print(f"\nGenericRAGService (FAISS + JSON):")
+    print(f"\nFaissRAGService (FAISS + JSON):")
     print(f"  Average: {faiss_avg*1000:.1f} ms")
     print(f"  Min:     {faiss_min*1000:.1f} ms")
     print(f"  Max:     {faiss_max*1000:.1f} ms")

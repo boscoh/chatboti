@@ -26,10 +26,10 @@ import numpy as np
 
 # Local
 from chatboti.document import ChunkRef, Document
-from chatboti.generic_rag import GenericRAGService
+from chatboti.faiss_rag import FaissRAGService
 
 
-class HDF5RAGService(GenericRAGService):
+class HDF5RAGService(FaissRAGService):
     """RAG service using HDF5 single-file backend.
 
     Storage format:

@@ -25,7 +25,7 @@ from slowapi.util import get_remote_address
 
 # Local
 from chatboti.agent import InfoAgent
-from chatboti.generic_rag import GenericRAGService
+from chatboti.faiss_rag import FaissRAGService
 
 model_config = load_config()
 chat_models = model_config["chat_models"]
@@ -89,7 +89,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             app.state.embed_client = embed_client
 
             # Create RAG service using context manager
-            rag_service = GenericRAGService(
+            rag_service = FaissRAGService(
                 embed_client=embed_client,
                 data_dir=data_dir
             )

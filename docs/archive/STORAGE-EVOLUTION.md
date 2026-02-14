@@ -340,13 +340,13 @@ class SQLiteMetadataStore(MetadataStore):
         self.conn.close()
 ```
 
-## GenericRAGService with Storage Abstraction
+## FaissRAGService with Storage Abstraction
 
 ```python
 from pathlib import Path
 from typing import Union
 
-class GenericRAGService:
+class FaissRAGService:
     """Generic RAG service with pluggable metadata storage."""
 
     def __init__(
@@ -455,7 +455,7 @@ migrate_json_to_sqlite(
 ### Detection and Auto-Migration
 
 ```python
-class GenericRAGService:
+class FaissRAGService:
     def __init__(self, index_path: Path, metadata_path: Path, **kwargs):
         # Auto-migrate if JSON exists but SQLite doesn't
         json_path = metadata_path.with_suffix('.json')
@@ -475,7 +475,7 @@ class GenericRAGService:
 ### Phase 1: Start with JSON (Week 1-2)
 ```python
 # Simple start
-rag = GenericRAGService(
+rag = FaissRAGService(
     index_path=Path("vectors.faiss"),
     metadata_store=Path("metadata.json")  # JSON storage
 )
@@ -498,7 +498,7 @@ migrate_json_to_sqlite(
 )
 
 # Use SQLite
-rag = GenericRAGService(
+rag = FaissRAGService(
     index_path=Path("vectors.faiss"),
     metadata_store=Path("metadata.db")  # SQLite storage
 )

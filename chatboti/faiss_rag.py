@@ -1,4 +1,4 @@
-"""Generic RAG service with FAISS index and JSON metadata storage."""
+"""FAISS-based RAG service with FAISS index and JSON metadata storage."""
 
 # Standard library
 import json
@@ -16,10 +16,11 @@ from chatboti.loaders import load_documents
 from chatboti.utils import make_slug
 
 
-class GenericRAGService:
-    """RAG service with FAISS index and JSON metadata storage.
+class FaissRAGService:
+    """RAG service using FAISS for vector indexing and JSON for metadata storage.
 
-    For SQLite storage, use SQLiteRAGService subclass.
+    This is the standard multi-file backend format. For single-file storage,
+    use HDF5RAGService instead.
     """
 
     def __init__(
@@ -37,7 +38,7 @@ class GenericRAGService:
             embed_client = get_llm_client("ollama", model="nomic-embed-text")
             await embed_client.connect()
 
-            async with GenericRAGService(embed_client=embed_client) as rag:
+            async with FaissRAGService(embed_client=embed_client) as rag:
                 results = await rag.search("query")
 
             await embed_client.close()

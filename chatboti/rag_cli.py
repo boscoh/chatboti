@@ -1,4 +1,4 @@
-"""CLI commands for GenericRAGService."""
+"""CLI commands for RAG services."""
 
 # Standard library
 import json
@@ -11,7 +11,7 @@ from microeval.llm import get_llm_client, load_config
 from rich.pretty import pprint
 
 # Local
-from chatboti.generic_rag import GenericRAGService
+from chatboti.faiss_rag import FaissRAGService
 
 # Optional HDF5 support
 try:
@@ -133,7 +133,7 @@ async def build_embeddings(
         await embed_client.connect()
 
         # Create RAG service using context manager
-        async with GenericRAGService(
+        async with FaissRAGService(
             embed_client=embed_client,
             data_dir=data_dir,
             index_path=index_path_obj,
@@ -243,7 +243,7 @@ async def search_rag(
         await embed_client.connect()
 
         # Create RAG service using context manager
-        async with GenericRAGService(
+        async with FaissRAGService(
             embed_client=embed_client,
             data_dir=data_dir,
             index_path=index_path_obj,
@@ -332,7 +332,7 @@ async def convert_to_hdf5(
 
     # Load from FAISS+JSON
     print("→ Loading FAISS+JSON format...")
-    async with GenericRAGService(
+    async with FaissRAGService(
         embed_client=embed_client,
         data_dir=data_dir,
         index_path=index_path_obj,
@@ -435,7 +435,7 @@ async def convert_from_hdf5(
 
         # Save to FAISS+JSON
         print(f"→ Converting to FAISS+JSON format...")
-        async with GenericRAGService(
+        async with FaissRAGService(
             embed_client=embed_client,
             data_dir=data_dir,
             index_path=index_path_obj,

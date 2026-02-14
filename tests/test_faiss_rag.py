@@ -1,4 +1,4 @@
-"""Comprehensive tests for GenericRAGService."""
+"""Comprehensive tests for FaissRAGService."""
 
 import json
 import pytest
@@ -6,19 +6,19 @@ import numpy as np
 from pathlib import Path
 from unittest.mock import Mock, AsyncMock, patch
 
-from chatboti.generic_rag import GenericRAGService
+from chatboti.faiss_rag import FaissRAGService
 from chatboti.document import Document, DocumentChunk, ChunkRef, ChunkResult
 
 
-class TestGenericRAGServiceInitialization:
-    """Test GenericRAGService initialization."""
+class TestFaissRAGServiceInitialization:
+    """Test FaissRAGService initialization."""
 
     def test_new_service_creates_empty_index_and_metadata(self, tmp_path):
         """Test that new service creates empty FAISS index and metadata."""
         index_path = tmp_path / "test.index"
         metadata_path = tmp_path / "test_meta.json"
 
-        service = GenericRAGService(
+        service = FaissRAGService(
             index_path=index_path,
             metadata_path=metadata_path,
             embedding_dim=768
@@ -40,7 +40,7 @@ class TestGenericRAGServiceInitialization:
         metadata_path = tmp_path / "test_meta.json"
 
         # Create and save initial service
-        service1 = GenericRAGService(
+        service1 = FaissRAGService(
             index_path=index_path,
             metadata_path=metadata_path,
             embedding_dim=768
@@ -57,7 +57,7 @@ class TestGenericRAGServiceInitialization:
         service1.save()
 
         # Load service from saved files
-        service2 = GenericRAGService(
+        service2 = FaissRAGService(
             index_path=index_path,
             metadata_path=metadata_path,
             embedding_dim=768
@@ -76,7 +76,7 @@ class TestGenericRAGServiceInitialization:
         metadata_path = tmp_path / "test_meta.json"
 
         # Test default dimension
-        service1 = GenericRAGService(
+        service1 = FaissRAGService(
             index_path=index_path,
             metadata_path=metadata_path
         )
@@ -85,7 +85,7 @@ class TestGenericRAGServiceInitialization:
         # Test custom dimension
         index_path2 = tmp_path / "test2.index"
         metadata_path2 = tmp_path / "test_meta2.json"
-        service2 = GenericRAGService(
+        service2 = FaissRAGService(
             index_path=index_path2,
             metadata_path=metadata_path2,
             embedding_dim=384
@@ -93,7 +93,7 @@ class TestGenericRAGServiceInitialization:
         assert service2.index.d == 384
 
 
-class TestGenericRAGServiceMetadata:
+class TestFaissRAGServiceMetadata:
     """Test metadata save/load functionality."""
 
     def test_save_and_load_chunk_refs(self, tmp_path):
@@ -101,7 +101,7 @@ class TestGenericRAGServiceMetadata:
         index_path = tmp_path / "test.index"
         metadata_path = tmp_path / "test_meta.json"
 
-        service = GenericRAGService(
+        service = FaissRAGService(
             index_path=index_path,
             metadata_path=metadata_path
         )
@@ -129,7 +129,7 @@ class TestGenericRAGServiceMetadata:
         index_path = tmp_path / "test.index"
         metadata_path = tmp_path / "test_meta.json"
 
-        service = GenericRAGService(
+        service = FaissRAGService(
             index_path=index_path,
             metadata_path=metadata_path
         )
@@ -155,7 +155,7 @@ class TestGenericRAGServiceMetadata:
         service.save()
 
         # Load and verify
-        service2 = GenericRAGService(
+        service2 = FaissRAGService(
             index_path=index_path,
             metadata_path=metadata_path
         )
@@ -172,7 +172,7 @@ class TestGenericRAGServiceMetadata:
         index_path = tmp_path / "test.index"
         metadata_path = tmp_path / "test_meta.json"
 
-        service = GenericRAGService(
+        service = FaissRAGService(
             index_path=index_path,
             metadata_path=metadata_path
         )
@@ -208,7 +208,7 @@ class TestGenericRAGServiceMetadata:
         assert 'chunks' in doc_data
 
 
-class TestGenericRAGServiceStorageWrappers:
+class TestFaissRAGServiceStorageWrappers:
     """Test storage wrapper methods."""
 
     def test_get_chunk_refs_returns_correct_objects(self, tmp_path):
@@ -216,7 +216,7 @@ class TestGenericRAGServiceStorageWrappers:
         index_path = tmp_path / "test.index"
         metadata_path = tmp_path / "test_meta.json"
 
-        service = GenericRAGService(
+        service = FaissRAGService(
             index_path=index_path,
             metadata_path=metadata_path
         )
@@ -242,7 +242,7 @@ class TestGenericRAGServiceStorageWrappers:
         index_path = tmp_path / "test.index"
         metadata_path = tmp_path / "test_meta.json"
 
-        service = GenericRAGService(
+        service = FaissRAGService(
             index_path=index_path,
             metadata_path=metadata_path
         )
@@ -270,7 +270,7 @@ class TestGenericRAGServiceStorageWrappers:
         index_path = tmp_path / "test.index"
         metadata_path = tmp_path / "test_meta.json"
 
-        service = GenericRAGService(
+        service = FaissRAGService(
             index_path=index_path,
             metadata_path=metadata_path
         )
@@ -299,7 +299,7 @@ class TestGenericRAGServiceStorageWrappers:
         index_path = tmp_path / "test.index"
         metadata_path = tmp_path / "test_meta.json"
 
-        service = GenericRAGService(
+        service = FaissRAGService(
             index_path=index_path,
             metadata_path=metadata_path
         )
@@ -325,7 +325,7 @@ class TestGenericRAGServiceStorageWrappers:
         assert "value1" in doc_texts["doc2"]
 
 
-class TestGenericRAGServiceDocumentManagement:
+class TestFaissRAGServiceDocumentManagement:
     """Test document management functionality."""
 
     @pytest.mark.asyncio
@@ -341,7 +341,7 @@ class TestGenericRAGServiceDocumentManagement:
             [0.2] * 768   # Second chunk embedding
         ])
 
-        service = GenericRAGService(
+        service = FaissRAGService(
             index_path=index_path,
             metadata_path=metadata_path,
             embedding_dim=768,
@@ -394,7 +394,7 @@ class TestGenericRAGServiceDocumentManagement:
         mock_embed_client = Mock()
         mock_embed_client.embed = AsyncMock(return_value=[0.1] * 768)
 
-        service = GenericRAGService(
+        service = FaissRAGService(
             index_path=index_path,
             metadata_path=metadata_path,
             embedding_dim=768,
@@ -438,7 +438,7 @@ class TestGenericRAGServiceDocumentManagement:
         mock_embed_client = Mock()
         mock_embed_client.embed = AsyncMock(return_value=[0.1] * 768)
 
-        service = GenericRAGService(
+        service = FaissRAGService(
             index_path=index_path,
             metadata_path=metadata_path,
             embedding_dim=768,
@@ -469,7 +469,7 @@ class TestGenericRAGServiceDocumentManagement:
         assert data['documents'][0]['id'] == "doc1"
 
 
-class TestGenericRAGServiceSearch:
+class TestFaissRAGServiceSearch:
     """Test search functionality."""
 
     @pytest.mark.asyncio
@@ -482,7 +482,7 @@ class TestGenericRAGServiceSearch:
         mock_embed_client = Mock()
         mock_embed_client.embed = AsyncMock(return_value=[0.1] * 768)
 
-        service = GenericRAGService(
+        service = FaissRAGService(
             index_path=index_path,
             metadata_path=metadata_path,
             embedding_dim=768,
@@ -518,7 +518,7 @@ class TestGenericRAGServiceSearch:
         mock_embed_client = Mock()
         mock_embed_client.embed = AsyncMock(return_value=[0.1] * 768)
 
-        service = GenericRAGService(
+        service = FaissRAGService(
             index_path=index_path,
             metadata_path=metadata_path,
             embedding_dim=768,
@@ -551,7 +551,7 @@ class TestGenericRAGServiceSearch:
         mock_embed_client = Mock()
         mock_embed_client.embed = AsyncMock(return_value=[0.1] * 768)
 
-        service = GenericRAGService(
+        service = FaissRAGService(
             index_path=index_path,
             metadata_path=metadata_path,
             embedding_dim=768,
@@ -586,7 +586,7 @@ class TestGenericRAGServiceSearch:
         assert results[2].text in ["First Title", "First Body", "Second Title"]
 
 
-class TestGenericRAGServiceLoaderIntegration:
+class TestFaissRAGServiceLoaderIntegration:
     """Test integration with document loaders."""
 
     @pytest.mark.asyncio
@@ -606,7 +606,7 @@ class TestGenericRAGServiceLoaderIntegration:
         mock_embed_client = Mock()
         mock_embed_client.embed = AsyncMock(return_value=[0.1] * 768)
 
-        service = GenericRAGService(
+        service = FaissRAGService(
             index_path=index_path,
             metadata_path=metadata_path,
             embedding_dim=768,

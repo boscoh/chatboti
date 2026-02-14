@@ -222,7 +222,7 @@ CREATE TABLE chunks (
 ### Runtime Layer (In-Memory)
 
 ```python
-class GenericRAGService:
+class FaissRAGService:
     def __init__(self, data_dir: Path):
         # Load FAISS index (memory-mapped, instant!)
         self.index = faiss.read_index(str(data_dir / "vectors.faiss"))

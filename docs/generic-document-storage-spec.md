@@ -652,7 +652,7 @@ class SQLiteMetadataStore(MetadataStore):
         self.conn.close()
 ```
 
-### 4.6 GenericRAGService with Pluggable Storage
+### 4.6 FaissRAGService with Pluggable Storage
 
 The RAG service automatically detects storage type by file extension:
 
@@ -660,7 +660,7 @@ The RAG service automatically detects storage type by file extension:
 from pathlib import Path
 from typing import Union
 
-class GenericRAGService:
+class FaissRAGService:
     """Generic RAG service with pluggable metadata storage."""
 
     def __init__(
@@ -763,7 +763,7 @@ def migrate_json_to_sqlite(json_path: Path, db_path: Path) -> None:
 **Auto-Detection and Migration**:
 
 ```python
-class GenericRAGService:
+class FaissRAGService:
     def __init__(self, index_path: Path, metadata_path: Path, **kwargs):
         # Auto-migrate if JSON exists but SQLite doesn't
         json_path = metadata_path.with_suffix('.json')
@@ -784,7 +784,7 @@ class GenericRAGService:
 
 ```python
 # Simple start
-rag = GenericRAGService(
+rag = FaissRAGService(
     index_path=Path("vectors.faiss"),
     metadata_store=Path("metadata.json")  # JSON storage
 )
@@ -808,7 +808,7 @@ migrate_json_to_sqlite(
 )
 
 # Use SQLite
-rag = GenericRAGService(
+rag = FaissRAGService(
     index_path=Path("vectors.faiss"),
     metadata_store=Path("metadata.db")  # SQLite storage
 )
@@ -2509,7 +2509,7 @@ import faiss
 import numpy as np
 from numpy.typing import NDArray
 
-class GenericRAGService:
+class FaissRAGService:
     """Domain-agnostic RAG service with FAISS vector storage."""
 
     def __init__(
@@ -2818,13 +2818,13 @@ class RAGService:
     # Keep existing implementation unchanged
     pass
 
-class GenericRAGService:
+class FaissRAGService:
     """New generic document service."""
     # New implementation
     pass
 
 # Compatibility wrapper
-class SpeakerRAGService(GenericRAGService):
+class SpeakerRAGService(FaissRAGService):
     """Backwards-compatible wrapper for speaker data."""
 
     def __init__(self, llm_service: Optional[str] = None):
@@ -2887,7 +2887,7 @@ async def get_best_speaker(query: str) -> Dict[str, Any]:
 
 **Phase 3: Gradual Adoption**
 
-New features use `GenericRAGService` directly:
+New features use `FaissRAGService` directly:
 
 ```python
 # New generic tools
@@ -2898,7 +2898,7 @@ async def search_documents(
     top_k: int = 5
 ) -> Dict[str, Any]:
     """Generic document search across all types."""
-    results = await generic_rag_service.search(query, doc_type, top_k)
+    results = await faiss_rag_service.search(query, doc_type, top_k)
     return {
         "success": True,
         "results": [doc.to_dict() for doc in results],
@@ -2975,9 +2975,9 @@ Create adapter to make old code work with new system:
 
 ```python
 class LegacySpeakerAdapter:
-    """Adapter to make GenericRAGService look like old RAGService."""
+    """Adapter to make FaissRAGService look like old RAGService."""
 
-    def __init__(self, generic_service: GenericRAGService):
+    def __init__(self, generic_service: FaissRAGService):
         self._service = generic_service
 
     @property
@@ -3030,7 +3030,7 @@ This specification complements `metadata-storage-design.md`:
 
 **Coordination**:
 ```python
-# GenericRAGService can use SQLite backend
+# FaissRAGService can use SQLite backend
 class SQLiteDocumentStore:
     """Store documents in SQLite instead of JSON."""
 
@@ -3241,7 +3241,7 @@ speaker_type = DocumentType(
 
 **Usage**:
 ```python
-rag = GenericRAGService()
+rag = FaissRAGService()
 rag.doc_type_registry.register(speaker_type)
 await rag.load_documents("data/2025-09-02-speaker-bio.csv", "speaker")
 
@@ -3423,7 +3423,7 @@ papers_only = await rag.search("neural networks", doc_type_name="research_paper"
 - Write unit tests for core models
 
 **Phase 2: Generic Service (Week 1-2)**
-- Implement `GenericRAGService` with basic functionality
+- Implement `FaissRAGService` with basic functionality
 - Create `CSVDocumentLoader` and `JSONDocumentLoader`
 - Add configuration file support (YAML)
 - Write integration tests
@@ -3460,7 +3460,7 @@ papers_only = await rag.search("neural networks", doc_type_name="research_paper"
 ```
 chatboti/
 ├── rag.py                    # Legacy RAGService (keep as-is)
-├── generic_rag.py            # New GenericRAGService
+├── faiss_rag.py            # New FaissRAGService
 ├── models/
 │   ├── document.py           # Document, DocumentChunk
 │   └── config.py             # EmbeddingConfig, DocumentType
@@ -3478,19 +3478,19 @@ chatboti/
 **Step 2: Create compatibility layer**
 ```python
 # In rag.py
-from chatboti.generic_rag import GenericRAGService, SpeakerRAGService
+from chatboti.faiss_rag import FaissRAGService, SpeakerRAGService
 
 # Export both old and new
-__all__ = ['RAGService', 'GenericRAGService', 'SpeakerRAGService']
+__all__ = ['RAGService', 'FaissRAGService', 'SpeakerRAGService']
 
 # Keep RAGService as deprecated alias
 class RAGService(SpeakerRAGService):
-    """Deprecated: Use SpeakerRAGService or GenericRAGService instead."""
+    """Deprecated: Use SpeakerRAGService or FaissRAGService instead."""
 
     def __init__(self, *args, **kwargs):
         import warnings
         warnings.warn(
-            "RAGService is deprecated. Use SpeakerRAGService or GenericRAGService.",
+            "RAGService is deprecated. Use SpeakerRAGService or FaissRAGService.",
             DeprecationWarning,
             stacklevel=2
         )
@@ -3505,11 +3505,11 @@ from chatboti.rag import SpeakerRAGService
 rag_service = SpeakerRAGService(llm_service=embed_service)
 
 # Phase 2: Migrate to generic service with speaker config
-from chatboti.generic_rag import GenericRAGService
+from chatboti.faiss_rag import FaissRAGService
 from chatboti.config import load_rag_config
 
 registry = load_rag_config("rag_config.yaml")
-rag_service = GenericRAGService(llm_service=embed_service, doc_type_registry=registry)
+rag_service = FaissRAGService(llm_service=embed_service, doc_type_registry=registry)
 await rag_service.load_documents("data/speakers.csv", "speaker")
 ```
 
@@ -3545,9 +3545,9 @@ async def test_csv_loader():
     assert len(docs) > 0
     assert all(isinstance(d, Document) for d in docs)
 
-# tests/test_generic_rag.py
+# tests/test_faiss_rag.py
 async def test_search_single_type():
-    rag = GenericRAGService()
+    rag = FaissRAGService()
     # Load test documents
     # Perform search
     # Verify results
@@ -3578,7 +3578,7 @@ async def test_legacy_speaker_compatibility():
 async def test_data_migration():
     """Test migrating legacy JSON to generic format."""
     # Run migration utility
-    # Load with GenericRAGService
+    # Load with FaissRAGService
     # Verify data integrity
     pass
 ```
@@ -3590,7 +3590,7 @@ import time
 
 async def test_search_latency():
     """Ensure search remains fast with generic implementation."""
-    rag = GenericRAGService()
+    rag = FaissRAGService()
     await rag.load_documents("data/large_dataset.json", "test")
 
     start = time.time()
@@ -3675,11 +3675,11 @@ data_sources:
 
 2. Initialize service:
 ```python
-from chatboti.generic_rag import GenericRAGService
+from chatboti.faiss_rag import FaissRAGService
 from chatboti.config import load_rag_config
 
 registry = load_rag_config("my_rag_config.yaml")
-rag = GenericRAGService(doc_type_registry=registry)
+rag = FaissRAGService(doc_type_registry=registry)
 await rag.load_documents("data/my_documents.json", "my_docs")
 ```
 
@@ -3721,7 +3721,7 @@ class MyCustomLoader(DocumentLoader):
 
 **Register loader**:
 ```python
-rag = GenericRAGService()
+rag = FaissRAGService()
 rag.document_loaders.append(MyCustomLoader())
 await rag.load_documents("https://my-api.com/docs", "my_type")
 ```
@@ -3800,7 +3800,7 @@ paper = MultiModalDocument(
 
 **Combine vector similarity with BM25 keyword matching**:
 ```python
-class HybridSearchRAG(GenericRAGService):
+class HybridSearchRAG(FaissRAGService):
     """RAG with hybrid dense + sparse retrieval."""
 
     def __init__(self, *args, **kwargs):
@@ -3830,7 +3830,7 @@ class HybridSearchRAG(GenericRAGService):
 
 **Improve retrieval with query reformulation**:
 ```python
-class QueryExpansionRAG(GenericRAGService):
+class QueryExpansionRAG(FaissRAGService):
     """RAG with automatic query expansion."""
 
     async def search(
@@ -3883,7 +3883,7 @@ class QueryExpansionRAG(GenericRAGService):
 from functools import lru_cache
 import hashlib
 
-class CachedRAG(GenericRAGService):
+class CachedRAG(FaissRAGService):
     """RAG with query result caching."""
 
     def __init__(self, *args, cache_size: int = 1000, **kwargs):
@@ -3921,7 +3921,7 @@ class CachedRAG(GenericRAGService):
 
 **Validate document sources**:
 ```python
-class SecureRAG(GenericRAGService):
+class SecureRAG(FaissRAGService):
     """RAG with security validations."""
 
     ALLOWED_PATHS = ["/data", "/documents"]

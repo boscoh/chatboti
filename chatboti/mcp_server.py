@@ -14,7 +14,7 @@ from mcp.server.fastmcp import FastMCP
 from microeval.llm import get_llm_client, load_config
 
 # Local
-from chatboti.generic_rag import GenericRAGService
+from chatboti.faiss_rag import FaissRAGService
 from chatboti.logger import setup_logging
 
 logger = logging.getLogger(__name__)
@@ -63,7 +63,7 @@ async def lifespan(app):
         await embed_client.connect()
 
         # Create RAG service using constructor and context manager
-        rag_service = GenericRAGService(
+        rag_service = FaissRAGService(
             embed_client=embed_client,
             data_dir=data_dir
         )

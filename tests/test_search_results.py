@@ -4,7 +4,7 @@ import pytest
 from unittest.mock import Mock, AsyncMock, patch
 from pathlib import Path
 
-from chatboti.generic_rag import GenericRAGService
+from chatboti.faiss_rag import FaissRAGService
 from chatboti.document import Document, DocumentChunk, ChunkRef
 
 
@@ -23,7 +23,7 @@ class TestSearchResultBuilding:
 
         with patch('microeval.llm.get_llm_client', return_value=mock_embed_client):
             with patch('microeval.llm.load_config', return_value={'embed_models': {'test': 'test-model'}}):
-                async with GenericRAGService(
+                async with FaissRAGService(
                     service_name="test",
                     model="test-model",
                     data_dir=tmp_path,
@@ -58,7 +58,7 @@ class TestSearchResultBuilding:
 
         with patch('microeval.llm.get_llm_client', return_value=mock_embed_client):
             with patch('microeval.llm.load_config', return_value={'embed_models': {'test': 'test-model'}}):
-                async with GenericRAGService(
+                async with FaissRAGService(
                     service_name="test",
                     model="test-model",
                     data_dir=tmp_path,
@@ -92,7 +92,7 @@ class TestSearchResultBuilding:
 
         with patch('microeval.llm.get_llm_client', return_value=mock_embed_client):
             with patch('microeval.llm.load_config', return_value={'embed_models': {'test': 'test-model'}}):
-                async with GenericRAGService(
+                async with FaissRAGService(
                     service_name="test",
                     model="test-model",
                     data_dir=tmp_path,
@@ -129,7 +129,7 @@ class TestSearchResultBuilding:
 
         with patch('microeval.llm.get_llm_client', return_value=mock_embed_client):
             with patch('microeval.llm.load_config', return_value={'embed_models': {'test': 'test-model'}}):
-                async with GenericRAGService(
+                async with FaissRAGService(
                     service_name="test",
                     model="test-model",
                     data_dir=tmp_path,

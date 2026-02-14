@@ -63,7 +63,7 @@ def build_rag(
     index_path: str = "",
     metadata_path: str = ""
 ):
-    """Build RAG embeddings using GenericRAGService.
+    """Build RAG embeddings using FaissRAGService.
 
     All paths default to chatboti/data/ directory.
 

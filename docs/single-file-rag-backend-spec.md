@@ -540,10 +540,10 @@ documents_json = json.dumps(
 
 ### 5.1 Backend Interface
 
-The single-file backend implements the same interface as `GenericRAGService`:
+The single-file backend implements the same interface as `FaissRAGService`:
 
 ```python
-class SingleFileRAGService(GenericRAGService):
+class SingleFileRAGService(FaissRAGService):
     """RAG service using single markdown file backend."""
 
     def __init__(self, service_name: str, model: str, ragmd_path: Path):
@@ -563,7 +563,7 @@ class SingleFileRAGService(GenericRAGService):
 
 **Option 1: Separate class**
 - `SingleFileRAGService` for `.ragmd` files
-- `GenericRAGService` for FAISS + JSON (default)
+- `FaissRAGService` for FAISS + JSON (default)
 - Users choose based on use case
 
 **Option 2: Auto-detection**
@@ -572,7 +572,7 @@ class SingleFileRAGService(GenericRAGService):
 if ragmd_path.suffix == '.ragmd':
     backend = SingleFileRAGService(...)
 else:
-    backend = GenericRAGService(...)
+    backend = FaissRAGService(...)
 ```
 
 ---
@@ -582,7 +582,7 @@ else:
 ### 6.1 File I/O Operations
 
 ```python
-class SingleFileRAGService(GenericRAGService):
+class SingleFileRAGService(FaissRAGService):
     def load_from_ragmd(self, path: Path) -> None:
         """Load index, chunks, and documents from .ragmd file."""
         content = path.read_text(encoding='utf-8')
@@ -788,7 +788,7 @@ python -m chatboti.rag_cli convert \
 
 ```python
 # Before (multi-file)
-async with GenericRAGService("ollama", model="nomic-embed-text") as rag:
+async with FaissRAGService("ollama", model="nomic-embed-text") as rag:
     results = await rag.search("query")
 
 # After (single-file)

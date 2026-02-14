@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 from pathlib import Path
-from chatboti.generic_rag import GenericRAGService
+from chatboti.faiss_rag import FaissRAGService
 from typing import List
 
 
@@ -38,7 +38,7 @@ async def test_full_pipeline_csv_to_search(tmp_path):
     metadata_path = tmp_path / "metadata.json"
     embed_client = MockEmbedClient()
 
-    rag = GenericRAGService(
+    rag = FaissRAGService(
         index_path=index_path,
         metadata_path=metadata_path,
         embedding_dim=384,
@@ -75,7 +75,7 @@ async def test_full_pipeline_csv_to_search(tmp_path):
     assert results_with_docs[0].document_text is not None
 
     # 9. Verify persistence - load from saved files
-    rag2 = GenericRAGService(
+    rag2 = FaissRAGService(
         index_path=index_path,
         metadata_path=metadata_path,
         embedding_dim=384,
@@ -99,7 +99,7 @@ async def test_search_without_embeddings_fails_gracefully(tmp_path):
     metadata_path = tmp_path / "empty.json"
     embed_client = MockEmbedClient()
 
-    rag = GenericRAGService(
+    rag = FaissRAGService(
         index_path=index_path,
         metadata_path=metadata_path,
         embedding_dim=384,
