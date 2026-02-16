@@ -42,9 +42,9 @@ def ui_chat():
 def server(host: str = "0.0.0.0", port: int = 8000, reload: bool = False):
     """Start the FastAPI server only.
 
-    :param host: Server host.
-    :param port: Server port.
-    :param reload: Enable auto-reload on file changes.
+    :param host: Server host
+    :param port: Server port
+    :param reload: Enable auto-reload on file changes
     """
     run_server(host, port, open_browser=False, reload=reload)
 
@@ -57,13 +57,11 @@ def cli_chat():
 
 @app.command(name="build-rag", sort_key=3)
 def build_rag(csv_path: str = "", index_path: str = "", metadata_path: str = ""):
-    """Build RAG embeddings using FaissRAGService.
+    """Build RAG embeddings from CSV data (defaults to chatboti/data/).
 
-    All paths default to chatboti/data/ directory.
-
-    :param csv_path: Path to CSV file (default: chatboti/data/2025-09-02-speaker-bio.csv)
-    :param index_path: Path to save FAISS index (default: chatboti/data/vectors.faiss)
-    :param metadata_path: Path to save metadata JSON (default: chatboti/data/metadata.json)
+    :param csv_path: Path to CSV file
+    :param index_path: Path to save FAISS index or HDF5 file
+    :param metadata_path: Path to save metadata JSON (FAISS only)
     """
     asyncio.run(
         build_rag_new(
@@ -78,14 +76,12 @@ def build_rag(csv_path: str = "", index_path: str = "", metadata_path: str = "")
 def search_rag_cmd(
     query: str, k: int = 5, index_path: str = "", metadata_path: str = ""
 ):
-    """Search the RAG index.
-
-    Paths default to chatboti/data/ directory.
+    """Search the RAG index for relevant documents (defaults to chatboti/data/).
 
     :param query: Search query
     :param k: Number of results to return
-    :param index_path: Path to FAISS index (default: chatboti/data/vectors.faiss)
-    :param metadata_path: Path to metadata JSON (default: chatboti/data/metadata.json)
+    :param index_path: Path to FAISS index or HDF5 file
+    :param metadata_path: Path to metadata JSON (FAISS only)
     """
     asyncio.run(
         search_rag(
@@ -115,8 +111,8 @@ def convert_from_hdf5_cmd(
     """Convert HDF5 format to FAISS+JSON format.
 
     :param input_path: Path to HDF5 file (.h5)
-    :param index_path: Path to output FAISS index file (default: chatboti/data/vectors-{model}.faiss)
-    :param metadata_path: Path to output metadata JSON file (default: chatboti/data/metadata-{model}.json)
+    :param index_path: Path to output FAISS index file
+    :param metadata_path: Path to output metadata JSON file
     """
     asyncio.run(
         convert_from_hdf5(
