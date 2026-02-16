@@ -22,7 +22,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
 from chatboti.agent import InfoAgent
-from chatboti.config import get_chat_client, get_embed_client
+from chatboti.config import get_chat_client, get_embed_client, get_chat_service, get_embed_service
 from chatboti.faiss_rag import FaissRAGService
 
 logger = logging.getLogger(__name__)
@@ -132,11 +132,11 @@ def create_app() -> FastAPI:
     async def get_info() -> Dict[str, Any]:
         info = {}
         if hasattr(app.state, 'chat_client') and app.state.chat_client:
-            info["chat_service"] = app.state.info_agent.chat_service if app.state.info_agent else 'unknown'
+            info["chat_service"] = get_chat_service() 
             info["chat_model"] = getattr(app.state.chat_client, 'model', 'unknown')
 
         if hasattr(app.state, 'embed_client') and app.state.embed_client:
-            info["embed_service"] = getattr(app.state.embed_client, 'service', 'unknown')
+            info["embed_service"] = get_embed_service() 
             info["embed_model"] = getattr(app.state.embed_client, 'model', 'unknown')
         return info
 
