@@ -422,6 +422,9 @@
       try {
         const info = await ky.get("/info").json();
         const parts = [];
+        if (info.version) {
+          parts.push(`v${info.version}`);
+        }
         if (info.chat_service || info.chat_model) {
           parts.push(`chat:${info.chat_service || '?'}:${info.chat_model || '?'}`);
         }
@@ -429,7 +432,7 @@
           parts.push(`embed:${info.embed_service || '?'}:${info.embed_model || '?'}`);
         }
         if (parts.length > 0) {
-          subtitle.value = parts.join(" ");
+          subtitle.value = parts.join(" • ");
         }
       } catch (e) {
         console.error("Error fetching info:", e);

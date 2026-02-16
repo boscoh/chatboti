@@ -3,9 +3,6 @@
 
 import asyncio
 import logging
-import os
-import sys
-import tomllib
 from pathlib import Path
 
 from cyclopts import App
@@ -22,6 +19,7 @@ from chatboti.rag_cli import (
     show_hdf5_info,
 )
 from chatboti.server import run_server
+from chatboti.utils import get_version
 
 setup_logging()
 load_dotenv(Path.cwd() / ".env")
@@ -141,14 +139,7 @@ def docker():
 @app.command(sort_key=9)
 def version():
     """Show version."""
-    pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
-    if pyproject_path.exists():
-        with open(pyproject_path, "rb") as f:
-            pyproject = tomllib.load(f)
-            version_str = pyproject.get("project", {}).get("version", "unknown")
-            print(f"chatboti {version_str}")
-    else:
-        print("chatboti version unknown")
+    print(f"chatboti {get_version()}")
 
 
 def main():

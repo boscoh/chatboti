@@ -1,7 +1,21 @@
 """Utility functions for chatboti."""
 
-# Standard library
 import re
+import tomllib
+from pathlib import Path
+
+
+def get_version() -> str:
+    """Get version from pyproject.toml.
+
+    :return: Version string or 'unknown' if not found
+    """
+    pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
+    if pyproject_path.exists():
+        with open(pyproject_path, "rb") as f:
+            pyproject = tomllib.load(f)
+            return pyproject.get("project", {}).get("version", "unknown")
+    return "unknown"
 
 
 def make_slug(text: str, strip_latest: bool = False) -> str:

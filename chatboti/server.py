@@ -29,6 +29,7 @@ from chatboti.config import (
     get_embed_service,
 )
 from chatboti.faiss_rag import FaissRAGService
+from chatboti.utils import get_version
 
 logger = logging.getLogger(__name__)
 
@@ -136,7 +137,7 @@ def create_app() -> FastAPI:
 
     @app.get("/info")
     async def get_info() -> Dict[str, Any]:
-        info = {}
+        info = {"version": get_version()}
         if hasattr(app.state, "chat_client") and app.state.chat_client:
             info["chat_service"] = get_chat_service()
             info["chat_model"] = getattr(app.state.chat_client, "model", "unknown")
