@@ -12,7 +12,6 @@ from cyclopts import App
 from dotenv import load_dotenv
 
 from chatboti.agent import amain as agent_amain
-from chatboti.config import get_chat_service
 from chatboti.docker import main as run_docker_main
 from chatboti.logger import setup_logging
 from chatboti.rag_cli import (
@@ -53,11 +52,6 @@ def server(host: str = "0.0.0.0", port: int = 8000, reload: bool = False):
 @app.command(name="cli-chat", sort_key=2)
 def cli_chat():
     """Interactive chat with agent using MCP tools."""
-    try:
-        get_chat_service()
-    except ValueError as e:
-        logger.error(str(e))
-        sys.exit(1)
     asyncio.run(agent_amain())
 
 
