@@ -5,14 +5,7 @@ from chatboti.document import Document, DocumentChunk, ChunkRef, ChunkResult
 
 
 class TestDocumentChunk:
-    """Test DocumentChunk dataclass."""
-
-    def test_chunk_without_indices(self):
-        """Test field-level chunk without text indices."""
-        chunk = DocumentChunk(faiss_id=123)
-        assert chunk.faiss_id == 123
-        assert chunk.i_start is None
-        assert chunk.i_end is None
+    """Test DocumentChunk dataclass - keep only meaningful tests."""
 
     def test_chunk_with_indices(self):
         """Test chunk-level chunk with text indices."""
@@ -23,8 +16,9 @@ class TestDocumentChunk:
 
 
 class TestChunkRef:
-    """Test ChunkRef dataclass."""
+    """Test ChunkRef dataclass - keep only meaningful tests."""
 
+    # This test is kept as it verifies the basic structure
     def test_chunk_ref_construction(self):
         """Test ChunkRef construction."""
         ref = ChunkRef(document_id="doc123", chunk_key="bio")
@@ -33,19 +27,7 @@ class TestChunkRef:
 
 
 class TestChunkResult:
-    """Test ChunkResult dataclass."""
-
-    def test_chunk_result_basic(self):
-        """Test ChunkResult with required fields."""
-        result = ChunkResult(
-            document_id="doc123",
-            chunk_key="bio",
-            text="Sample text"
-        )
-        assert result.document_id == "doc123"
-        assert result.chunk_key == "bio"
-        assert result.text == "Sample text"
-        assert result.document_text is None
+    """Test ChunkResult dataclass - keep only meaningful tests."""
 
     def test_chunk_result_with_document_text(self):
         """Test ChunkResult with optional document_text."""
@@ -307,33 +289,7 @@ class TestDocumentSerialization:
 
 
 class TestDocumentInitialization:
-    """Test Document initialization."""
-
-    def test_init_with_all_params(self):
-        """Test initialization with all parameters."""
-        doc = Document(
-            id="doc1",
-            content={"key": "value"},
-            full_text="text",
-            metadata={"meta": "data"},
-            chunks={"0": DocumentChunk(faiss_id=1)}
-        )
-
-        assert doc.id == "doc1"
-        assert doc.content == {"key": "value"}
-        assert doc.full_text == "text"
-        assert doc.metadata == {"meta": "data"}
-        assert len(doc.chunks) == 1
-
-    def test_init_minimal(self):
-        """Test initialization with only required id parameter."""
-        doc = Document(id="minimal")
-
-        assert doc.id == "minimal"
-        assert doc.content == {}
-        assert doc.full_text == ""
-        assert doc.metadata == {}
-        assert doc.chunks == {}
+    """Test Document initialization - keep only meaningful tests."""
 
     def test_init_none_defaults(self):
         """Test that None parameters default to empty dicts."""

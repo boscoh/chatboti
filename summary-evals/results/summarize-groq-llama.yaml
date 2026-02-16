@@ -1,0 +1,60 @@
+---
+texts:
+- >-
+  The sentence "the quick brown fox jumps over the lazy dog" is famous for containing
+  every letter of the English alphabet at least once. It has been used for centuries
+  to test typewriters, fonts, and keyboards, and was first used in the late 1800s.
+  The phrase remains popular today for testing purposes due to its unique composition.
+- >-
+  The sentence "The quick brown fox jumps over the lazy dog" is famous for containing
+  every letter of the English alphabet at least once. It has been used to test typewriters,
+  fonts, and keyboards for centuries, dating back to the late 1800s. The phrase remains
+  popular today for testing purposes due to its unique characteristic.
+- >-
+  The sentence "The quick brown fox jumps over the lazy dog" is famous for containing
+  every letter of the English alphabet at least once. It has been used to test typewriters,
+  fonts, and keyboards for centuries. The phrase originated in the late 1800s and
+  remains a popular testing tool today.
+evaluations:
+- name: word_count
+  values:
+  - 1.0
+  - 1.0
+  - 1.0
+  average: 1.0
+  standard_deviation: 0.0
+- name: coherence
+  values:
+  - 1.0
+  - 0.9
+  - 1.0
+  average: 0.9666666666666667
+  standard_deviation: 0.05773502691896256
+- name: equivalence
+  values:
+  - 1.0
+  - 0.9
+  - 0.9
+  average: 0.9333333333333333
+  standard_deviation: 0.05773502691896256
+- name: elapsed_seconds
+  values:
+  - 1.0633211135864258
+  - 0.16583490371704102
+  - 0.1592121124267578
+  average: 0.4627893765767415
+  standard_deviation: 0.5200862819840762
+- name: token_count
+  values:
+  - 229
+  - 227
+  - 221
+  average: 225.66666666666666
+  standard_deviation: 4.163331998932265
+- name: cost
+  values:
+  - 0.00024022100000000002
+  - 0.000238123
+  - 0.00023182900000000002
+  average: 0.00023672433333333335
+  standard_deviation: 4.367335266879941e-06

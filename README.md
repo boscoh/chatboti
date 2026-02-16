@@ -59,10 +59,10 @@ Builds and runs a Docker container. The `Dockerfile` is configured for CI/ECS de
 - Health endpoint at `/health`
 
 **AWS Credentials for Bedrock:**
-When using `CHAT_SERVICE=bedrock` or `EMBED_SERVICE=bedrock`, the CLI automatically:
+When using `CHAT_SERVICE=bedrock` or `EMBED_SERVICE=bedrock`, CLI automatically:
 - Extracts AWS credentials from your `AWS_PROFILE` (or default profile)
-- Injects them into the Docker container as environment variables
-- Validates credentials before building the image
+- Injects them into Docker container as environment variables
+- Validates credentials before building image
 
 No manual credential configuration needed - just ensure your AWS profile is configured locally.
 
@@ -104,3 +104,36 @@ chatboti/
 | `EMBED_SERVICE`  | Embedding provider (defaults to `CHAT_SERVICE`)   |
 | `OPENAI_API_KEY` | OpenAI API key                                    |
 | `AWS_PROFILE`    | AWS profile for Bedrock                           |
+
+## Model Configuration
+
+The project supports multiple LLM and embedding models configured in `summary-evals/models.json`:
+
+**Chat Models:**
+- **OpenAI:** GPT-4o, GPT-4o-mini, GPT-4-turbo, GPT-3.5-turbo
+- **Bedrock:** Amazon Nova Pro
+- **Ollama:** Llama 3.2
+- **Groq:** Llama 3.3-70b-versatile
+
+**Embedding Models:**
+- **OpenAI:** text-embedding-3-small, text-embedding-3-large, text-embedding-ada-002
+- **Ollama:** nomic-embed-text, mxbai-embed-large, all-minilm
+- **Bedrock:** Amazon Titan Embed Text v2 & v1, Cohere Embed v3
+
+## Recent Improvements
+
+### Test Suite Refactoring
+
+- **Reduced Mock Usage:** Replaced mock-based tests with integration tests using real services
+- **Consolidated Test Utilities:** Created shared `conftest.py` with deterministic embed client
+- **Parameterized Tests:** Added unified search tests for both FAISS and HDF5 backends
+- **Improved Service Creation:** Abstracted RAG service creation with unified `create_rag_service()` function
+
+### Storage Backends
+
+The project supports multiple storage backends for flexibility:
+
+- **FAISS + JSON:** Standard multi-file format (`.faiss` + `.json`)
+- **HDF5:** Single-file format (`.h5`) with compression and partial loading
+
+Both backends are fully tested and supported in production.
