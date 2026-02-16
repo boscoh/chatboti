@@ -228,7 +228,8 @@ def main():
         logger.error(f".env file not found at {env_file}")
         sys.exit(1)
 
-    load_dotenv(env_file)
+    logger.info(f"Loading environment from {env_file}")
+    load_dotenv(env_file, verbose=True)
 
     chat_service = os.getenv("CHAT_SERVICE", "openai")
     embed_service = os.getenv("EMBED_SERVICE", "openai")

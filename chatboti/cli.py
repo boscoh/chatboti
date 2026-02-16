@@ -22,9 +22,15 @@ from chatboti.server import run_server
 from chatboti.utils import get_version
 
 setup_logging()
-load_dotenv(Path.cwd() / ".env")
 
 logger = logging.getLogger(__name__)
+
+env_file = Path.cwd() / ".env"
+if env_file.exists():
+    logger.info(f"Loading environment from {env_file}")
+    load_dotenv(env_file, verbose=True)
+else:
+    load_dotenv(env_file, verbose=True)
 
 
 app = App(name="chatboti", help="Chatboti - RAG starter kit")

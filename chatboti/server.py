@@ -224,7 +224,7 @@ def run_server(host: str, port: int, open_browser: bool = False, reload: bool = 
         )
         thread.start()
 
-    logger.info(f"Starting TinyRAG server on http://{host}:{port}")
+    logger.info(f"Starting chatboti {get_version()} on http://{host}:{port}")
     if reload:
         uvicorn.run(
             "chatboti.server:app",
