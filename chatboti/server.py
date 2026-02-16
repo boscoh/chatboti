@@ -15,7 +15,7 @@ import httpx
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
-from microeval.llm import SimpleLLMClient, load_config
+from microeval.llm import SimpleLLMClient
 from pydantic import BaseModel
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -24,10 +24,6 @@ from slowapi.util import get_remote_address
 from chatboti.agent import InfoAgent
 from chatboti.config import get_chat_client, get_embed_client
 from chatboti.faiss_rag import FaissRAGService
-
-model_config = load_config()
-chat_models = model_config["chat_models"]
-embed_models = model_config["embed_models"]
 
 logger = logging.getLogger(__name__)
 

@@ -13,14 +13,11 @@ from typing import Any, Dict, List, Optional
 from dotenv import load_dotenv
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
-from microeval.llm import SimpleLLMClient, get_llm_client, load_config
+from microeval.llm import SimpleLLMClient
 from path import Path
 import pydash as py_
 
 from chatboti.config import get_chat_client
-
-model_config = load_config()
-chat_models = model_config["chat_models"]
 
 load_dotenv()
 
