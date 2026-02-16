@@ -5,6 +5,7 @@ import asyncio
 import logging
 import os
 import sys
+import tomllib
 from pathlib import Path
 
 from cyclopts import App
@@ -147,7 +148,14 @@ def docker():
 @app.command(sort_key=9)
 def version():
     """Show version."""
-    print("chatboti 0.1.0")
+    pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
+    if pyproject_path.exists():
+        with open(pyproject_path, "rb") as f:
+            pyproject = tomllib.load(f)
+            version_str = pyproject.get("project", {}).get("version", "unknown")
+            print(f"chatboti {version_str}")
+    else:
+        print("chatboti version unknown")
 
 
 def main():
