@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 
 import logging
-import os
 import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
 from microeval.llm import SimpleLLMClient
 
@@ -17,14 +15,7 @@ from chatboti.logger import setup_logging
 
 logger = logging.getLogger(__name__)
 
-load_dotenv()
-
-chat_service = os.getenv("CHAT_SERVICE")
-if not chat_service:
-    raise ValueError("CHAT_SERVICE environment variable is not set")
-
 data_dir = Path(__file__).parent / "data"
-
 rag_service: Optional[FaissRAGService] = None
 embed_client: Optional[SimpleLLMClient] = None
 

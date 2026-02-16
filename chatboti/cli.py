@@ -1,25 +1,20 @@
 #!/usr/bin/env python3
-"""
-Chatboti CLI - Command-line interface for Chatboti
-"""
+"""Chatboti CLI - Command-line interface for Chatboti"""
 
-# Standard library
 import asyncio
 import logging
 import os
 import sys
+from pathlib import Path
 
-# Third-party
 from cyclopts import App
+from dotenv import load_dotenv
 
-# Local
 from chatboti.agent import amain as agent_amain
 from chatboti.docker import main as run_docker_main
 from chatboti.logger import setup_logging
 from chatboti.rag_cli import (
     build_embeddings as build_rag_new,
-)
-from chatboti.rag_cli import (
     convert_from_hdf5,
     convert_to_hdf5,
     search_rag,
@@ -28,6 +23,7 @@ from chatboti.rag_cli import (
 from chatboti.server import run_server
 
 setup_logging()
+load_dotenv(Path.cwd() / ".env")
 
 logger = logging.getLogger(__name__)
 

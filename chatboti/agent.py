@@ -11,15 +11,11 @@ from contextlib import AsyncExitStack
 from typing import Any, Dict, List, Optional
 
 import pydash as py_
-from dotenv import load_dotenv
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from microeval.llm import SimpleLLMClient
-from path import Path
 
 from chatboti.config import get_chat_client
-
-load_dotenv()
 
 logger = logging.getLogger(__name__)
 
