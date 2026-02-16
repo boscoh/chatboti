@@ -66,10 +66,10 @@ def _get_default_model(models_dict: dict, service: str) -> str:
     return ""
 
 
-def get_chat_config() -> tuple[str, str]:
-    """Get chat service and model from environment and config.
+async def get_chat_client() -> SimpleLLMClient:
+    """Create and connect a chat client with logging.
 
-    :return: Tuple of (service, model)
+    :return: Connected chat client
     :raises ValueError: If service or model cannot be determined
     """
     config = _get_model_config()
@@ -87,48 +87,10 @@ def get_chat_config() -> tuple[str, str]:
     if not model:
         raise ValueError(f"No model configured for chat service '{service}'")
 
-    return service, model
-
-
-def get_embed_config() -> tuple[str, str]:
-    """Get embedding service and model from environment and config.
-
-    :return: Tuple of (service, model)
-    :raises ValueError: If service cannot be determined
-    """
-    config = _get_model_config()
-
-    service = os.getenv("EMBED_SERVICE") or os.getenv("CHAT_SERVICE")
-    if not service:
-        raise ValueError("Neither EMBED_SERVICE nor CHAT_SERVICE environment variable is set")
-
-    model = os.getenv("EMBED_MODEL") or _get_default_model(config["embed_models"], service)
-
-    return service, model
-
-
-async def _create_client(service: str, model: str) -> SimpleLLMClient:
-    """Create and connect a client.
-
-    :param service: Service name
-    :param model: Model name
-    :return: Connected client
-    """
-    client = get_llm_client(service, model=model)
-    await client.connect()
-    return client
-
-
-async def get_chat_client() -> SimpleLLMClient:
-    """Create and connect a chat client with logging.
-
-    :return: Connected chat client
-    :raises ValueError: If service or model cannot be determined
-    """
-    service, model = get_chat_config()
     logger.info(f"Chat client: {service}:{model}")
     logger.info(f"Connecting to {service}...")
-    client = await _create_client(service, model)
+    client = get_llm_client(service, model=model)
+    await client.connect()
     logger.info(f"Connected to {service}:{model}")
     return client
 
@@ -139,9 +101,17 @@ async def get_embed_client() -> SimpleLLMClient:
     :return: Connected embedding client
     :raises ValueError: If service cannot be determined
     """
-    service, model = get_embed_config()
+    config = _get_model_config()
+
+    service = os.getenv("EMBED_SERVICE") or os.getenv("CHAT_SERVICE")
+    if not service:
+        raise ValueError("Neither EMBED_SERVICE nor CHAT_SERVICE environment variable is set")
+
+    model = os.getenv("EMBED_MODEL") or _get_default_model(config["embed_models"], service)
+
     logger.info(f"Embed client: {service}:{model}")
     logger.info(f"Connecting to {service}...")
-    client = await _create_client(service, model)
+    client = get_llm_client(service, model=model)
+    await client.connect()
     logger.info(f"Connected to {service}:{model}")
     return client
