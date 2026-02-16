@@ -22,7 +22,12 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
 from chatboti.agent import InfoAgent
-from chatboti.config import get_chat_client, get_embed_client, get_chat_service, get_embed_service
+from chatboti.config import (
+    get_chat_client,
+    get_chat_service,
+    get_embed_client,
+    get_embed_service,
+)
 from chatboti.faiss_rag import FaissRAGService
 
 logger = logging.getLogger(__name__)
@@ -66,11 +71,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             app.state.embed_client = await get_embed_client()
 
             rag_service = FaissRAGService(
-                embed_client=app.state.embed_client,
-                data_dir=data_dir
+                embed_client=app.state.embed_client, data_dir=data_dir
             )
             await rag_service.__aenter__()
-            logger.info(f"RAG loaded: {len(rag_service.documents)} documents, {rag_service.index.ntotal} vectors")
+            logger.info(
+                f"RAG loaded: {len(rag_service.documents)} documents, {rag_service.index.ntotal} vectors"
+            )
 
             # Manual lifecycle management avoids asyncio task context issues with anyio cancel scopes in Python 3.13
             logger.info("Initializing chat client and MCP agent...")
@@ -91,11 +97,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             if rag_service:
                 await rag_service.__aexit__(None, None, None)
 
-            if hasattr(app.state, 'chat_client') and app.state.chat_client:
+            if hasattr(app.state, "chat_client") and app.state.chat_client:
                 await app.state.chat_client.close()
                 app.state.chat_client = None
 
-            if hasattr(app.state, 'embed_client') and app.state.embed_client:
+            if hasattr(app.state, "embed_client") and app.state.embed_client:
                 await app.state.embed_client.close()
                 app.state.embed_client = None
         except Exception as e:
@@ -131,13 +137,13 @@ def create_app() -> FastAPI:
     @app.get("/info")
     async def get_info() -> Dict[str, Any]:
         info = {}
-        if hasattr(app.state, 'chat_client') and app.state.chat_client:
-            info["chat_service"] = get_chat_service() 
-            info["chat_model"] = getattr(app.state.chat_client, 'model', 'unknown')
+        if hasattr(app.state, "chat_client") and app.state.chat_client:
+            info["chat_service"] = get_chat_service()
+            info["chat_model"] = getattr(app.state.chat_client, "model", "unknown")
 
-        if hasattr(app.state, 'embed_client') and app.state.embed_client:
-            info["embed_service"] = get_embed_service() 
-            info["embed_model"] = getattr(app.state.embed_client, 'model', 'unknown')
+        if hasattr(app.state, "embed_client") and app.state.embed_client:
+            info["embed_service"] = get_embed_service()
+            info["embed_model"] = getattr(app.state.embed_client, "model", "unknown")
         return info
 
     @app.get("/")

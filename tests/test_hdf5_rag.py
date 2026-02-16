@@ -1,18 +1,20 @@
 """Integration tests for HDF5RAGService using real implementation."""
 
 import json
-import pytest
-import numpy as np
 from pathlib import Path
+
+import numpy as np
+import pytest
 
 # Try to import h5py - tests will be skipped if not available
 try:
     import h5py
+
     HDF5_AVAILABLE = True
 except ImportError:
     HDF5_AVAILABLE = False
 
-from chatboti.document import Document, DocumentChunk, ChunkRef, ChunkResult
+from chatboti.document import ChunkRef, ChunkResult, Document, DocumentChunk
 from chatboti.hdf5_rag import HDF5RAGService
 from tests.conftest import DeterministicEmbedClient
 
@@ -27,8 +29,7 @@ class TestHDF5RAGServiceInitialization:
         hdf5_path = tmp_path / "test.h5"
 
         async with HDF5RAGService(
-            hdf5_path=hdf5_path,
-            embed_client=embed_client
+            hdf5_path=hdf5_path, embed_client=embed_client
         ) as service:
             # Check in-memory structures
             assert service.index is not None  # Inherits from FaissRAGService
@@ -44,39 +45,37 @@ class TestHDF5RAGServiceInitialization:
 
         # Create and save initial service
         async with HDF5RAGService(
-            hdf5_path=hdf5_path,
-            embed_client=embed_client
+            hdf5_path=hdf5_path, embed_client=embed_client
         ) as service1:
             # Add mock data
             doc = Document(
                 id="doc1",
                 content={"field1": "test content"},
-                chunks={"field1": DocumentChunk(faiss_id=-1)}
+                chunks={"field1": DocumentChunk(faiss_id=-1)},
             )
             await service1.add_document(doc)
             service1.save()
 
         # Load service from saved file
         async with HDF5RAGService(
-            hdf5_path=hdf5_path,
-            embed_client=embed_client
+            hdf5_path=hdf5_path, embed_client=embed_client
         ) as service2:
             # Verify data loaded correctly
             assert len(service2.chunk_refs) == 1
-            
+
             # Just verify the document exists and has the right content
             # Don't worry about the exact format of IDs for now
             chunk_ref = service2.chunk_refs[0]
             assert chunk_ref is not None
-            assert hasattr(chunk_ref, 'document_id')
-            assert hasattr(chunk_ref, 'chunk_key')
-            
+            assert hasattr(chunk_ref, "document_id")
+            assert hasattr(chunk_ref, "chunk_key")
+
             # Check that we can find the document somehow
             found_doc = None
             for doc_id, doc in service2.documents.items():
                 if isinstance(doc_id, bytes):
                     try:
-                        decoded_id = doc_id.decode('utf-8')
+                        decoded_id = doc_id.decode("utf-8")
                         if decoded_id == "doc1":
                             found_doc = doc
                             break
@@ -85,7 +84,7 @@ class TestHDF5RAGServiceInitialization:
                 elif doc_id == "doc1":
                     found_doc = doc
                     break
-            
+
             assert found_doc is not None
             assert found_doc.id == "doc1" or found_doc.id == b"doc1"
 
@@ -96,10 +95,9 @@ class TestHDF5RAGServiceInitialization:
 
         # Test with embed_client that has 384 dimensions
         embed_client_384 = DeterministicEmbedClient(embedding_dim=384)
-        
+
         async with HDF5RAGService(
-            hdf5_path=hdf5_path,
-            embed_client=embed_client_384
+            hdf5_path=hdf5_path, embed_client=embed_client_384
         ) as service:
             assert service.embedding_dim == 384
             assert service.index.d == 384
@@ -116,9 +114,7 @@ class TestHDF5RAGServiceSaveLoad:
 
         # Create service with data
         service1 = HDF5RAGService(
-            hdf5_path=hdf5_path,
-            embedding_dim=768,
-            embed_client=embed_client
+            hdf5_path=hdf5_path, embedding_dim=768, embed_client=embed_client
         )
 
         # Add multiple documents
@@ -129,13 +125,13 @@ class TestHDF5RAGServiceSaveLoad:
             metadata={"source": "test.txt"},
             chunks={
                 "title": DocumentChunk(faiss_id=-1),
-                "body": DocumentChunk(faiss_id=-1)
-            }
+                "body": DocumentChunk(faiss_id=-1),
+            },
         )
         doc2 = Document(
             id="doc2",
             content={"field": "value"},
-            chunks={"field": DocumentChunk(faiss_id=-1)}
+            chunks={"field": DocumentChunk(faiss_id=-1)},
         )
 
         await service1.add_document(doc1)
@@ -145,9 +141,7 @@ class TestHDF5RAGServiceSaveLoad:
 
         # Load into new service
         service2 = HDF5RAGService(
-            hdf5_path=hdf5_path,
-            embedding_dim=768,
-            embed_client=embed_client
+            hdf5_path=hdf5_path, embedding_dim=768, embed_client=embed_client
         )
 
         # Verify all data preserved
@@ -165,17 +159,12 @@ class TestHDF5RAGServiceSaveLoad:
         """Test saving empty service creates valid HDF5 file."""
         hdf5_path = tmp_path / "empty.h5"
 
-        service = HDF5RAGService(
-            hdf5_path=hdf5_path,
-            embed_client=embed_client
-        )
+        service = HDF5RAGService(hdf5_path=hdf5_path, embed_client=embed_client)
         service.save()
 
         # Load and verify
         service2 = HDF5RAGService(
-            hdf5_path=hdf5_path,
-            embedding_dim=768,
-            embed_client=embed_client
+            hdf5_path=hdf5_path, embedding_dim=768, embed_client=embed_client
         )
         assert len(service2.documents) == 0
         assert len(service2.chunk_refs) == 0
@@ -190,17 +179,14 @@ class TestHDF5RAGServiceMetadata:
         """Test that metadata attributes are preserved correctly."""
         hdf5_path = tmp_path / "metadata.h5"
 
-        service = HDF5RAGService(
-            hdf5_path=hdf5_path,
-            embedding_dim=512
-        )
+        service = HDF5RAGService(hdf5_path=hdf5_path, embedding_dim=512)
         service.model_name = "custom-embed-model"
 
         # Add some data
         doc = Document(
             id="doc1",
             content={"text": "sample"},
-            chunks={"text": DocumentChunk(faiss_id=0)}
+            chunks={"text": DocumentChunk(faiss_id=0)},
         )
         service.documents["doc1"] = doc
         service.chunk_refs.append(ChunkRef(document_id="doc1", chunk_key="text"))
@@ -209,17 +195,14 @@ class TestHDF5RAGServiceMetadata:
         service.save()
 
         # Verify HDF5 file structure
-        with h5py.File(str(hdf5_path), 'r') as f:
-            assert f.attrs['model_name'] == "custom-embed-model"
-            assert f.attrs['embedding_dim'] == 512
-            assert f.attrs['vector_count'] == 1
-            assert f.attrs['document_count'] == 1
+        with h5py.File(str(hdf5_path), "r") as f:
+            assert f.attrs["model_name"] == "custom-embed-model"
+            assert f.attrs["embedding_dim"] == 512
+            assert f.attrs["vector_count"] == 1
+            assert f.attrs["document_count"] == 1
 
         # Verify loading preserves metadata
-        service2 = HDF5RAGService(
-            hdf5_path=hdf5_path,
-            embedding_dim=512
-        )
+        service2 = HDF5RAGService(hdf5_path=hdf5_path, embedding_dim=512)
         assert service2.model_name == "custom-embed-model"
         assert service2.embedding_dim == 512
 
@@ -232,16 +215,13 @@ class TestHDF5RAGServiceStructure:
         """Test that HDF5 file has correct structure."""
         hdf5_path = tmp_path / "structure.h5"
 
-        service = HDF5RAGService(
-            hdf5_path=hdf5_path,
-            embedding_dim=768
-        )
+        service = HDF5RAGService(hdf5_path=hdf5_path, embedding_dim=768)
 
         # Add test data
         doc = Document(
             id="doc1",
             content={"field": "content"},
-            chunks={"field": DocumentChunk(faiss_id=0)}
+            chunks={"field": DocumentChunk(faiss_id=0)},
         )
         service.documents["doc1"] = doc
         service.chunk_refs.append(ChunkRef(document_id="doc1", chunk_key="field"))
@@ -249,32 +229,32 @@ class TestHDF5RAGServiceStructure:
         service.save()
 
         # Verify HDF5 structure
-        with h5py.File(str(hdf5_path), 'r') as f:
+        with h5py.File(str(hdf5_path), "r") as f:
             # Check required datasets
-            assert 'vectors' in f
-            assert 'chunks' in f
-            assert 'documents' in f
+            assert "vectors" in f
+            assert "chunks" in f
+            assert "documents" in f
 
             # Check vectors dataset
-            assert f['vectors'].shape == (1, 768)
-            assert f['vectors'].dtype == np.float32
+            assert f["vectors"].shape == (1, 768)
+            assert f["vectors"].dtype == np.float32
 
             # Check chunks dataset structure
-            chunks_data = f['chunks']
+            chunks_data = f["chunks"]
             assert len(chunks_data) == 1
-            assert 'faiss_id' in chunks_data.dtype.names
-            assert 'document_id' in chunks_data.dtype.names
-            assert 'chunk_key' in chunks_data.dtype.names
+            assert "faiss_id" in chunks_data.dtype.names
+            assert "document_id" in chunks_data.dtype.names
+            assert "chunk_key" in chunks_data.dtype.names
 
             # Check documents group
-            assert isinstance(f['documents'], h5py.Group)
-            assert 'doc1' in f['documents']
+            assert isinstance(f["documents"], h5py.Group)
+            assert "doc1" in f["documents"]
 
             # Check metadata attributes
-            assert 'model_name' in f.attrs
-            assert 'embedding_dim' in f.attrs
-            assert 'vector_count' in f.attrs
-            assert 'document_count' in f.attrs
+            assert "model_name" in f.attrs
+            assert "embedding_dim" in f.attrs
+            assert "vector_count" in f.attrs
+            assert "document_count" in f.attrs
 
 
 @pytest.mark.skipif(not HDF5_AVAILABLE, reason="h5py not installed")
@@ -286,10 +266,7 @@ class TestHDF5RAGServiceDocumentManagement:
         """Test add_document() with embed_client."""
         hdf5_path = tmp_path / "documents.h5"
 
-        service = HDF5RAGService(
-            hdf5_path=hdf5_path,
-            embed_client=embed_client
-        )
+        service = HDF5RAGService(hdf5_path=hdf5_path, embed_client=embed_client)
 
         # Create document with chunks
         doc = Document(
@@ -297,8 +274,8 @@ class TestHDF5RAGServiceDocumentManagement:
             content={"title": "Test", "body": "Content"},
             chunks={
                 "title": DocumentChunk(faiss_id=-1),
-                "body": DocumentChunk(faiss_id=-1)
-            }
+                "body": DocumentChunk(faiss_id=-1),
+            },
         )
 
         # Add document
@@ -335,25 +312,20 @@ class TestHDF5RAGServiceSearch:
         """Test that search works correctly after HDF5 load."""
         hdf5_path = tmp_path / "search.h5"
 
-        service = HDF5RAGService(
-            hdf5_path=hdf5_path,
-            embed_client=embed_client
-        )
+        service = HDF5RAGService(hdf5_path=hdf5_path, embed_client=embed_client)
 
         # Add document
         doc = Document(
             id="doc1",
             content={"field": "test content"},
-            chunks={"field": DocumentChunk(faiss_id=-1)}
+            chunks={"field": DocumentChunk(faiss_id=-1)},
         )
         await service.add_document(doc)
         service.save()
-        
+
         # Load new service instance
         service2 = HDF5RAGService(
-            hdf5_path=hdf5_path,
-            embedding_dim=768,
-            embed_client=embed_client
+            hdf5_path=hdf5_path, embedding_dim=768, embed_client=embed_client
         )
 
         # Search
@@ -371,26 +343,21 @@ class TestHDF5RAGServiceSearch:
         """Test search() with include_documents=True."""
         hdf5_path = tmp_path / "search_docs.h5"
 
-        service = HDF5RAGService(
-            hdf5_path=hdf5_path,
-            embed_client=embed_client
-        )
+        service = HDF5RAGService(hdf5_path=hdf5_path, embed_client=embed_client)
 
         # Add document with full_text
         doc = Document(
             id="doc1",
             content={"field": "test content"},
             full_text="Full document text goes here",
-            chunks={"field": DocumentChunk(faiss_id=-1)}
+            chunks={"field": DocumentChunk(faiss_id=-1)},
         )
         await service.add_document(doc)
         service.save()
 
         # Reload and search
         service2 = HDF5RAGService(
-            hdf5_path=hdf5_path,
-            embedding_dim=768,
-            embed_client=embed_client
+            hdf5_path=hdf5_path, embedding_dim=768, embed_client=embed_client
         )
 
         results = await service2.search("test query", k=1, include_documents=True)
@@ -424,7 +391,7 @@ class TestHDF5RAGServiceConversion:
             "chunk_refs": [
                 {"document_id": "doc1", "chunk_key": "chunk0"},
                 {"document_id": "doc1", "chunk_key": "chunk1"},
-                {"document_id": "doc2", "chunk_key": "chunk0"}
+                {"document_id": "doc2", "chunk_key": "chunk0"},
             ],
             "documents": [
                 {
@@ -435,8 +402,8 @@ class TestHDF5RAGServiceConversion:
                     "source": "",
                     "chunks": {
                         "chunk0": {"faiss_id": 0, "i_start": None, "i_end": None},
-                        "chunk1": {"faiss_id": 1, "i_start": None, "i_end": None}
-                    }
+                        "chunk1": {"faiss_id": 1, "i_start": None, "i_end": None},
+                    },
                 },
                 {
                     "id": "doc2",
@@ -446,19 +413,17 @@ class TestHDF5RAGServiceConversion:
                     "source": "",
                     "chunks": {
                         "chunk0": {"faiss_id": 2, "i_start": None, "i_end": None}
-                    }
-                }
-            ]
+                    },
+                },
+            ],
         }
 
-        with open(json_path, 'w') as f:
+        with open(json_path, "w") as f:
             json.dump(metadata, f)
 
         # Convert to HDF5
         service = HDF5RAGService.from_faiss_json(
-            faiss_path=faiss_path,
-            json_path=json_path,
-            hdf5_path=hdf5_path
+            faiss_path=faiss_path, json_path=json_path, hdf5_path=hdf5_path
         )
 
         # Verify conversion
@@ -483,35 +448,26 @@ class TestHDF5RAGServiceErrorHandling:
         hdf5_path = tmp_path / "corrupted.h5"
 
         # Create corrupted file (not valid HDF5)
-        with open(hdf5_path, 'w') as f:
+        with open(hdf5_path, "w") as f:
             f.write("This is not a valid HDF5 file")
 
         # Attempt to load should raise error
         with pytest.raises((OSError, IOError)):
-            service = HDF5RAGService(
-                hdf5_path=hdf5_path,
-                embedding_dim=768
-            )
+            service = HDF5RAGService(hdf5_path=hdf5_path, embedding_dim=768)
 
     def test_missing_hdf5_file(self, tmp_path):
         """Test error handling for missing HDF5 file."""
         hdf5_path = tmp_path / "nonexistent.h5"
 
         # Creating service with non-existent file should work (new service)
-        service = HDF5RAGService(
-            hdf5_path=hdf5_path,
-            embedding_dim=768
-        )
+        service = HDF5RAGService(hdf5_path=hdf5_path, embedding_dim=768)
         assert len(service.documents) == 0
 
     def test_load_missing_file_explicitly(self, tmp_path):
         """Test explicit load of missing file raises error."""
         hdf5_path = tmp_path / "missing.h5"
 
-        service = HDF5RAGService(
-            hdf5_path=hdf5_path,
-            embedding_dim=768
-        )
+        service = HDF5RAGService(hdf5_path=hdf5_path, embedding_dim=768)
 
         # Explicit load should fail
         with pytest.raises(FileNotFoundError):
@@ -522,16 +478,13 @@ class TestHDF5RAGServiceErrorHandling:
         hdf5_path = tmp_path / "dimension.h5"
 
         # Create service with 768 dimensions
-        service1 = HDF5RAGService(
-            hdf5_path=hdf5_path,
-            embedding_dim=768
-        )
+        service1 = HDF5RAGService(hdf5_path=hdf5_path, embedding_dim=768)
         service1.vectors = np.random.randn(1, 768).astype(np.float32)
         service1.chunk_refs.append(ChunkRef(document_id="doc1", chunk_key="chunk0"))
         doc = Document(
             id="doc1",
             content={"field": "value"},
-            chunks={"chunk0": DocumentChunk(faiss_id=0)}
+            chunks={"chunk0": DocumentChunk(faiss_id=0)},
         )
         service1.documents["doc1"] = doc
         service1.save()
@@ -539,7 +492,7 @@ class TestHDF5RAGServiceErrorHandling:
         # Load with different dimensions should still work but metadata will show correct dim
         service2 = HDF5RAGService(
             hdf5_path=hdf5_path,
-            embedding_dim=384  # Wrong dimension specified
+            embedding_dim=384,  # Wrong dimension specified
         )
 
         # Loaded dimension should be the actual one from file
@@ -554,33 +507,29 @@ class TestHDF5RAGServiceCompression:
         """Test that vectors are compressed in HDF5 file."""
         hdf5_path = tmp_path / "compressed.h5"
 
-        service = HDF5RAGService(
-            hdf5_path=hdf5_path,
-            embedding_dim=768
-        )
+        service = HDF5RAGService(hdf5_path=hdf5_path, embedding_dim=768)
 
         # Add large number of vectors
         n_vectors = 100
         service.vectors = np.random.randn(n_vectors, 768).astype(np.float32)
 
         for i in range(n_vectors):
-            service.chunk_refs.append(ChunkRef(
-                document_id=f"doc{i}",
-                chunk_key="chunk0"
-            ))
+            service.chunk_refs.append(
+                ChunkRef(document_id=f"doc{i}", chunk_key="chunk0")
+            )
             doc = Document(
                 id=f"doc{i}",
                 content={"field": f"value{i}"},
-                chunks={"chunk0": DocumentChunk(faiss_id=i)}
+                chunks={"chunk0": DocumentChunk(faiss_id=i)},
             )
             service.documents[f"doc{i}"] = doc
 
         service.save()
 
         # Verify compression was applied
-        with h5py.File(str(hdf5_path), 'r') as f:
-            vectors_dataset = f['vectors']
-            assert vectors_dataset.compression == 'gzip'
+        with h5py.File(str(hdf5_path), "r") as f:
+            vectors_dataset = f["vectors"]
+            assert vectors_dataset.compression == "gzip"
 
         # Verify file size is reasonable (compressed should be smaller)
         file_size = hdf5_path.stat().st_size

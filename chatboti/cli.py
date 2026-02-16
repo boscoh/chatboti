@@ -14,16 +14,18 @@ from cyclopts import App
 
 # Local
 from chatboti.agent import amain as agent_amain
+from chatboti.docker import main as run_docker_main
+from chatboti.logger import setup_logging
 from chatboti.rag_cli import (
     build_embeddings as build_rag_new,
+)
+from chatboti.rag_cli import (
     convert_from_hdf5,
     convert_to_hdf5,
     search_rag,
     show_hdf5_info,
 )
 from chatboti.server import run_server
-from chatboti.docker import main as run_docker_main
-from chatboti.logger import setup_logging
 
 setup_logging()
 
@@ -60,11 +62,7 @@ def cli_chat():
 
 
 @app.command(name="build-rag", sort_key=3)
-def build_rag(
-    csv_path: str = "",
-    index_path: str = "",
-    metadata_path: str = ""
-):
+def build_rag(csv_path: str = "", index_path: str = "", metadata_path: str = ""):
     """Build RAG embeddings using FaissRAGService.
 
     All paths default to chatboti/data/ directory.
@@ -73,19 +71,18 @@ def build_rag(
     :param index_path: Path to save FAISS index (default: chatboti/data/vectors.faiss)
     :param metadata_path: Path to save metadata JSON (default: chatboti/data/metadata.json)
     """
-    asyncio.run(build_rag_new(
-        csv_path if csv_path else None,
-        index_path if index_path else None,
-        metadata_path if metadata_path else None
-    ))
+    asyncio.run(
+        build_rag_new(
+            csv_path if csv_path else None,
+            index_path if index_path else None,
+            metadata_path if metadata_path else None,
+        )
+    )
 
 
 @app.command(name="search-rag", sort_key=4)
 def search_rag_cmd(
-    query: str,
-    k: int = 5,
-    index_path: str = "",
-    metadata_path: str = ""
+    query: str, k: int = 5, index_path: str = "", metadata_path: str = ""
 ):
     """Search the RAG index.
 
@@ -96,20 +93,18 @@ def search_rag_cmd(
     :param index_path: Path to FAISS index (default: chatboti/data/vectors.faiss)
     :param metadata_path: Path to metadata JSON (default: chatboti/data/metadata.json)
     """
-    asyncio.run(search_rag(
-        query,
-        k,
-        index_path if index_path else None,
-        metadata_path if metadata_path else None
-    ))
+    asyncio.run(
+        search_rag(
+            query,
+            k,
+            index_path if index_path else None,
+            metadata_path if metadata_path else None,
+        )
+    )
 
 
 @app.command(name="convert-to-hdf5", sort_key=5)
-def convert_to_hdf5_cmd(
-    index_path: str,
-    metadata_path: str,
-    output_path: str
-):
+def convert_to_hdf5_cmd(index_path: str, metadata_path: str, output_path: str):
     """Convert FAISS+JSON format to HDF5 single-file format.
 
     :param index_path: Path to FAISS index file (.faiss)
@@ -121,9 +116,7 @@ def convert_to_hdf5_cmd(
 
 @app.command(name="convert-from-hdf5", sort_key=6)
 def convert_from_hdf5_cmd(
-    input_path: str,
-    index_path: str = "",
-    metadata_path: str = ""
+    input_path: str, index_path: str = "", metadata_path: str = ""
 ):
     """Convert HDF5 format to FAISS+JSON format.
 
@@ -131,11 +124,13 @@ def convert_from_hdf5_cmd(
     :param index_path: Path to output FAISS index file (default: chatboti/data/vectors-{model}.faiss)
     :param metadata_path: Path to output metadata JSON file (default: chatboti/data/metadata-{model}.json)
     """
-    asyncio.run(convert_from_hdf5(
-        input_path,
-        index_path if index_path else None,
-        metadata_path if metadata_path else None
-    ))
+    asyncio.run(
+        convert_from_hdf5(
+            input_path,
+            index_path if index_path else None,
+            metadata_path if metadata_path else None,
+        )
+    )
 
 
 @app.command(name="hdf5-info", sort_key=7)

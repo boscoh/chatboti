@@ -37,12 +37,11 @@ async def lifespan(app):
 
         embed_client = await get_embed_client()
 
-        rag_service = FaissRAGService(
-            embed_client=embed_client,
-            data_dir=data_dir
-        )
+        rag_service = FaissRAGService(embed_client=embed_client, data_dir=data_dir)
         await rag_service.__aenter__()
-        logger.info(f"RAG service initialized: {len(rag_service.documents)} documents, {rag_service.index.ntotal} vectors")
+        logger.info(
+            f"RAG service initialized: {len(rag_service.documents)} documents, {rag_service.index.ntotal} vectors"
+        )
     except Exception as e:
         logger.error(f"Failed to initialize RAG service: {e}", exc_info=True)
         raise
@@ -82,7 +81,7 @@ async def get_matching_speakers(query: str, n: int = 3) -> Dict[str, Any]:
                 "success": False,
                 "error": "No matching speakers found",
                 "query": query,
-                "n": n
+                "n": n,
             }
 
         speakers = []

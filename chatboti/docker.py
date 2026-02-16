@@ -35,12 +35,14 @@ def get_aws_config(is_raise_exception: bool = True):
 
     if os.path.exists(credentials_path):
         import configparser
+
         config = configparser.ConfigParser()
         config.read(credentials_path)
         available_profiles.update(config.sections())
 
     if os.path.exists(config_path):
         import configparser
+
         config = configparser.ConfigParser()
         config.read(config_path)
         for section in config.sections():
@@ -55,7 +57,9 @@ def get_aws_config(is_raise_exception: bool = True):
         if profile_name in available_profiles:
             aws_config["profile_name"] = profile_name
         else:
-            logger.info(f"AWS profile '{profile_name}' not found, using default credential chain...")
+            logger.info(
+                f"AWS profile '{profile_name}' not found, using default credential chain..."
+            )
             profile_not_found = True
 
     region = os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION")
@@ -95,15 +99,22 @@ def get_aws_config(is_raise_exception: bool = True):
             config_path = os.path.expanduser("~/.aws/config")
             if os.path.exists(config_path):
                 import configparser
+
                 config = configparser.ConfigParser()
                 config.read(config_path)
                 section = f"profile {profile_name}"
-                if config.has_section(section) and config.has_option(section, "sso_start_url"):
+                if config.has_section(section) and config.has_option(
+                    section, "sso_start_url"
+                ):
                     if hasattr(credentials, "token"):
                         creds = credentials.get_frozen_credentials()
-                        if hasattr(creds, "expiry_time") and creds.expiry_time < datetime.now(timezone.utc):
+                        if hasattr(
+                            creds, "expiry_time"
+                        ) and creds.expiry_time < datetime.now(timezone.utc):
                             login_cmd = f"aws sso login --profile {profile_name}"
-                            logger.error(f"AWS SSO session expired. Please run:\n  {login_cmd}")
+                            logger.error(
+                                f"AWS SSO session expired. Please run:\n  {login_cmd}"
+                            )
                             sys.exit(1)
 
         return aws_config
@@ -119,16 +130,23 @@ def get_aws_config(is_raise_exception: bool = True):
                 config_path = os.path.expanduser("~/.aws/config")
                 if os.path.exists(config_path):
                     import configparser
+
                     config = configparser.ConfigParser()
                     config.read(config_path)
                     section = f"profile {profile_to_check}"
-                    if config.has_section(section) and config.has_option(section, "sso_start_url"):
+                    if config.has_section(section) and config.has_option(
+                        section, "sso_start_url"
+                    ):
                         login_cmd = f"aws sso login --profile {profile_to_check}"
-                        logger.warning(f"AWS SSO session expired. Please run:\n  {login_cmd}")
+                        logger.warning(
+                            f"AWS SSO session expired. Please run:\n  {login_cmd}"
+                        )
                         return aws_config
             logger.warning("AWS credentials have expired")
         elif error_code == "InvalidClientTokenId":
-            logger.warning("AWS credentials are invalid. Please reconfigure:\n  aws configure")
+            logger.warning(
+                "AWS credentials are invalid. Please reconfigure:\n  aws configure"
+            )
         else:
             logger.warning(f"AWS API error: {error_code}")
     except Exception as e:
@@ -231,7 +249,9 @@ def main():
 
             # Extract credentials using the already-validated config
             if aws_config.get("profile_name"):
-                logger.info(f"Extracting credentials from AWS profile: {aws_config['profile_name']}")
+                logger.info(
+                    f"Extracting credentials from AWS profile: {aws_config['profile_name']}"
+                )
             else:
                 logger.info("Using AWS credentials from default credential chain")
 

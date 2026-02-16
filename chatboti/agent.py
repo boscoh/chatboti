@@ -10,12 +10,12 @@ import textwrap
 from contextlib import AsyncExitStack
 from typing import Any, Dict, List, Optional
 
+import pydash as py_
 from dotenv import load_dotenv
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from microeval.llm import SimpleLLMClient
 from path import Path
-import pydash as py_
 
 from chatboti.config import get_chat_client
 
@@ -31,7 +31,7 @@ class InfoAgent:
         :param chat_client: Connected chat client (required)
         """
         self.chat_client = chat_client
-        self.chat_service = getattr(chat_client, 'service', 'unknown')
+        self.chat_service = getattr(chat_client, "service", "unknown")
 
         self._mcp_session: Optional[ClientSession] = None
         self._exit_stack: Optional[AsyncExitStack] = None
@@ -156,7 +156,9 @@ class InfoAgent:
                 logger.warning(f"Invalid JSON string: {tool_args[:100]}... Error: {e}")
                 return "{}"
 
-        logger.warning(f"Unexpected tool arguments type: {type(tool_args)}, using empty dict")
+        logger.warning(
+            f"Unexpected tool arguments type: {type(tool_args)}, using empty dict"
+        )
         return "{}"
 
     def _parse_tool_args(self, tool_call: Dict[str, Any]) -> Dict[str, Any]:
@@ -213,7 +215,9 @@ class InfoAgent:
             if isinstance(content, list):
                 content = " ".join(self._extract_content_text(item) for item in content)
             content = re.sub(r"\s+", " ", str(content).replace("\r", "")).strip()
-            truncated = content[:max_length] + ("..." if len(content) > max_length else "")
+            truncated = content[:max_length] + (
+                "..." if len(content) > max_length else ""
+            )
             logger.info(f"- {py_.get(msg, 'role', 'unknown')}: {truncated}")
 
     def _get_tool_call_id(self, tool_call: Dict[str, Any]) -> str:
@@ -233,7 +237,9 @@ class InfoAgent:
     def _sanitize_message(self, msg: Dict[str, Any]) -> Dict[str, Any]:
         result = py_.clone_deep(msg)
         if tool_calls := py_.get(result, "tool_calls", []):
-            py_.set_(result, "tool_calls", py_.map_(tool_calls, self._sanitize_tool_call))
+            py_.set_(
+                result, "tool_calls", py_.map_(tool_calls, self._sanitize_tool_call)
+            )
         return result
 
     def _build_assistant_message(
@@ -247,7 +253,9 @@ class InfoAgent:
 
             sanitized = self._sanitize_tool_call(tc)
             sanitized = py_.set_(sanitized, "id", call_id)
-            sanitized = py_.set_(sanitized, "type", py_.get(sanitized, "type", "function"))
+            sanitized = py_.set_(
+                sanitized, "type", py_.get(sanitized, "type", "function")
+            )
             formatted_calls.append(sanitized)
 
         if not formatted_calls:
@@ -305,8 +313,7 @@ class InfoAgent:
         REMEMBER: Making 10 tool calls is ENCOURAGED for thorough answers!
 
         NEVER SAY: "I would call X tool" or "To find Y, I would use Z"
-        ALWAYS DO: Actually call the tool immediately - take action, don't describe it!"""
-    )
+        ALWAYS DO: Actually call the tool immediately - take action, don't describe it!""")
 
     MAX_TOOL_ITERATIONS = 5
 
@@ -356,7 +363,9 @@ class InfoAgent:
         should_add_query = True
         if messages:
             last_msg = messages[-1]
-            if py_.get(last_msg, "role", "") == "user" and py_.get(last_msg, "content", "") == str(query):
+            if py_.get(last_msg, "role", "") == "user" and py_.get(
+                last_msg, "content", ""
+            ) == str(query):
                 should_add_query = False
 
         if should_add_query:
@@ -386,7 +395,9 @@ class InfoAgent:
             if not tool_calls:
                 break
 
-            logger.info(f"Reasoning step {iteration + 1} with {len(tool_calls)} tool calls")
+            logger.info(
+                f"Reasoning step {iteration + 1} with {len(tool_calls)} tool calls"
+            )
 
             assistant_msg = self._build_assistant_message(response, tool_calls)
             if assistant_msg:
@@ -402,7 +413,9 @@ class InfoAgent:
             tool_calls = py_.get(response, "tool_calls", None)
         else:
             if tool_calls:
-                logger.warning(f"Reached maximum tool iterations ({self.MAX_TOOL_ITERATIONS})")
+                logger.warning(
+                    f"Reached maximum tool iterations ({self.MAX_TOOL_ITERATIONS})"
+                )
 
         return py_.get(response, "text", "")
 
@@ -448,4 +461,3 @@ async def amain():
                 conversation_history.append({"role": "assistant", "content": response})
     finally:
         await chat_client.close()
-

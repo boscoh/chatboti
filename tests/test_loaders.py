@@ -2,11 +2,12 @@
 
 import csv
 import os
-import pytest
 from pathlib import Path
 
-from chatboti.loaders import load_documents, load_csv
+import pytest
+
 from chatboti.document import Document, DocumentChunk
+from chatboti.loaders import load_csv, load_documents
 
 
 class TestLoadDocuments:
@@ -33,10 +34,15 @@ class TestLoadCSV:
         csv_path = tmp_path / "test_data.csv"
         data = [
             {"name": "Alice", "age": "30", "bio": "Software engineer", "notes": ""},
-            {"name": "Bob", "age": "25", "bio": "Data scientist", "notes": "Expert in ML"},
-            {"name": "Charlie", "age": "", "bio": "", "notes": ""}
+            {
+                "name": "Bob",
+                "age": "25",
+                "bio": "Data scientist",
+                "notes": "Expert in ML",
+            },
+            {"name": "Charlie", "age": "", "bio": "", "notes": ""},
         ]
-        with open(csv_path, 'w', newline='') as f:
+        with open(csv_path, "w", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=["name", "age", "bio", "notes"])
             writer.writeheader()
             writer.writerows(data)

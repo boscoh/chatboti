@@ -13,6 +13,7 @@ class DocumentChunk:
     Chunk-level: dict key is index, i_start/i_end locate text
     Global ID: (document.id, dict_key)
     """
+
     faiss_id: int
     i_start: Optional[int] = None
     i_end: Optional[int] = None
@@ -21,6 +22,7 @@ class DocumentChunk:
 @dataclass(frozen=True)
 class ChunkRef:
     """Maps faiss_id to document location."""
+
     document_id: str
     chunk_key: str
 
@@ -28,6 +30,7 @@ class ChunkRef:
 @dataclass
 class ChunkResult:
     """Search result with chunk text."""
+
     document_id: str
     chunk_key: str
     text: str
@@ -49,7 +52,7 @@ class Document:
         full_text: str = "",
         metadata: Optional[dict] = None,
         chunks: Optional[Dict[str, DocumentChunk]] = None,
-        source: str = ""
+        source: str = "",
     ):
         """Initialize a document.
 
@@ -75,10 +78,12 @@ class Document:
         """
         chunk = self.chunks[key]
         if chunk.i_start is not None:
-            return self.full_text[chunk.i_start:chunk.i_end]
+            return self.full_text[chunk.i_start : chunk.i_end]
         return self.content[key]
 
-    def get_chunk_with_context(self, key: str, context_chars: int = 200) -> tuple[str, str, str]:
+    def get_chunk_with_context(
+        self, key: str, context_chars: int = 200
+    ) -> tuple[str, str, str]:
         """Get chunk text with surrounding context.
 
         :param key: Field name or chunk index
@@ -92,9 +97,9 @@ class Document:
         before_start = max(0, chunk.i_start - context_chars)
         after_end = min(len(self.full_text), chunk.i_end + context_chars)
         return (
-            self.full_text[before_start:chunk.i_start],
-            self.full_text[chunk.i_start:chunk.i_end],
-            self.full_text[chunk.i_end:after_end]
+            self.full_text[before_start : chunk.i_start],
+            self.full_text[chunk.i_start : chunk.i_end],
+            self.full_text[chunk.i_end : after_end],
         )
 
     def to_dict(self) -> dict:
@@ -112,14 +117,14 @@ class Document:
                 key: {
                     "faiss_id": chunk.faiss_id,
                     "i_start": chunk.i_start,
-                    "i_end": chunk.i_end
+                    "i_end": chunk.i_end,
                 }
                 for key, chunk in self.chunks.items()
-            }
+            },
         }
 
     @staticmethod
-    def from_dict(data: dict) -> 'Document':
+    def from_dict(data: dict) -> "Document":
         """Deserialize document from dictionary.
 
         :param data: Dictionary representation of document
@@ -129,7 +134,7 @@ class Document:
             key: DocumentChunk(
                 faiss_id=chunk_data["faiss_id"],
                 i_start=chunk_data.get("i_start"),
-                i_end=chunk_data.get("i_end")
+                i_end=chunk_data.get("i_end"),
             )
             for key, chunk_data in data.get("chunks", {}).items()
         }
@@ -140,5 +145,5 @@ class Document:
             full_text=data.get("full_text", ""),
             metadata=data.get("metadata", {}),
             chunks=chunks,
-            source=data.get("source", "")
+            source=data.get("source", ""),
         )

@@ -6,17 +6,19 @@ Tests automatically run for all provider configurations that can be initialized.
 Configure providers in .env with API keys/credentials.
 """
 
-import os
 import csv
-import pytest
+import os
 from pathlib import Path
+from typing import Any, Dict, Optional
+
+import pytest
 from dotenv import load_dotenv
-from typing import Dict, Any, Optional
 
 pytestmark = pytest.mark.asyncio
 
-from chatboti.agent import InfoAgent
 from microeval.llm import get_llm_client, load_config
+
+from chatboti.agent import InfoAgent
 
 
 def load_test_env():
@@ -30,10 +32,15 @@ def load_test_env():
 
 def load_speaker_data():
     """Load speaker data from CSV file."""
-    csv_path = Path(__file__).parent.parent / "chatboti" / "data" / "2025-09-02-speaker-bio.csv"
+    csv_path = (
+        Path(__file__).parent.parent
+        / "chatboti"
+        / "data"
+        / "2025-09-02-speaker-bio.csv"
+    )
     speakers = []
     if csv_path.exists():
-        with open(csv_path, 'r', encoding='utf-8') as f:
+        with open(csv_path, "r", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             speakers = list(reader)
     return speakers
@@ -118,7 +125,9 @@ def get_available_configs():
     return available
 
 
-@pytest.fixture(scope="module", params=get_available_configs(), ids=lambda cfg: cfg["name"])
+@pytest.fixture(
+    scope="module", params=get_available_configs(), ids=lambda cfg: cfg["name"]
+)
 def provider_config(request):
     """Parametrized fixture that runs tests for each available provider config."""
     return request.param
@@ -147,9 +156,9 @@ def test_show_available_configs():
     load_test_env()
     available = get_available_configs()
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("AVAILABLE LLM PROVIDER CONFIGURATIONS FOR TESTING:")
-    print("="*70)
+    print("=" * 70)
 
     for config in PROVIDER_CONFIGS:
         name = config["name"]
@@ -169,9 +178,11 @@ def test_show_available_configs():
             elif chat_service == "bedrock":
                 print(f"               → Set AWS_PROFILE or AWS credentials in .env")
 
-    print("="*70)
-    print(f"Testing {len(available)} configuration(s): {', '.join([a['name'] for a in available]) or 'none'}")
-    print("="*70 + "\n")
+    print("=" * 70)
+    print(
+        f"Testing {len(available)} configuration(s): {', '.join([a['name'] for a in available]) or 'none'}"
+    )
+    print("=" * 70 + "\n")
 
     if not available:
         pytest.skip("No LLM provider configurations available for testing")
@@ -228,7 +239,9 @@ async def test_list_all_speakers_actually_executes(provider_config, speaker_data
     if not speaker_data:
         pytest.skip("No speaker data available")
 
-    csv_speaker_names = [s.get('Name', '').strip() for s in speaker_data if s.get('Name')]
+    csv_speaker_names = [
+        s.get("Name", "").strip() for s in speaker_data if s.get("Name")
+    ]
     assert len(csv_speaker_names) > 0, "CSV should have speaker names"
 
     chat_client = get_llm_client(chat_service, model=chat_model)
@@ -244,7 +257,9 @@ async def test_list_all_speakers_actually_executes(provider_config, speaker_data
         found_speakers = []
         for name in csv_speaker_names:
             name_lower = name.lower()
-            name_parts = [part.strip() for part in name_lower.split() if len(part.strip()) > 2]
+            name_parts = [
+                part.strip() for part in name_lower.split() if len(part.strip()) > 2
+            ]
             if any(part in response_lower for part in name_parts):
                 found_speakers.append(name)
 
@@ -273,8 +288,8 @@ async def test_get_best_speaker_actually_executes(provider_config, speaker_data)
         pytest.skip("No speaker data available")
 
     test_speaker = speaker_data[0]
-    speaker_name = test_speaker.get('Name', '').strip()
-    speaker_title = test_speaker.get('Final title', '').strip()
+    speaker_name = test_speaker.get("Name", "").strip()
+    speaker_title = test_speaker.get("Final title", "").strip()
 
     if not speaker_name or not speaker_title:
         pytest.skip("Speaker missing name or title")
@@ -296,10 +311,14 @@ async def test_get_best_speaker_actually_executes(provider_config, speaker_data)
         response_lower = response.lower()
         speaker_name_lower = speaker_name.lower()
 
-        speaker_name_parts = [part.strip() for part in speaker_name_lower.split() if len(part.strip()) > 2]
+        speaker_name_parts = [
+            part.strip() for part in speaker_name_lower.split() if len(part.strip()) > 2
+        ]
         speaker_found = any(part in response_lower for part in speaker_name_parts)
 
-        print(f"[{name.upper()}] ✓ Found speaker '{speaker_name}' in response: {speaker_found}")
+        print(
+            f"[{name.upper()}] ✓ Found speaker '{speaker_name}' in response: {speaker_found}"
+        )
 
         assert speaker_found, (
             f"Tool must be EXECUTED - response should contain actual speaker name '{speaker_name}' from CSV. "
@@ -325,10 +344,12 @@ async def test_multi_step_tool_chaining(provider_config, speaker_data):
     if not speaker_data:
         pytest.skip("No speaker data available")
 
-    csv_speaker_names = [s.get('Name', '').strip() for s in speaker_data if s.get('Name')]
+    csv_speaker_names = [
+        s.get("Name", "").strip() for s in speaker_data if s.get("Name")
+    ]
     test_speaker = speaker_data[0]
-    speaker_name = test_speaker.get('Name', '').strip()
-    speaker_title = test_speaker.get('Final title', '').strip()
+    speaker_name = test_speaker.get("Name", "").strip()
+    speaker_title = test_speaker.get("Final title", "").strip()
 
     if not speaker_name or not speaker_title:
         pytest.skip("Speaker missing name or title")
@@ -348,23 +369,58 @@ async def test_multi_step_tool_chaining(provider_config, speaker_data):
         response = await agent.process_query(query)
 
         assert response is not None
-        assert len(response) > 80, "Response should integrate results from multiple tool calls"
+        assert len(response) > 80, (
+            "Response should integrate results from multiple tool calls"
+        )
 
         response_lower = response.lower()
 
         found_any_speaker = any(
-            any(part in response_lower for part in name.lower().split() if len(part) > 2)
+            any(
+                part in response_lower for part in name.lower().split() if len(part) > 2
+            )
             for name in csv_speaker_names
         )
 
-        speaker_name_parts = [part.strip() for part in speaker_name.lower().split() if len(part.strip()) > 2]
-        found_target_speaker = any(part in response_lower for part in speaker_name_parts)
+        speaker_name_parts = [
+            part.strip()
+            for part in speaker_name.lower().split()
+            if len(part.strip()) > 2
+        ]
+        found_target_speaker = any(
+            part in response_lower for part in speaker_name_parts
+        )
 
-        number_words = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13",
-                        "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"]
+        number_words = [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "11",
+            "12",
+            "13",
+            "one",
+            "two",
+            "three",
+            "four",
+            "five",
+            "six",
+            "seven",
+            "eight",
+            "nine",
+            "ten",
+        ]
         has_number = any(word in response_lower for word in number_words)
 
-        print(f"[{name.upper()}] ✓ Multi-step chaining - speakers found: {found_any_speaker or found_target_speaker}, has count: {has_number}")
+        print(
+            f"[{name.upper()}] ✓ Multi-step chaining - speakers found: {found_any_speaker or found_target_speaker}, has count: {has_number}"
+        )
 
         assert found_any_speaker or found_target_speaker, (
             f"Tools must be EXECUTED - response should contain actual speaker names from CSV. "
@@ -394,7 +450,7 @@ async def test_llm_client_handles_tools(provider_config):
 
     if not chat_model:
         pytest.skip("CHAT_MODEL not set")
-    
+
     tools = [
         {
             "type": "function",
@@ -406,52 +462,64 @@ async def test_llm_client_handles_tools(provider_config):
                     "properties": {
                         "location": {
                             "type": "string",
-                            "description": "The city and state, e.g. San Francisco, CA"
+                            "description": "The city and state, e.g. San Francisco, CA",
                         }
                     },
-                    "required": ["location"]
-                }
-            }
+                    "required": ["location"],
+                },
+            },
         }
     ]
-    
+
     client = get_llm_client(chat_service, model=chat_model)
     await client.connect()
-    
+
     try:
         messages = [
             {
                 "role": "user",
-                "content": "What's the weather in San Francisco? Use the get_weather tool."
+                "content": "What's the weather in San Francisco? Use the get_weather tool.",
             }
         ]
-        
+
         response_with_tools = await client.get_completion(messages, tools=tools)
         response_without_tools = await client.get_completion(messages, tools=None)
-        
-        assert response_with_tools is not None, f"{chat_service} client should return response when tools provided"
-        assert response_without_tools is not None, f"{chat_service} client should return response without tools"
-        
+
+        assert response_with_tools is not None, (
+            f"{chat_service} client should return response when tools provided"
+        )
+        assert response_without_tools is not None, (
+            f"{chat_service} client should return response without tools"
+        )
+
         assert "text" in response_with_tools, "Response should have text field"
         assert "text" in response_without_tools, "Response should have text field"
-        
-        has_text = response_with_tools.get("text") and len(response_with_tools["text"]) > 0
+
+        has_text = (
+            response_with_tools.get("text") and len(response_with_tools["text"]) > 0
+        )
         has_tool_calls = response_with_tools.get("tool_calls")
         assert has_text or has_tool_calls, (
             f"{chat_service} client should return text or tool_calls. Got: {response_with_tools}"
         )
-        
+
         tool_calls = response_with_tools.get("tool_calls")
-        
+
         if tool_calls is not None:
-            assert isinstance(tool_calls, list), "tool_calls should be a list if present"
+            assert isinstance(tool_calls, list), (
+                "tool_calls should be a list if present"
+            )
             if len(tool_calls) > 0:
                 for tool_call in tool_calls:
-                    assert "function" in tool_call, "Each tool_call should have a function"
-                    assert "name" in tool_call["function"], "Tool call should have a function name"
-        
+                    assert "function" in tool_call, (
+                        "Each tool_call should have a function"
+                    )
+                    assert "name" in tool_call["function"], (
+                        "Tool call should have a function name"
+                    )
+
         print(f"\n{chat_service.upper()} tool handling:")
-        text_len = len(response_with_tools.get('text') or '')
+        text_len = len(response_with_tools.get("text") or "")
         print(f"  Response text length: {text_len}")
         print(f"  Tool calls returned: {len(tool_calls) if tool_calls else 0}")
         if tool_calls:
@@ -474,7 +542,7 @@ async def test_tool_call_extraction(provider_config):
 
     if not chat_model:
         pytest.skip("CHAT_MODEL not set")
-    
+
     tools = [
         {
             "type": "function",
@@ -486,40 +554,40 @@ async def test_tool_call_extraction(provider_config):
                     "properties": {
                         "timezone": {
                             "type": "string",
-                            "description": "The timezone, e.g. UTC, America/New_York"
+                            "description": "The timezone, e.g. UTC, America/New_York",
                         }
                     },
-                    "required": ["timezone"]
-                }
-            }
+                    "required": ["timezone"],
+                },
+            },
         }
     ]
-    
+
     client = get_llm_client(chat_service, model=chat_model)
     await client.connect()
-    
+
     try:
         messages = [
             {
                 "role": "system",
-                "content": "You must use the get_current_time tool to answer time questions. Always call the tool."
+                "content": "You must use the get_current_time tool to answer time questions. Always call the tool.",
             },
             {
                 "role": "user",
-                "content": "What time is it in New York? You MUST use the get_current_time tool."
-            }
+                "content": "What time is it in New York? You MUST use the get_current_time tool.",
+            },
         ]
-        
+
         response = await client.get_completion(messages, tools=tools)
-        
+
         assert response is not None
-        
+
         tool_calls = response.get("tool_calls", [])
-        
+
         print(f"\n{chat_service.upper()} tool call extraction:")
         print(f"  Response keys: {list(response.keys())}")
         print(f"  Tool calls: {len(tool_calls) if tool_calls else 0}")
-        
+
         if tool_calls:
             for tc in tool_calls:
                 print(f"    - name: {tc['function'].get('name')}")
@@ -529,18 +597,23 @@ async def test_tool_call_extraction(provider_config):
             assert len(tool_calls) > 0, f"{chat_service} should return tool_calls"
 
             tc = tool_calls[0]
-            assert tc["function"]["name"] == "get_current_time", "Should call get_current_time"
+            assert tc["function"]["name"] == "get_current_time", (
+                "Should call get_current_time"
+            )
 
             has_id = tc["function"].get("tool_call_id")
             assert has_id, f"{chat_service} tool_call should have an ID for chaining"
         else:
-            print(f"  Note: {chat_service} did not return tool_calls (may need different prompt)")
+            print(
+                f"  Note: {chat_service} did not return tool_calls (may need different prompt)"
+            )
             print(f"  Response text: {response.get('text', '')[:200]}")
     finally:
         await client.close()
 
 
 # Provider-specific tests
+
 
 async def test_openai_specific_features(provider_config):
     """Test OpenAI-specific tool calling features."""
@@ -555,7 +628,7 @@ async def test_openai_specific_features(provider_config):
 
     client = OpenAIClient(model=chat_model)
     await client.connect()
-    
+
     try:
         tools = [
             {
@@ -567,32 +640,37 @@ async def test_openai_specific_features(provider_config):
                         "type": "object",
                         "properties": {
                             "query": {"type": "string", "description": "Search query"},
-                            "limit": {"type": "integer", "description": "Max results"}
+                            "limit": {"type": "integer", "description": "Max results"},
                         },
-                        "required": ["query"]
-                    }
-                }
+                        "required": ["query"],
+                    },
+                },
             }
         ]
-        
+
         messages = [
-            {"role": "user", "content": "Search the database for 'AI speakers'. Use the search_database tool."}
+            {
+                "role": "user",
+                "content": "Search the database for 'AI speakers'. Use the search_database tool.",
+            }
         ]
-        
+
         response = await client.get_completion(messages, tools=tools)
-        
+
         assert response is not None
         assert "text" in response or "tool_calls" in response
-        
+
         print("\nOpenAI tool calling response:")
         print(f"  Has text: {bool(response.get('text'))}")
         print(f"  Has tool_calls: {bool(response.get('tool_calls'))}")
-        
+
         if response.get("tool_calls"):
             tc = response["tool_calls"][0]
             print(f"  Tool called: {tc['function']['name']}")
             print(f"  Arguments: {tc['function'].get('arguments')}")
-            assert "tool_call_id" in tc["function"] or "id" in tc, "OpenAI should provide tool_call_id"
+            assert "tool_call_id" in tc["function"] or "id" in tc, (
+                "OpenAI should provide tool_call_id"
+            )
     finally:
         await client.close()
 
@@ -610,7 +688,7 @@ async def test_ollama_specific_features(provider_config):
 
     client = OllamaClient(model=chat_model)
     await client.connect()
-    
+
     try:
         tools = [
             {
@@ -621,23 +699,26 @@ async def test_ollama_specific_features(provider_config):
                     "parameters": {
                         "type": "object",
                         "properties": {
-                            "expression": {"type": "string", "description": "Math expression"}
+                            "expression": {
+                                "type": "string",
+                                "description": "Math expression",
+                            }
                         },
-                        "required": ["expression"]
-                    }
-                }
+                        "required": ["expression"],
+                    },
+                },
             }
         ]
-        
+
         messages = [
             {"role": "user", "content": "Calculate 2+2 using the calculate tool."}
         ]
-        
+
         response = await client.get_completion(messages, tools=tools)
-        
+
         assert response is not None
         assert "text" in response
-        
+
         print("\nOllama tool calling response:")
         print(f"  Has text: {bool(response.get('text'))}")
         print(f"  Has tool_calls: {bool(response.get('tool_calls'))}")

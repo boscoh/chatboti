@@ -10,7 +10,9 @@ from chatboti.document import Document, DocumentChunk
 from chatboti.utils import make_slug
 
 
-async def load_csv(source: str, embed_fields: Optional[List[str]] = None) -> List[Document]:
+async def load_csv(
+    source: str, embed_fields: Optional[List[str]] = None
+) -> List[Document]:
     """Load CSV rows as documents.
 
     Each row becomes a Document with content dict,
@@ -30,10 +32,7 @@ async def load_csv(source: str, embed_fields: Optional[List[str]] = None) -> Lis
         for i, row in enumerate(reader):
             # Create document with content dict
             doc = Document(
-                id=f"{prefix}-{i}",
-                content=dict(row),
-                chunks={},
-                source=source
+                id=f"{prefix}-{i}", content=dict(row), chunks={}, source=source
             )
 
             # Create chunks for embed fields
@@ -47,7 +46,9 @@ async def load_csv(source: str, embed_fields: Optional[List[str]] = None) -> Lis
     return documents
 
 
-async def load_documents(source: str, embed_fields: Optional[List[str]] = None) -> List[Document]:
+async def load_documents(
+    source: str, embed_fields: Optional[List[str]] = None
+) -> List[Document]:
     """Load documents from source, dispatching to appropriate loader.
 
     :param source: File path
@@ -56,7 +57,7 @@ async def load_documents(source: str, embed_fields: Optional[List[str]] = None) 
     """
     ext = Path(source).suffix.lower()
 
-    if ext == '.csv':
+    if ext == ".csv":
         return await load_csv(source, embed_fields)
     else:
         raise ValueError(f"Unsupported file type: {ext}")

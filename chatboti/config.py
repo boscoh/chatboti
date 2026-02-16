@@ -102,8 +102,11 @@ def get_embed_service() -> str:
     """
     service = os.getenv("EMBED_SERVICE") or os.getenv("CHAT_SERVICE")
     if not service:
-        raise ValueError("Neither EMBED_SERVICE nor CHAT_SERVICE environment variable is set")
+        raise ValueError(
+            "Neither EMBED_SERVICE nor CHAT_SERVICE environment variable is set"
+        )
     return service
+
 
 async def get_embed_client() -> SimpleLLMClient:
     """Create and connect an embedding client with logging.

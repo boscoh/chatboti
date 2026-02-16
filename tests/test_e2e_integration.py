@@ -1,8 +1,10 @@
-import pytest
-import numpy as np
 from pathlib import Path
-from chatboti.faiss_rag import FaissRAGService
 from typing import List
+
+import numpy as np
+import pytest
+
+from chatboti.faiss_rag import FaissRAGService
 
 
 @pytest.mark.asyncio
@@ -22,9 +24,7 @@ async def test_full_pipeline_csv_to_search(tmp_path, embed_client):
     metadata_path = tmp_path / "metadata.json"
 
     async with FaissRAGService(
-        index_path=index_path,
-        metadata_path=metadata_path,
-        embed_client=embed_client
+        index_path=index_path, metadata_path=metadata_path, embed_client=embed_client
     ) as rag:
         # 3. Load documents and build embeddings
         await rag.build_embeddings_from_documents(str(csv_path))
@@ -46,22 +46,22 @@ async def test_full_pipeline_csv_to_search(tmp_path, embed_client):
 
         # 7. Verify search results
         assert len(results) == 2
-        assert all(hasattr(r, 'document_id') for r in results)
-        assert all(hasattr(r, 'chunk_key') for r in results)
-        assert all(hasattr(r, 'text') for r in results)
+        assert all(hasattr(r, "document_id") for r in results)
+        assert all(hasattr(r, "chunk_key") for r in results)
+        assert all(hasattr(r, "text") for r in results)
         assert all(r.text for r in results)  # Non-empty text
 
         # 8. Verify we can search with include_documents
-        results_with_docs = await rag.search("machine learning", k=1, include_documents=True)
+        results_with_docs = await rag.search(
+            "machine learning", k=1, include_documents=True
+        )
         assert len(results_with_docs) == 1
         # document_text may be None for CSV-loaded documents, so just verify the result exists
         assert results_with_docs[0] is not None
 
     # 9. Verify persistence - load from saved files
     async with FaissRAGService(
-        index_path=index_path,
-        metadata_path=metadata_path,
-        embed_client=embed_client
+        index_path=index_path, metadata_path=metadata_path, embed_client=embed_client
     ) as rag2:
         # Verify loaded state matches
         assert rag2.index.ntotal >= 8
@@ -80,9 +80,7 @@ async def test_search_without_embeddings_fails_gracefully(tmp_path, embed_client
     metadata_path = tmp_path / "empty.json"
 
     async with FaissRAGService(
-        index_path=index_path,
-        metadata_path=metadata_path,
-        embed_client=embed_client
+        index_path=index_path, metadata_path=metadata_path, embed_client=embed_client
     ) as rag:
         # Search on empty index
         results = await rag.search("test query", k=5)

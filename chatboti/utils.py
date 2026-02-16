@@ -16,7 +16,7 @@ def make_slug(text: str, strip_latest: bool = False) -> str:
     """
     slug = text
     if strip_latest:
-        slug = re.sub(r':latest$', '', slug)
-    slug = re.sub(r'[^a-z0-9]+', '-', slug.lower())
-    slug = re.sub(r'-+', '-', slug).strip('-')
+        slug = re.sub(r":latest$", "", slug)
+    slug = re.sub(r"[^a-z0-9]+", "-", slug.lower())
+    slug = re.sub(r"-+", "-", slug).strip("-")
     return slug

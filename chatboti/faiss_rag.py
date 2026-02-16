@@ -29,7 +29,7 @@ class FaissRAGService:
         embed_client: SimpleLLMClient,
         data_dir: Optional[Path] = None,
         index_path: Optional[Path] = None,
-        metadata_path: Optional[Path] = None
+        metadata_path: Optional[Path] = None,
     ):
         """Initialize RAG service (lazy - call via context manager for async setup).
 
@@ -78,7 +78,7 @@ class FaissRAGService:
             return self
 
         # Get model name from embed client
-        self.model_name = getattr(self.embed_client, 'model', None)
+        self.model_name = getattr(self.embed_client, "model", None)
 
         # Create model slug for file paths
         if self.model_name:
@@ -89,6 +89,7 @@ class FaissRAGService:
         # Set up paths
         if not self.data_dir:
             import chatboti
+
             self.data_dir = Path(chatboti.__file__).parent / "data"
 
         if not self.index_path:
@@ -100,7 +101,7 @@ class FaissRAGService:
         if self.metadata_path.exists():
             with open(self.metadata_path) as f:
                 metadata = json.load(f)
-                self.embedding_dim = metadata.get('embedding_dim', 768)
+                self.embedding_dim = metadata.get("embedding_dim", 768)
         else:
             test_embedding = await self.embed_client.embed("test")
             self.embedding_dim = len(test_embedding)
@@ -122,12 +123,14 @@ class FaissRAGService:
         # Load or create JSON metadata
         if self.metadata_path.exists():
             data = json.load(open(self.metadata_path))
-            self.chunk_refs = [ChunkRef(**r) for r in data['chunk_refs']]
-            self.documents = {d['id']: Document.from_dict(d) for d in data['documents']}
-            self.model_name = data.get('model_name', self.model_name)
-            stored_dim = data.get('embedding_dim')
+            self.chunk_refs = [ChunkRef(**r) for r in data["chunk_refs"]]
+            self.documents = {d["id"]: Document.from_dict(d) for d in data["documents"]}
+            self.model_name = data.get("model_name", self.model_name)
+            stored_dim = data.get("embedding_dim")
             if stored_dim and stored_dim != self.embedding_dim:
-                logger.warning(f"Stored dimension {stored_dim} != provided {self.embedding_dim}")
+                logger.warning(
+                    f"Stored dimension {stored_dim} != provided {self.embedding_dim}"
+                )
         else:
             self.chunk_refs = []
             self.documents = {}
@@ -175,7 +178,9 @@ class FaissRAGService:
         faiss.write_index(self.index, str(self.index_path))
         self.save_metadata()
 
-    def vector_search(self, query_emb: np.ndarray, k: int) -> tuple[np.ndarray, np.ndarray]:
+    def vector_search(
+        self, query_emb: np.ndarray, k: int
+    ) -> tuple[np.ndarray, np.ndarray]:
         """Vector similarity search wrapper (override for cloud backends).
 
         :param query_emb: Query embedding shape (1, dim)
@@ -203,7 +208,7 @@ class FaissRAGService:
         chunk = doc.chunks[ref.chunk_key]
         if chunk.i_start is not None:
             # Chunk-level: slice from full_text
-            return doc.full_text[chunk.i_start:chunk.i_end]
+            return doc.full_text[chunk.i_start : chunk.i_end]
         else:
             # Field-level: get from content
             return doc.content[ref.chunk_key]
@@ -227,15 +232,20 @@ class FaissRAGService:
     def save_metadata(self) -> None:
         """Save metadata to JSON (override in subclasses)."""
         data = {
-            'model_name': self.model_name,
-            'embedding_dim': self.embedding_dim,
-            'chunk_refs': [{'document_id': r.document_id, 'chunk_key': r.chunk_key} for r in self.chunk_refs],
-            'documents': [doc.to_dict() for doc in self.documents.values()]
+            "model_name": self.model_name,
+            "embedding_dim": self.embedding_dim,
+            "chunk_refs": [
+                {"document_id": r.document_id, "chunk_key": r.chunk_key}
+                for r in self.chunk_refs
+            ],
+            "documents": [doc.to_dict() for doc in self.documents.values()],
         }
-        with open(self.metadata_path, 'w') as f:
+        with open(self.metadata_path, "w") as f:
             json.dump(data, f, indent=2)
 
-    async def search(self, query: str, k: int = 5, include_documents: bool = False) -> List[ChunkResult]:
+    async def search(
+        self, query: str, k: int = 5, include_documents: bool = False
+    ) -> List[ChunkResult]:
         """Search for relevant chunks.
 
         :param query: Search query text
@@ -263,7 +273,7 @@ class FaissRAGService:
             result = ChunkResult(
                 document_id=ref.document_id,
                 chunk_key=ref.chunk_key,
-                text=self.get_chunk_text(ref)
+                text=self.get_chunk_text(ref),
             )
             if doc.full_text:
                 result.document_text = doc.full_text
