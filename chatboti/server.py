@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """FastAPI server for xConf Assistant's MCP client API."""
 
-# Standard library
 import logging
 import os
 import threading
@@ -12,19 +11,18 @@ from pathlib import Path
 from typing import Any, AsyncIterator, Dict, Optional
 from uuid import uuid4
 
-# Third-party
 import httpx
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
-from microeval.llm import get_llm_client, load_config
+from microeval.llm import SimpleLLMClient, load_config
 from pydantic import BaseModel
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
-# Local
 from chatboti.agent import InfoAgent
+from chatboti.config import get_chat_client, get_embed_client
 from chatboti.faiss_rag import FaissRAGService
 
 model_config = load_config()
@@ -32,16 +30,6 @@ chat_models = model_config["chat_models"]
 embed_models = model_config["embed_models"]
 
 logger = logging.getLogger(__name__)
-
-
-def get_default_model(models_dict: dict, service: str) -> str:
-    """Get the default model for a service (first in list or string value)."""
-    models = models_dict.get(service, [])
-    if isinstance(models, list) and models:
-        return models[0]
-    elif isinstance(models, str):
-        return models
-    return ""
 
 
 class SlimMessage(BaseModel):
@@ -62,11 +50,12 @@ limiter = Limiter(key_func=get_remote_address)
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.info_agent: Optional[InfoAgent] = None
+    app.state.chat_client: Optional[SimpleLLMClient] = None
+    app.state.embed_client: Optional[SimpleLLMClient] = None
     app.state.ready = False
-    rag_service = None
+    rag_service: Optional[FaissRAGService] = None
 
     chat_service = os.getenv("CHAT_SERVICE")
-    embed_service = os.getenv("EMBED_SERVICE") or chat_service
 
     if not chat_service:
         logger.warning("CHAT_SERVICE not set, skipping MCP initialization")
@@ -74,33 +63,23 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         yield
     else:
         try:
-            # Pre-load embeddings during startup
-            logger.info(f"Pre-loading embeddings with {embed_service}...")
+            logger.info("Pre-loading embeddings...")
 
-            # Get model from config
-            model = os.getenv("EMBED_MODEL") or get_default_model(embed_models, embed_service)
-
-            # Set up paths
             data_dir = Path(__file__).parent / "data"
 
-            # Create and connect embed client
-            embed_client = get_llm_client(embed_service, model=model)
-            await embed_client.connect()
-            app.state.embed_client = embed_client
+            app.state.embed_client = await get_embed_client()
 
-            # Create RAG service using context manager
             rag_service = FaissRAGService(
-                embed_client=embed_client,
+                embed_client=app.state.embed_client,
                 data_dir=data_dir
             )
             await rag_service.__aenter__()
             logger.info(f"RAG loaded: {len(rag_service.documents)} documents, {rag_service.index.ntotal} vectors")
 
-            # Initialize MCP client with chat service
-            # Note: Don't use async with here - manual lifecycle management avoids
-            # asyncio task context issues with anyio cancel scopes in Python 3.13
-            logger.info(f"Initializing MCP client with {chat_service}...")
-            agent = InfoAgent(chat_service=chat_service)
+            # Manual lifecycle management avoids asyncio task context issues with anyio cancel scopes in Python 3.13
+            logger.info("Initializing chat client and MCP agent...")
+            app.state.chat_client = await get_chat_client()
+            agent = InfoAgent(chat_client=app.state.chat_client)
             await agent.connect()
             app.state.info_agent = agent
             logger.info("MCP client initialized successfully")
@@ -108,17 +87,18 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
             yield
 
-            # Manual cleanup to ensure proper task context
             logger.info("Shutting down MCP client...")
             if app.state.info_agent:
                 await app.state.info_agent.disconnect()
                 app.state.info_agent = None
 
-            # Close RAG service
             if rag_service:
                 await rag_service.__aexit__(None, None, None)
 
-            # Close embed client
+            if hasattr(app.state, 'chat_client') and app.state.chat_client:
+                await app.state.chat_client.close()
+                app.state.chat_client = None
+
             if hasattr(app.state, 'embed_client') and app.state.embed_client:
                 await app.state.embed_client.close()
                 app.state.embed_client = None
@@ -155,16 +135,13 @@ def create_app() -> FastAPI:
     @app.get("/info")
     async def get_info() -> Dict[str, Any]:
         info = {}
-        if app.state.info_agent and app.state.info_agent.chat_client:
-            info["chat_service"] = app.state.info_agent.chat_service
-            info["chat_model"] = (
-                os.getenv("CHAT_MODEL")
-                or getattr(app.state.info_agent.chat_client, "model", None)
-                or get_default_model(chat_models, app.state.info_agent.chat_service)
-            )
-            embed_service = os.getenv("EMBED_SERVICE") or os.getenv("CHAT_SERVICE")
-            info["embed_service"] = embed_service
-            info["embed_model"] = get_default_model(embed_models, embed_service)
+        if hasattr(app.state, 'chat_client') and app.state.chat_client:
+            info["chat_service"] = app.state.info_agent.chat_service if app.state.info_agent else 'unknown'
+            info["chat_model"] = getattr(app.state.chat_client, 'model', 'unknown')
+
+        if hasattr(app.state, 'embed_client') and app.state.embed_client:
+            info["embed_service"] = getattr(app.state.embed_client, 'service', 'unknown')
+            info["embed_model"] = getattr(app.state.embed_client, 'model', 'unknown')
         return info
 
     @app.get("/")
@@ -179,14 +156,11 @@ def create_app() -> FastAPI:
     @app.post("/chat")
     @limiter.limit("10/minute")
     async def chat(request: Request, chat_request: ChatRequest) -> Dict[str, Any]:
-        """
-        Returns:
-            {
-                "id": <uuid4>,
-                "role": "assistant",
-                "status": "success",
-                "data": <response from MCP client>
-            }
+        """Process chat query via MCP client.
+
+        :param request: FastAPI request
+        :param chat_request: Chat query and history
+        :return: Dict with id, role, status, and data from MCP client
         """
         if not app.state.info_agent:
             raise HTTPException(status_code=503, detail="Chat service not initialized")

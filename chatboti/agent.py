@@ -17,6 +17,8 @@ from microeval.llm import SimpleLLMClient, get_llm_client, load_config
 from path import Path
 import pydash as py_
 
+from chatboti.config import get_chat_client
+
 model_config = load_config()
 chat_models = model_config["chat_models"]
 
@@ -25,35 +27,19 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 
-def get_default_model(models_dict: dict, service: str) -> str:
-    """Get the default model for a service (first in list or string value)."""
-    models = models_dict.get(service, [])
-    if isinstance(models, list) and models:
-        return models[0]
-    elif isinstance(models, str):
-        return models
-    return ""
-
-
 class InfoAgent:
-    def __init__(self, chat_service: Optional[str] = None):
-        self.chat_service = chat_service or os.getenv("CHAT_SERVICE")
-        if not self.chat_service:
-            raise ValueError("CHAT_SERVICE environment variable is not set")
+    def __init__(self, chat_client: SimpleLLMClient):
+        """Initialize InfoAgent with a chat client.
+
+        :param chat_client: Connected chat client (required)
+        """
+        self.chat_client = chat_client
+        self.chat_service = getattr(chat_client, 'service', 'unknown')
+
         self._mcp_session: Optional[ClientSession] = None
         self._exit_stack: Optional[AsyncExitStack] = None
 
         self.tools: Optional[List[Dict[str, Any]]] = None
-
-        self.chat_client: Optional[SimpleLLMClient] = None
-        model = (
-            os.getenv("CHAT_MODEL")
-            or os.getenv(f"{self.chat_service.upper()}_MODEL")
-            or get_default_model(chat_models, self.chat_service)
-        )
-        if not model:
-            raise ValueError(f"Unsupported chat service: {self.chat_service}")
-        self.chat_client = get_llm_client(self.chat_service, model=model)
 
     async def __aenter__(self):
         await self.connect()
@@ -67,25 +53,21 @@ class InfoAgent:
         if self._mcp_session:
             return
 
-        # Use AsyncExitStack to properly manage async context managers
         self._exit_stack = AsyncExitStack()
 
         env = os.environ.copy()
         env["CHAT_SERVICE"] = self.chat_service
 
-        # Use full path to uv for non-interactive shells
         uv_command = os.path.expanduser("~/.local/bin/uv")
         if not os.path.exists(uv_command):
-            uv_command = "uv"  # Fallback to PATH
+            uv_command = "uv"
 
-        # Run MCP server as a Python module
         server_params = StdioServerParameters(
             command=uv_command,
             args=["run", "-m", "chatboti.mcp_server"],
             env=env,
         )
 
-        # Enter context managers in the correct order using AsyncExitStack
         try:
             logger.info(f"Starting MCP stdio client with command: {uv_command}")
             _stdio_read, _stdio_write = await self._exit_stack.enter_async_context(
@@ -131,7 +113,6 @@ class InfoAgent:
         except Exception:
             pass
 
-        # AsyncExitStack properly exits all context managers in reverse order
         if self._exit_stack:
             try:
                 await self._exit_stack.aclose()
@@ -163,7 +144,6 @@ class InfoAgent:
         if not tool_args:
             return "{}"
 
-        # If it's a dict, dump it with sorted keys
         if isinstance(tool_args, dict):
             try:
                 return json.dumps(tool_args, sort_keys=True)
@@ -171,7 +151,6 @@ class InfoAgent:
                 logger.warning(f"Failed to serialize dict to JSON: {e}")
                 return "{}"
 
-        # If it's a string, parse and re-dump for normalization
         if isinstance(tool_args, str):
             try:
                 parsed = json.loads(tool_args)
@@ -180,7 +159,6 @@ class InfoAgent:
                 logger.warning(f"Invalid JSON string: {tool_args[:100]}... Error: {e}")
                 return "{}"
 
-        # For any other type, convert to empty dict and warn
         logger.warning(f"Unexpected tool arguments type: {type(tool_args)}, using empty dict")
         return "{}"
 
@@ -444,28 +422,33 @@ async def setup_async_exception_handler():
     loop.set_exception_handler(silence_event_loop_closed)
 
 
-async def amain(service):
+async def amain():
     await setup_async_exception_handler()
-    async with InfoAgent(service) as client:
-        for tool in client.tools:
+    chat_client = await get_chat_client()
+    try:
+        async with InfoAgent(chat_client) as agent:
+            client = agent
+            for tool in client.tools:
+                logger.info("----------------------------------------------")
+                logger.info(f"Tool: {py_.get(tool, 'function.name')}")
+                logger.info("Description:")
+                for line in py_.get(tool, "function.description", "").split("\n"):
+                    logger.info(f"| {line}")
             logger.info("----------------------------------------------")
-            logger.info(f"Tool: {py_.get(tool, 'function.name')}")
-            logger.info("Description:")
-            for line in py_.get(tool, "function.description", "").split("\n"):
-                logger.info(f"| {line}")
-        logger.info("----------------------------------------------")
-        print("Type your query to pick a speaker.")
-        print("Type 'quit', 'exit', or 'q' to end the conversation.")
-        conversation_history: List[Dict[str, Any]] = []
-        while True:
-            user_input = input("\nYou: ").strip()
-            if user_input.lower() in ["quit", "exit", "q", ""]:
-                print("Goodbye!")
-                return
-            response = await client.process_query(
-                query=user_input, history=conversation_history
-            )
-            print(f"\nResponse: {response}")
-            conversation_history.append({"role": "user", "content": user_input})
-            conversation_history.append({"role": "assistant", "content": response})
+            print("Type your query to pick a speaker.")
+            print("Type 'quit', 'exit', or 'q' to end the conversation.")
+            conversation_history: List[Dict[str, Any]] = []
+            while True:
+                user_input = input("\nYou: ").strip()
+                if user_input.lower() in ["quit", "exit", "q", ""]:
+                    print("Goodbye!")
+                    return
+                response = await client.process_query(
+                    query=user_input, history=conversation_history
+                )
+                print(f"\nResponse: {response}")
+                conversation_history.append({"role": "user", "content": user_input})
+                conversation_history.append({"role": "assistant", "content": response})
+    finally:
+        await chat_client.close()
 

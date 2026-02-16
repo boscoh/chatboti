@@ -13,11 +13,12 @@ Advantages:
 See docs/single-file-rag-backend-spec.md section 2.1 for format details.
 """
 
-# Standard library
 import json
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
+
+from microeval.llm import SimpleLLMClient
 
 # Third-party
 import faiss
@@ -53,7 +54,7 @@ class HDF5RAGService(FaissRAGService):
 
     def __init__(
         self,
-        embed_client,
+        embed_client: SimpleLLMClient,
         data_dir: Optional[Path] = None,
         hdf5_path: Optional[Path] = None
     ):

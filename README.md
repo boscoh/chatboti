@@ -58,6 +58,14 @@ Builds and runs a Docker container. The `Dockerfile` is configured for CI/ECS de
 - Port `80`
 - Health endpoint at `/health`
 
+**AWS Credentials for Bedrock:**
+When using `CHAT_SERVICE=bedrock` or `EMBED_SERVICE=bedrock`, the CLI automatically:
+- Extracts AWS credentials from your `AWS_PROFILE` (or default profile)
+- Injects them into the Docker container as environment variables
+- Validates credentials before building the image
+
+No manual credential configuration needed - just ensure your AWS profile is configured locally.
+
 ## How It Works
 
 ```

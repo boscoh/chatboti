@@ -4,6 +4,7 @@ Build and run Docker container with appropriate environment config.
 Extracts AWS credentials only when bedrock services are used.
 """
 
+import logging
 import os
 import subprocess
 import sys
@@ -14,21 +15,7 @@ import boto3
 from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 
-
-def log(msg: str):
-    """Log info message."""
-    print(f"[INFO] {msg}")
-
-
-def warn(msg: str):
-    """Log warning message."""
-    print(f"[WARN] {msg}", file=sys.stderr)
-
-
-def error(msg: str):
-    """Log error message and exit."""
-    print(f"[ERROR] {msg}", file=sys.stderr)
-    sys.exit(1)
+logger = logging.getLogger(__name__)
 
 
 def get_aws_config(is_raise_exception: bool = True):
@@ -68,7 +55,7 @@ def get_aws_config(is_raise_exception: bool = True):
         if profile_name in available_profiles:
             aws_config["profile_name"] = profile_name
         else:
-            log(f"AWS profile '{profile_name}' not found, using default credential chain...")
+            logger.info(f"AWS profile '{profile_name}' not found, using default credential chain...")
             profile_not_found = True
 
     region = os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION")
@@ -85,18 +72,20 @@ def get_aws_config(is_raise_exception: bool = True):
         if not credentials:
             if is_raise_exception:
                 if available_profiles:
-                    error(
+                    logger.error(
                         f"No AWS credentials found.\n"
                         f"Available profiles: {', '.join(available_profiles)}\n"
                         f"To configure: aws configure\n"
                         f"Or set AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY environment variables"
                     )
+                    sys.exit(1)
                 else:
-                    error(
+                    logger.error(
                         f"No AWS credentials found.\n"
                         f"To configure: aws configure\n"
                         f"Or set AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY environment variables"
                     )
+                    sys.exit(1)
             return aws_config
 
         sts = session.client("sts")
@@ -114,7 +103,8 @@ def get_aws_config(is_raise_exception: bool = True):
                         creds = credentials.get_frozen_credentials()
                         if hasattr(creds, "expiry_time") and creds.expiry_time < datetime.now(timezone.utc):
                             login_cmd = f"aws sso login --profile {profile_name}"
-                            error(f"AWS SSO session expired. Please run:\n  {login_cmd}")
+                            logger.error(f"AWS SSO session expired. Please run:\n  {login_cmd}")
+                            sys.exit(1)
 
         return aws_config
     except ClientError as e:
@@ -134,13 +124,13 @@ def get_aws_config(is_raise_exception: bool = True):
                     section = f"profile {profile_to_check}"
                     if config.has_section(section) and config.has_option(section, "sso_start_url"):
                         login_cmd = f"aws sso login --profile {profile_to_check}"
-                        warn(f"AWS SSO session expired. Please run:\n  {login_cmd}")
+                        logger.warning(f"AWS SSO session expired. Please run:\n  {login_cmd}")
                         return aws_config
-            warn("AWS credentials have expired")
+            logger.warning("AWS credentials have expired")
         elif error_code == "InvalidClientTokenId":
-            warn("AWS credentials are invalid. Please reconfigure:\n  aws configure")
+            logger.warning("AWS credentials are invalid. Please reconfigure:\n  aws configure")
         else:
-            warn(f"AWS API error: {error_code}")
+            logger.warning(f"AWS API error: {error_code}")
     except Exception as e:
         if is_raise_exception:
             raise
@@ -217,7 +207,8 @@ def main():
     env_docker_file = project_root / ".env.docker"
 
     if not env_file.exists():
-        error(f".env file not found at {env_file}")
+        logger.error(f".env file not found at {env_file}")
+        sys.exit(1)
 
     load_dotenv(env_file)
 
@@ -240,9 +231,9 @@ def main():
 
             # Extract credentials using the already-validated config
             if aws_config.get("profile_name"):
-                log(f"Extracting credentials from AWS profile: {aws_config['profile_name']}")
+                logger.info(f"Extracting credentials from AWS profile: {aws_config['profile_name']}")
             else:
-                log("Using AWS credentials from default credential chain")
+                logger.info("Using AWS credentials from default credential chain")
 
             # Extract credentials from the validated config
             aws_creds = get_aws_credentials_from_config(aws_config)
@@ -259,12 +250,12 @@ def main():
                 env_vars["GROQ_API_KEY"] = groq_api_key
 
         write_env_file(env_docker_file, env_vars)
-        log(f"Successfully wrote config to {env_docker_file}")
-        log(f"Extracted {len(env_vars)} environment variables")
+        logger.info(f"Successfully wrote config to {env_docker_file}")
+        logger.info(f"Extracted {len(env_vars)} environment variables")
 
         build_cmd = ["docker", "build", "-t", image_name, "."]
-        log("\nBuilding Docker image:")
-        log(" ".join(build_cmd))
+        logger.info("\nBuilding Docker image:")
+        logger.info(" ".join(build_cmd))
         sys.stdout.flush()
         subprocess.run(build_cmd, check=True, cwd=str(project_root))
 
@@ -278,15 +269,17 @@ def main():
             image_name,
         ]
 
-        log("\nRunning Docker command:")
-        log(" ".join(docker_cmd))
+        logger.info("\nRunning Docker command:")
+        logger.info(" ".join(docker_cmd))
         print()
 
         subprocess.run(docker_cmd, check=True)
     except subprocess.CalledProcessError as e:
-        error(f"Command failed with exit code {e.returncode}: {e.cmd}")
+        logger.error(f"Command failed with exit code {e.returncode}: {e.cmd}")
+        sys.exit(1)
     except Exception as e:
-        error(f"Error: {str(e)}")
+        logger.error(f"Error: {str(e)}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

@@ -185,7 +185,8 @@ async def test_agent_initialization(provider_config):
 
     print(f"\n[{name.upper()}] Testing agent initialization...")
 
-    async with InfoAgent(chat_service=chat_service) as agent:
+    chat_client = get_llm_client(chat_service, model=chat_model)
+    async with InfoAgent(chat_client) as agent:
         assert agent.chat_service == chat_service
         assert agent.chat_client is not None
         if chat_model:
@@ -199,10 +200,12 @@ async def test_tool_metadata(provider_config):
     """Test that tool metadata is correctly loaded."""
     name = provider_config["name"]
     chat_service = provider_config["chat_service"]
+    chat_model = provider_config["chat_model"]
 
     print(f"\n[{name.upper()}] Testing tool metadata...")
 
-    async with InfoAgent(chat_service=chat_service) as agent:
+    chat_client = get_llm_client(chat_service, model=chat_model)
+    async with InfoAgent(chat_client) as agent:
         assert agent.tools is not None
 
         tool_names = [tool["function"]["name"] for tool in agent.tools]
@@ -218,6 +221,7 @@ async def test_list_all_speakers_actually_executes(provider_config, speaker_data
     """
     name = provider_config["name"]
     chat_service = provider_config["chat_service"]
+    chat_model = provider_config["chat_model"]
 
     print(f"\n[{name.upper()}] Testing list_all_speakers execution...")
 
@@ -227,7 +231,8 @@ async def test_list_all_speakers_actually_executes(provider_config, speaker_data
     csv_speaker_names = [s.get('Name', '').strip() for s in speaker_data if s.get('Name')]
     assert len(csv_speaker_names) > 0, "CSV should have speaker names"
 
-    async with InfoAgent(chat_service=chat_service) as agent:
+    chat_client = get_llm_client(chat_service, model=chat_model)
+    async with InfoAgent(chat_client) as agent:
         query = "List all available speakers"
         response = await agent.process_query(query)
 
@@ -260,6 +265,7 @@ async def test_get_best_speaker_actually_executes(provider_config, speaker_data)
     """
     name = provider_config["name"]
     chat_service = provider_config["chat_service"]
+    chat_model = provider_config["chat_model"]
 
     print(f"\n[{name.upper()}] Testing get_best_speaker execution...")
 
@@ -279,7 +285,8 @@ async def test_get_best_speaker_actually_executes(provider_config, speaker_data)
 
     query_topic = " ".join(title_keywords[:2])
 
-    async with InfoAgent(chat_service=chat_service) as agent:
+    chat_client = get_llm_client(chat_service, model=chat_model)
+    async with InfoAgent(chat_client) as agent:
         query = f"Find the best speaker for: {query_topic}"
         response = await agent.process_query(query)
 
@@ -311,46 +318,48 @@ async def test_multi_step_tool_chaining(provider_config, speaker_data):
     """
     name = provider_config["name"]
     chat_service = provider_config["chat_service"]
+    chat_model = provider_config["chat_model"]
 
     print(f"\n[{name.upper()}] Testing multi-step tool chaining...")
 
     if not speaker_data:
         pytest.skip("No speaker data available")
-    
+
     csv_speaker_names = [s.get('Name', '').strip() for s in speaker_data if s.get('Name')]
     test_speaker = speaker_data[0]
     speaker_name = test_speaker.get('Name', '').strip()
     speaker_title = test_speaker.get('Final title', '').strip()
-    
+
     if not speaker_name or not speaker_title:
         pytest.skip("Speaker missing name or title")
-    
+
     title_keywords = [w.lower() for w in speaker_title.split() if len(w) > 4][:3]
     if not title_keywords:
         title_keywords = ["modernization", "legacy", "incremental"]
-    
+
     query_topic = " ".join(title_keywords[:2])
-    
-    async with InfoAgent(chat_service=chat_service) as agent:
+
+    chat_client = get_llm_client(chat_service, model=chat_model)
+    async with InfoAgent(chat_client) as agent:
         query = (
             f"Use the list_all_speakers tool, then use get_best_speaker to find a speaker for '{query_topic}'. "
             f"Tell me how many speakers there are and who is the best speaker for '{query_topic}'."
         )
         response = await agent.process_query(query)
-        
+
         assert response is not None
         assert len(response) > 80, "Response should integrate results from multiple tool calls"
-        
+
         response_lower = response.lower()
-        
+
         found_any_speaker = any(
             any(part in response_lower for part in name.lower().split() if len(part) > 2)
             for name in csv_speaker_names
         )
-        
+
         speaker_name_parts = [part.strip() for part in speaker_name.lower().split() if len(part.strip()) > 2]
         found_target_speaker = any(part in response_lower for part in speaker_name_parts)
-        
+
         number_words = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13",
                         "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"]
         has_number = any(word in response_lower for word in number_words)

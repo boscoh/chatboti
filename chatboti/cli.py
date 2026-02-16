@@ -5,6 +5,7 @@ Chatboti CLI - Command-line interface for Chatboti
 
 # Standard library
 import asyncio
+import logging
 import os
 import sys
 
@@ -25,6 +26,8 @@ from chatboti.docker import main as run_docker_main
 from chatboti.logger import setup_logging
 
 setup_logging()
+
+logger = logging.getLogger(__name__)
 
 
 app = App(name="chatboti", help="Chatboti - RAG starter kit")
@@ -50,11 +53,10 @@ def server(host: str = "0.0.0.0", port: int = 8000, reload: bool = False):
 @app.command(name="cli-chat", sort_key=2)
 def cli_chat():
     """Interactive chat with agent using MCP tools."""
-    service = os.getenv("CHAT_SERVICE")
-    if not service:
-        print("Error: CHAT_SERVICE environment variable is not set")
+    if not os.getenv("CHAT_SERVICE"):
+        logger.error("CHAT_SERVICE environment variable is not set")
         sys.exit(1)
-    asyncio.run(agent_amain(service))
+    asyncio.run(agent_amain())
 
 
 @app.command(name="build-rag", sort_key=3)

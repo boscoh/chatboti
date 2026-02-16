@@ -1,19 +1,20 @@
 """FAISS-based RAG service with FAISS index and JSON metadata storage."""
 
-# Standard library
 import json
+import logging
 import os
 from pathlib import Path
 from typing import Dict, List, Optional
 
-# Third-party
 import faiss
 import numpy as np
+from microeval.llm import SimpleLLMClient
 
-# Local
 from chatboti.document import ChunkRef, ChunkResult, Document
 from chatboti.loaders import load_documents
 from chatboti.utils import make_slug
+
+logger = logging.getLogger(__name__)
 
 
 class FaissRAGService:
@@ -25,7 +26,7 @@ class FaissRAGService:
 
     def __init__(
         self,
-        embed_client,
+        embed_client: SimpleLLMClient,
         data_dir: Optional[Path] = None,
         index_path: Optional[Path] = None,
         metadata_path: Optional[Path] = None
@@ -126,7 +127,7 @@ class FaissRAGService:
             self.model_name = data.get('model_name', self.model_name)
             stored_dim = data.get('embedding_dim')
             if stored_dim and stored_dim != self.embedding_dim:
-                print(f"⚠ Warning: Stored dimension {stored_dim} != provided {self.embedding_dim}")
+                logger.warning(f"Stored dimension {stored_dim} != provided {self.embedding_dim}")
         else:
             self.chunk_refs = []
             self.documents = {}
