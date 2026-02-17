@@ -1,21 +1,23 @@
 """Utility functions for chatboti."""
 
 import re
-import tomllib
 from pathlib import Path
+
+try:
+    from importlib.metadata import version, PackageNotFoundError  # Python 3.8+
+except ImportError:
+    from importlib_metadata import version, PackageNotFoundError  # backport
 
 
 def get_version() -> str:
-    """Get version from pyproject.toml.
+    """Get version from package metadata.
 
-    :return: Version string or 'unknown' if not found
+    :return: Version string or '0+unknown' if not found
     """
-    pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
-    if pyproject_path.exists():
-        with open(pyproject_path, "rb") as f:
-            pyproject = tomllib.load(f)
-            return pyproject.get("project", {}).get("version", "unknown")
-    return "unknown"
+    try:
+        return version("chatboti")
+    except PackageNotFoundError:
+        return "0+unknown"
 
 
 def make_slug(text: str, strip_latest: bool = False) -> str:

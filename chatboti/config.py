@@ -78,11 +78,7 @@ async def get_chat_client() -> SimpleLLMClient:
     :raises ValueError: If service or model cannot be determined
     """
     service = get_chat_service()
-    model = (
-        os.getenv("CHAT_MODEL")
-        or os.getenv(f"{service.upper()}_MODEL")
-        or _get_default_model(service, "chat_models")
-    )
+    model = os.getenv("CHAT_MODEL") or _get_default_model(service, "chat_models")
 
     if not model:
         raise ValueError(f"No model configured for chat service '{service}'")

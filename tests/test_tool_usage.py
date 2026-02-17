@@ -198,7 +198,6 @@ async def test_agent_initialization(provider_config):
 
     chat_client = get_llm_client(chat_service, model=chat_model)
     async with InfoAgent(chat_client) as agent:
-        assert agent.chat_service == chat_service
         assert agent.chat_client is not None
         if chat_model:
             assert agent.chat_client.model == chat_model

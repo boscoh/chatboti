@@ -27,7 +27,6 @@ class InfoAgent:
         :param chat_client: Connected chat client (required)
         """
         self.chat_client = chat_client
-        self.chat_service = getattr(chat_client, "service", "unknown")
 
         self._mcp_session: Optional[ClientSession] = None
         self._exit_stack: Optional[AsyncExitStack] = None
@@ -48,28 +47,21 @@ class InfoAgent:
 
         self._exit_stack = AsyncExitStack()
 
-        env = os.environ.copy()
-        env["CHAT_SERVICE"] = self.chat_service
-
-        uv_command = os.path.expanduser("~/.local/bin/uv")
-        if not os.path.exists(uv_command):
-            uv_command = "uv"
-
         server_params = StdioServerParameters(
-            command=uv_command,
+            command="uv",
             args=["run", "-m", "chatboti.mcp_server"],
-            env=env,
+            env=os.environ.copy(),
         )
 
         try:
-            logger.info(f"Starting MCP stdio client with command: {uv_command}")
-            _stdio_read, _stdio_write = await self._exit_stack.enter_async_context(
+            logger.info("Starting MCP stdio client with command: uv run -m chatboti.mcp_server")
+            stdio_read, stdio_write = await self._exit_stack.enter_async_context(
                 stdio_client(server_params)
             )
             logger.info("MCP stdio connection established")
 
             self._mcp_session = await self._exit_stack.enter_async_context(
-                ClientSession(_stdio_read, _stdio_write)
+                ClientSession(stdio_read, stdio_write)
             )
             logger.info("MCP session created, initializing...")
 
@@ -92,7 +84,7 @@ class InfoAgent:
         logger.info(f"Connected Server to MCP tools: {', '.join(names)}")
 
         try:
-            logger.info(f"Connecting chat client for service: {self.chat_service}")
+            logger.info("Connecting chat client...")
             await self.chat_client.connect()
             logger.info("Chat client connected successfully")
         except Exception as e:
@@ -110,7 +102,7 @@ class InfoAgent:
             try:
                 await self._exit_stack.aclose()
             except Exception as e:
-                logger.warning(f"Error closing exit stack: {e}")
+                logger.warning(f"Error closing MCP resources: {e}")
 
         self._mcp_session = None
         self._exit_stack = None
