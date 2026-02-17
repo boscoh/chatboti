@@ -1110,12 +1110,15 @@ class BedrockClient(SimpleLLMClient):
                         text_parts.append(content["text"])
                     elif "toolUse" in content:
                         tool_use = content["toolUse"]
+                        logger.debug(f"[TRACE] Bedrock response toolUse block: {tool_use}")
+                        tool_call_id = tool_use.get("toolUseId", "")
+                        logger.debug(f"[TRACE] Extracted tool_call_id from Bedrock: '{tool_call_id}'")
                         tool_calls.append(
                             {
                                 "function": {
                                     "name": tool_use["name"],
                                     "arguments": json.dumps(tool_use.get("input", {})),
-                                    "tool_call_id": tool_use.get("toolUseId", ""),
+                                    "tool_call_id": tool_call_id,
                                 }
                             }
                         )
@@ -1231,23 +1234,30 @@ class BedrockClient(SimpleLLMClient):
                     # but here we only check tool_call.id. This causes tool_calls to be silently dropped
                     # when tool_call_id is not at the top level, resulting in missing toolResult blocks.
                     # Fix: Check both tool_call.get("id") and tool_call["function"].get("tool_call_id")
+                    logger.debug(f"[TRACE] Processing tool_call structure: {tool_call}")
                     tool_call_id = tool_call.get("id", "")
+                    logger.debug(f"[TRACE] tool_call.get('id', ''): '{tool_call_id}'")
+                    function_tool_call_id = tool_call.get("function", {}).get("tool_call_id", "")
+                    logger.debug(f"[TRACE] tool_call.get('function', {{}}).get('tool_call_id', ''): '{function_tool_call_id}'")
                     if tool_call_id:
-                        assistant_content.append(
-                            {
-                                "toolUse": {
-                                    "toolUseId": tool_call_id,
-                                    "name": tool_call["function"]["name"],
-                                    "input": json.loads(
-                                        tool_call["function"]["arguments"]
-                                    )
-                                    if isinstance(
-                                        tool_call["function"]["arguments"], str
-                                    )
-                                    else tool_call["function"]["arguments"],
-                                }
+                        logger.debug(f"[TRACE] ✓ tool_call_id is truthy, adding toolUse to assistant_content")
+                        toolUse_block = {
+                            "toolUse": {
+                                "toolUseId": tool_call_id,
+                                "name": tool_call["function"]["name"],
+                                "input": json.loads(
+                                    tool_call["function"]["arguments"]
+                                )
+                                if isinstance(
+                                    tool_call["function"]["arguments"], str
+                                )
+                                else tool_call["function"]["arguments"],
                             }
-                        )
+                        }
+                        logger.debug(f"[TRACE] Adding toolUse block: {toolUse_block}")
+                        assistant_content.append(toolUse_block)
+                    else:
+                        logger.debug(f"[TRACE] ✗ tool_call_id is empty/falsy, DROPPING tool_call silently!")
                 if assistant_content:
                     formatted_messages.append(
                         {
@@ -1257,24 +1267,25 @@ class BedrockClient(SimpleLLMClient):
                     )
             elif role == "tool":
                 tool_call_id = msg.get("tool_call_id", "")
+                logger.debug(f"[TRACE] Processing tool result message with tool_call_id: '{tool_call_id}'")
                 tool_content = (
                     content.rstrip() if isinstance(content, str) else str(content)
                 )
                 tool_status = msg.get("status", "success")
-                formatted_messages.append(
-                    {
-                        "role": "user",
-                        "content": [
-                            {
-                                "toolResult": {
-                                    "toolUseId": tool_call_id,
-                                    "content": [{"text": tool_content}],
-                                    "status": tool_status,
-                                }
+                toolResult_block = {
+                    "role": "user",
+                    "content": [
+                        {
+                            "toolResult": {
+                                "toolUseId": tool_call_id,
+                                "content": [{"text": tool_content}],
+                                "status": tool_status,
                             }
-                        ],
-                    }
-                )
+                        }
+                    ],
+                }
+                logger.debug(f"[TRACE] Sending toolResult block to Bedrock: {toolResult_block}")
+                formatted_messages.append(toolResult_block)
             elif (
                 role == "user"
                 and isinstance(content, list)
