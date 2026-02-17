@@ -1,0 +1,3619 @@
+{
+  "model_name": "amazon.titan-embed-text-v2:0",
+  "embedding_dim": 1024,
+  "chunk_refs": [
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-0",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-1",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-2",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-3",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-4",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-5",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-6",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-7",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-8",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-9",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-10",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-11",
+      "chunk_key": "Social Media Handles"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Country"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Name"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Role"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Final title"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Final abstract (Max. 150 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Bio (Max. 120 words)"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Mail adress"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Headshot"
+    },
+    {
+      "document_id": "2025-09-02-speaker-bio-12",
+      "chunk_key": "Social Media Handles"
+    }
+  ],
+  "documents": [
+    {
+      "id": "2025-09-02-speaker-bio-0",
+      "content": {
+        "Country": "Germany & UK",
+        "Name": "Jonathan Pass\u00e9 and Shodhan Sheth",
+        "Role": "Lead Developer and Principal Developer",
+        "Final title": "Incremental Modernization through CodeConcise",
+        "Final abstract (Max. 150 words)": "In today\u2019s competitive market, legacy systems often hinder the rapid delivery of products and services that align with evolving customer expectations. As a result, legacy modernization is not only more critical\u2013but also more urgent\u2013than ever.\n\nJoin us to explore how we are using a combination of deterministic techniques and AI to identify the core business capabilities buried within legacy systems. By uncovering \u201cseams\u201d in the code, we decompose modernization into manageable \u201cthin slices\u201d that can be delivered incrementally. This approach democratises modernization by providing continuous value and feedback throughout the journey\u2013rather than deferring ROI until the end of a multi-year transformation programme.",
+        "Bio (Max. 120 words)": "Jonathan is a software engineer with a passion for building tools that make technologists more powerful. Over the course of his career, he\u2019s worked across diverse industries, from automotive to retail, insurance to healthcare  always with a focus on creating platforms that enable others to push the boundaries of what\u2019s possible.\nIn the last two years, Jonathan has been diving  into Generative AI, developing software tools that put this breakthrough technology at the core of how engineers design, build, and innovate. \n\nShodhan looks after service design for the modernization portfolio in Thoughtworks - where has been for the last 18 years! He has played all sorts of tech roles in the past across industry verticals and is also currently responsible for building internal Thoughtworks accelerators in the modernization space",
+        "Mail adress": "jpasse@thoughtworks.com\nssheth@thoughtworks.com",
+        "Headshot": "Upload here",
+        "Social Media Handles": "https://www.linkedin.com/in/jonathan-passe-618579127/\n\n\n\n\nhttps://www.linkedin.com/in/shodhansheth/"
+      },
+      "full_text": "",
+      "metadata": {},
+      "source": "/Users/boscoh/p/chatboti/chatboti/data/2025-09-02-speaker-bio.csv",
+      "chunks": {
+        "Country": {
+          "faiss_id": 580,
+          "i_start": null,
+          "i_end": null
+        },
+        "Name": {
+          "faiss_id": 581,
+          "i_start": null,
+          "i_end": null
+        },
+        "Role": {
+          "faiss_id": 582,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final title": {
+          "faiss_id": 583,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final abstract (Max. 150 words)": {
+          "faiss_id": 584,
+          "i_start": null,
+          "i_end": null
+        },
+        "Bio (Max. 120 words)": {
+          "faiss_id": 585,
+          "i_start": null,
+          "i_end": null
+        },
+        "Mail adress": {
+          "faiss_id": 586,
+          "i_start": null,
+          "i_end": null
+        },
+        "Headshot": {
+          "faiss_id": 587,
+          "i_start": null,
+          "i_end": null
+        },
+        "Social Media Handles": {
+          "faiss_id": 588,
+          "i_start": null,
+          "i_end": null
+        }
+      }
+    },
+    {
+      "id": "2025-09-02-speaker-bio-1",
+      "content": {
+        "Country": "Spain",
+        "Name": "\u00d3scar Cobles Montes",
+        "Role": "Senior Infrastructure Consultant",
+        "Final title": "Policy-Aware Infrastructure Generation: Using an MCP Server to Bridge OPA and AI for Terraform",
+        "Final abstract (Max. 150 words)": "As developers use AI agents to generate Terraform configurations, ensuring compliance with internal policies becomes a critical challenge. This talk presents a new approach: integrating an MCP (Model Context Protocol) server that connects AI agents with existing OPA (Open Policy Agent) policies. By querying these policies, the server extracts real-time constraints\u2014such as allowed instance types, required tags, or open ports\u2014and feeds them back into the generation prompt. This allows developers to request infrastructure in natural language (\u201cI need a server on AWS\u201d) and receive compliant Terraform code by default. The session includes a prototype demo and explores how this pattern bridges policy, AI, and Infrastructure as Code inside modern developer workflows.",
+        "Bio (Max. 120 words)": "\u00d3scar is a Senior Software Engineer and Cloud Architect with over 14 years of experience building and automating cloud infrastructure at scale. He specializes in Infrastructure as Code, cloud governance, and platform automation. Throughout his career, he has supported enterprise clients in adopting DevOps practices, improving developer experience, and ensuring policy compliance across cloud environments. \n\nA few months ago, \u00d3scar joined the Thoughtworks family, where he continues to explore the intersection of AI, infrastructure, and developer enablement. This is his first time speaking at XConf, where he\u2019s excited to share a new approach to policy-aware infrastructure generation using AI agents.",
+        "Mail adress": "oscar.coblesmontes@thoughtworks.com",
+        "Headshot": "Upload here",
+        "Social Media Handles": "https://www.linkedin.com/in/oscar-cobles-80020354/"
+      },
+      "full_text": "",
+      "metadata": {},
+      "source": "/Users/boscoh/p/chatboti/chatboti/data/2025-09-02-speaker-bio.csv",
+      "chunks": {
+        "Country": {
+          "faiss_id": 589,
+          "i_start": null,
+          "i_end": null
+        },
+        "Name": {
+          "faiss_id": 590,
+          "i_start": null,
+          "i_end": null
+        },
+        "Role": {
+          "faiss_id": 591,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final title": {
+          "faiss_id": 592,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final abstract (Max. 150 words)": {
+          "faiss_id": 593,
+          "i_start": null,
+          "i_end": null
+        },
+        "Bio (Max. 120 words)": {
+          "faiss_id": 594,
+          "i_start": null,
+          "i_end": null
+        },
+        "Mail adress": {
+          "faiss_id": 595,
+          "i_start": null,
+          "i_end": null
+        },
+        "Headshot": {
+          "faiss_id": 596,
+          "i_start": null,
+          "i_end": null
+        },
+        "Social Media Handles": {
+          "faiss_id": 597,
+          "i_start": null,
+          "i_end": null
+        }
+      }
+    },
+    {
+      "id": "2025-09-02-speaker-bio-2",
+      "content": {
+        "Country": "Germany",
+        "Name": "Sarah Schmid",
+        "Role": "1337 (Lead) Developer",
+        "Final title": "Is clean code dead ? ",
+        "Final abstract (Max. 150 words)": "In today\u2019s fast-paced development world, conversations about Clean Code have become rare \u2014 but is it really less important? This talk is a reminder of why \"good\" code quality still matters, simple ideas to write better code and how to encourage others. Let\u2019s bring Clean Code back onto the table!",
+        "Bio (Max. 120 words)": "Sarah is a Software Developer, a Thoughtworker for over six years and a clean code enthusiast. She has worked on a wide varienty of products and projects, from Co-Delivery to Enablement, and enjoys introducting modern software development practices and perspectives into different technical contexts and into teams.\nOutside of work Sarah is a mother to a two-year old who is keeping her very busy, but when she has some time off she enjoys getting creative in various crafts and DIY projects.",
+        "Mail adress": "sarah.schmid@thoughtworks.com",
+        "Headshot": "Upload here",
+        "Social Media Handles": "https://www.linkedin.com/in/sasahamburg"
+      },
+      "full_text": "",
+      "metadata": {},
+      "source": "/Users/boscoh/p/chatboti/chatboti/data/2025-09-02-speaker-bio.csv",
+      "chunks": {
+        "Country": {
+          "faiss_id": 598,
+          "i_start": null,
+          "i_end": null
+        },
+        "Name": {
+          "faiss_id": 599,
+          "i_start": null,
+          "i_end": null
+        },
+        "Role": {
+          "faiss_id": 600,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final title": {
+          "faiss_id": 601,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final abstract (Max. 150 words)": {
+          "faiss_id": 602,
+          "i_start": null,
+          "i_end": null
+        },
+        "Bio (Max. 120 words)": {
+          "faiss_id": 603,
+          "i_start": null,
+          "i_end": null
+        },
+        "Mail adress": {
+          "faiss_id": 604,
+          "i_start": null,
+          "i_end": null
+        },
+        "Headshot": {
+          "faiss_id": 605,
+          "i_start": null,
+          "i_end": null
+        },
+        "Social Media Handles": {
+          "faiss_id": 606,
+          "i_start": null,
+          "i_end": null
+        }
+      }
+    },
+    {
+      "id": "2025-09-02-speaker-bio-3",
+      "content": {
+        "Country": "UK",
+        "Name": "Jen Wallace",
+        "Role": "Lead Developer",
+        "Final title": "Fight the big ball of mud with business capability mapping",
+        "Final abstract (Max. 150 words)": "Are your systems drifting into a Big Ball of Mud? In this talk, I\u2019ll show how Business Capability Mapping can uncover and resolve unclear domain boundaries in large, multi-team projects - without disrupting progress. I\u2019ll share how we applied this approach across 10+ teams to gain alignment, reduce complexity and keep our architecture clean and scalable. Walk away with practical techniques to break free from architectural chaos, keep your teams aligned and your projects on track.",
+        "Bio (Max. 120 words)": "Jen is a Technical Lead and aspiring architect, currently working as a consultant with Thoughtworks. With over a dozen years of experience, Jen has led teams across numerous domains and technology stacks, and has worked with clients worldwide. Her interests include building diverse, high performing teams and bridging the business-technical gap - helping engineers effectively communicate their ideas, architectures and designs with non-technical stakeholders and vice-versa. Jen is also an active advocate for greater diversity, equity and inclusion in the technology industry, volunteering her time and experience to further the cause. In her free time, Jen immerses herself in tabletop games, video games and horror movies.",
+        "Mail adress": "jen.wallace@thoughtworks.com",
+        "Headshot": "Upload here",
+        "Social Media Handles": "https://www.linkedin.com/in/jenniferewallace/"
+      },
+      "full_text": "",
+      "metadata": {},
+      "source": "/Users/boscoh/p/chatboti/chatboti/data/2025-09-02-speaker-bio.csv",
+      "chunks": {
+        "Country": {
+          "faiss_id": 607,
+          "i_start": null,
+          "i_end": null
+        },
+        "Name": {
+          "faiss_id": 608,
+          "i_start": null,
+          "i_end": null
+        },
+        "Role": {
+          "faiss_id": 609,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final title": {
+          "faiss_id": 610,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final abstract (Max. 150 words)": {
+          "faiss_id": 611,
+          "i_start": null,
+          "i_end": null
+        },
+        "Bio (Max. 120 words)": {
+          "faiss_id": 612,
+          "i_start": null,
+          "i_end": null
+        },
+        "Mail adress": {
+          "faiss_id": 613,
+          "i_start": null,
+          "i_end": null
+        },
+        "Headshot": {
+          "faiss_id": 614,
+          "i_start": null,
+          "i_end": null
+        },
+        "Social Media Handles": {
+          "faiss_id": 615,
+          "i_start": null,
+          "i_end": null
+        }
+      }
+    },
+    {
+      "id": "2025-09-02-speaker-bio-4",
+      "content": {
+        "Country": "Italy",
+        "Name": "Sara Michelazzo",
+        "Role": "Head of Strategy and Innovation, Global IT Services",
+        "Final title": "AI in action: Boost productivity and deliver business value with practical tools",
+        "Final abstract (Max. 150 words)": "Thoughtworks is undergoing a bold AI transformation, integrating tools like Gemini, NotebookLM, and Agentic AI to boost both individual and enterprise productivity. In this session, we\u2019ll share hands-on experiences\u2014what worked, what didn\u2019t, and how we\u2019re navigating change. Expect live demos of AI-augmented workflows in Sales and Knowledge Management, including intelligent research for account planning, strategic meeting prep, and rapid proposal creation. We\u2019ll also unpack our adoption strategies. Designed for practitioners and leaders alike, this talk offers practical lessons, adoption tactics, and clear impact metrics\u2014ideal for anyone looking to integrate AI into daily workflows and drive real business value.",
+        "Bio (Max. 120 words)": "Sara is the Head of Strategy and Innovation at Thoughtworks, where she leads AI-driven transformation initiatives across global IT. With over a decade of experience in technology and operations, she is currently focused on redefining Knowledge Management and enterprise productivity using tools like Gemini, NotebookLM, and AI agents. Sara works closely with executive leadership to scale AI adoption and has pioneered initiatives that blend cutting-edge technology with measurable business impact. A frequent speaker at industry events, she brings a pragmatic yet visionary approach to digital transformation.",
+        "Mail adress": "smichel@thoughtworks.com",
+        "Headshot": "Upload here",
+        "Social Media Handles": "https://www.linkedin.com/in/saramichelazzo/?"
+      },
+      "full_text": "",
+      "metadata": {},
+      "source": "/Users/boscoh/p/chatboti/chatboti/data/2025-09-02-speaker-bio.csv",
+      "chunks": {
+        "Country": {
+          "faiss_id": 616,
+          "i_start": null,
+          "i_end": null
+        },
+        "Name": {
+          "faiss_id": 617,
+          "i_start": null,
+          "i_end": null
+        },
+        "Role": {
+          "faiss_id": 618,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final title": {
+          "faiss_id": 619,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final abstract (Max. 150 words)": {
+          "faiss_id": 620,
+          "i_start": null,
+          "i_end": null
+        },
+        "Bio (Max. 120 words)": {
+          "faiss_id": 621,
+          "i_start": null,
+          "i_end": null
+        },
+        "Mail adress": {
+          "faiss_id": 622,
+          "i_start": null,
+          "i_end": null
+        },
+        "Headshot": {
+          "faiss_id": 623,
+          "i_start": null,
+          "i_end": null
+        },
+        "Social Media Handles": {
+          "faiss_id": 624,
+          "i_start": null,
+          "i_end": null
+        }
+      }
+    },
+    {
+      "id": "2025-09-02-speaker-bio-5",
+      "content": {
+        "Country": "Spain",
+        "Name": "Paola Reyes",
+        "Role": "Lead Developer",
+        "Final title": "The Paradox of TDD and Pairing: Why it's so difficult, but so worthwhile",
+        "Final abstract (Max. 150 words)": "This talk dives into the real-world experience of adopting Test-Driven Development (TDD) and pair programming. It's not a theoretical overview, but a candid look at the challenges and triumphs of integrating these practices into daily workflow. I'll be sharing my personal journey over six years, from the initial frustration of fundamentally changing my coding approach to the eventual realization of its profound benefits.\n\nWe'll dissect the 'paradox' \u2013 that initial struggle that many encounter, and how to push through it, gaining practical insights into overcoming the mental shift required for TDD, and learn how to navigate the complexities of effective pairing. We'll explore concrete examples of how these techniques can lead to more robust, maintainable code and a significantly more collaborative team environment, leaving with actionable strategies to implement TDD and pairing, empowering you to improve their coding practices and team dynamics and ways to elevate the team's collaborative power. We'll explore together how to transform coding from a solitary struggle to a shared success and ownership.",
+        "Bio (Max. 120 words)": "Sharing knowledge is one of the greatest professional satisfactions. With almost six years at Thoughtworks, I've discovered that my passion for technology multiplies when I transmit it to others. I firmly believe in the power of collaborative learning and seek to create spaces where everyone can grow and develop.",
+        "Mail adress": "paola.reyesmontalvo@thoughtworks.com",
+        "Headshot": "Upload here",
+        "Social Media Handles": "www.linkedin.com/in/paolareyesmontalvo"
+      },
+      "full_text": "",
+      "metadata": {},
+      "source": "/Users/boscoh/p/chatboti/chatboti/data/2025-09-02-speaker-bio.csv",
+      "chunks": {
+        "Country": {
+          "faiss_id": 625,
+          "i_start": null,
+          "i_end": null
+        },
+        "Name": {
+          "faiss_id": 626,
+          "i_start": null,
+          "i_end": null
+        },
+        "Role": {
+          "faiss_id": 627,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final title": {
+          "faiss_id": 628,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final abstract (Max. 150 words)": {
+          "faiss_id": 629,
+          "i_start": null,
+          "i_end": null
+        },
+        "Bio (Max. 120 words)": {
+          "faiss_id": 630,
+          "i_start": null,
+          "i_end": null
+        },
+        "Mail adress": {
+          "faiss_id": 631,
+          "i_start": null,
+          "i_end": null
+        },
+        "Headshot": {
+          "faiss_id": 632,
+          "i_start": null,
+          "i_end": null
+        },
+        "Social Media Handles": {
+          "faiss_id": 633,
+          "i_start": null,
+          "i_end": null
+        }
+      }
+    },
+    {
+      "id": "2025-09-02-speaker-bio-6",
+      "content": {
+        "Country": "UK",
+        "Name": "Kief Morris",
+        "Role": "Distinguished Engineer",
+        "Final title": "Application-Driven Infrastructure",
+        "Final abstract (Max. 150 words)": "Even with automated delivery pipelines, cloud, and infrastructure as code, managing environments and infrastructure is often a major drag for software delivery effectiveness. This talk describes an approach to building infrastructure as composable components that application teams can provision and configure themselves, changing the dynamic away from ticket-driven infrastructure silos.",
+        "Bio (Max. 120 words)": "Kief Morris (he/him) is an Infrastructure Automation Architect who helps infrastructure teams move from hand-crafted infrastructure management that creates friction and toil to a platform approach that focuses on enabling users to deliver better outcomes faster. An infrastructure platform approach involves adopting a composable infrastructure architecture and self-service environment management, which needs changes to team workflows and topologies.\n\nKief is the author of the O\u2019Reilly book Infrastructure as Code and a Distinguished Infrastructure Engineer at Thoughtworks. He has been working across development and operations teams and automating infrastructure management since the dot-com era. He has worked with digital scaleups and enterprises in many industries around the globe.",
+        "Mail adress": "kmorris@thoughtworks.com",
+        "Headshot": "Upload here",
+        "Social Media Handles": "https://github.com/kief\n\nhttps://www.linkedin.com/in/kiefmorris/\n\nhttps://infrastructure-as-code.com/ "
+      },
+      "full_text": "",
+      "metadata": {},
+      "source": "/Users/boscoh/p/chatboti/chatboti/data/2025-09-02-speaker-bio.csv",
+      "chunks": {
+        "Country": {
+          "faiss_id": 634,
+          "i_start": null,
+          "i_end": null
+        },
+        "Name": {
+          "faiss_id": 635,
+          "i_start": null,
+          "i_end": null
+        },
+        "Role": {
+          "faiss_id": 636,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final title": {
+          "faiss_id": 637,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final abstract (Max. 150 words)": {
+          "faiss_id": 638,
+          "i_start": null,
+          "i_end": null
+        },
+        "Bio (Max. 120 words)": {
+          "faiss_id": 639,
+          "i_start": null,
+          "i_end": null
+        },
+        "Mail adress": {
+          "faiss_id": 640,
+          "i_start": null,
+          "i_end": null
+        },
+        "Headshot": {
+          "faiss_id": 641,
+          "i_start": null,
+          "i_end": null
+        },
+        "Social Media Handles": {
+          "faiss_id": 642,
+          "i_start": null,
+          "i_end": null
+        }
+      }
+    },
+    {
+      "id": "2025-09-02-speaker-bio-7",
+      "content": {
+        "Country": "Germany",
+        "Name": "Barosch Demir and Dima Fateev",
+        "Role": "Lead Developer and (?)",
+        "Final title": "Streaming: Real-Time Architecture for Connected Products in Automotive",
+        "Final abstract (Max. 150 words)": "The EU Data Act establishes a legal foundation for fair access to and use of data, with a strong emphasis on transparency, user control and seamless data exchange - particularly for connected products and services. As developers, we play a key role in turning these regulatory principles into robust, real-world systems. In this talk, we\u2019ll break down the core concepts of the EU Data Act and explore their impact on modern data architectures. Using the automotive domain as a practical example, we\u2019ll present a scalable streaming solution designed to support real-time data access. The architecture leverages event-driven microservices, MQTT for efficient and lightweight communication, secure APIs, and access control mechanisms to ensure both performance and compliance. We\u2019ll share lessons learned, practical challenges, and the tools that helped us deliver a future-ready, regulation-aligned system.",
+        "Bio (Max. 120 words)": "Joining Thoughtworks in 2019 marked the start of a transformative journey for Barosch. While training in Xi\u2019an, China, he discovered the foundational values of teamwork, engineering excellence, and inclusive leadership. These early lessons helped shape his approach to problem-solving and collaboration with others. Over the years, he has contributed across diverse domains including Retail, BFSI, Energy, and Automotive. Currently, he leads a team of six engineers focused on real-time data streaming solutions. Barosch is passionate about building scalable systems and fostering environments where diverse perspectives drive innovation. His journey\u2014from a junior developer to a lead\u2014reflects a commitment to continuous growth, cross-cultural collaboration, and impactful engineering",
+        "Mail adress": "barosch.demir@thoughtworks.com\ndima.fateev@thoughtworks.com",
+        "Headshot": "Upload here",
+        "Social Media Handles": "www.linkedin.com/in/baran-demir-69091922a"
+      },
+      "full_text": "",
+      "metadata": {},
+      "source": "/Users/boscoh/p/chatboti/chatboti/data/2025-09-02-speaker-bio.csv",
+      "chunks": {
+        "Country": {
+          "faiss_id": 643,
+          "i_start": null,
+          "i_end": null
+        },
+        "Name": {
+          "faiss_id": 644,
+          "i_start": null,
+          "i_end": null
+        },
+        "Role": {
+          "faiss_id": 645,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final title": {
+          "faiss_id": 646,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final abstract (Max. 150 words)": {
+          "faiss_id": 647,
+          "i_start": null,
+          "i_end": null
+        },
+        "Bio (Max. 120 words)": {
+          "faiss_id": 648,
+          "i_start": null,
+          "i_end": null
+        },
+        "Mail adress": {
+          "faiss_id": 649,
+          "i_start": null,
+          "i_end": null
+        },
+        "Headshot": {
+          "faiss_id": 650,
+          "i_start": null,
+          "i_end": null
+        },
+        "Social Media Handles": {
+          "faiss_id": 651,
+          "i_start": null,
+          "i_end": null
+        }
+      }
+    },
+    {
+      "id": "2025-09-02-speaker-bio-8",
+      "content": {
+        "Country": "Spain",
+        "Name": "Emma Manna",
+        "Role": "Senior Developer",
+        "Final title": "Training Without Sharing: Is Federated Learning the Answer to Data Privacy in AI?",
+        "Final abstract (Max. 150 words)": "In sectors like healthcare, data is abundant but often unusable due to strict privacy regulations. Federated learning offers a promising solution: training models locally on sensitive data and sharing only the learned parameters, not the data itself. This talk introduces the core concepts behind federated learning and explores its practical potential and limitations. Within the scope of natural language processing, detecting domain-specific medical terms in patient records, we will examine how federated approaches can benefit from sensitive datasets without compromising privacy. Through a series of performed experiments, we\u2019ll highlight the strengths and limitations of federated learning, as well as learnings that can help assessing its suitability for other use cases.",
+        "Bio (Max. 120 words)": "Emma is a passionate software engineer that has been working as a consultant at ThoughtWorks since 2022. As a recent graduate with a strong foundation in software development, Emma brings a fresh perspective to complex technical challenges.\n\nDuring her final year of university, Emma was actively involved in a research group, focusing on a Natural Language Processing (NLP) project within the medical field. This experience ignited a particular interest in the cutting-edge area of Federated Learning.",
+        "Mail adress": "emma.manna@thoughtworks.com",
+        "Headshot": "Upload here",
+        "Social Media Handles": "https://www.linkedin.com/in/emmamannaloyarte/"
+      },
+      "full_text": "",
+      "metadata": {},
+      "source": "/Users/boscoh/p/chatboti/chatboti/data/2025-09-02-speaker-bio.csv",
+      "chunks": {
+        "Country": {
+          "faiss_id": 652,
+          "i_start": null,
+          "i_end": null
+        },
+        "Name": {
+          "faiss_id": 653,
+          "i_start": null,
+          "i_end": null
+        },
+        "Role": {
+          "faiss_id": 654,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final title": {
+          "faiss_id": 655,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final abstract (Max. 150 words)": {
+          "faiss_id": 656,
+          "i_start": null,
+          "i_end": null
+        },
+        "Bio (Max. 120 words)": {
+          "faiss_id": 657,
+          "i_start": null,
+          "i_end": null
+        },
+        "Mail adress": {
+          "faiss_id": 658,
+          "i_start": null,
+          "i_end": null
+        },
+        "Headshot": {
+          "faiss_id": 659,
+          "i_start": null,
+          "i_end": null
+        },
+        "Social Media Handles": {
+          "faiss_id": 660,
+          "i_start": null,
+          "i_end": null
+        }
+      }
+    },
+    {
+      "id": "2025-09-02-speaker-bio-9",
+      "content": {
+        "Country": "Italy",
+        "Name": "Matteo Vaccari",
+        "Role": "Technical Principal",
+        "Final title": "\"Port & Mend\" over Rewrite. Reducing the cost & risk of dealing with legacy code",
+        "Final abstract (Max. 150 words)": "Many legacy rewrite projects end up not delivering the expected benefits, while the legacy is still running and keeping the business alive.\n\nAn alternative is to port & mend the legacy code. We may need to adapt it to new hardware, modern libraries or new operating systems. \"\"Porting\"\" means taking the old code and making the minimal changes necessary to make it run in a new home. \n\n\"\"Mending\"\" is the humble act of giving old code some respect and care; fixing what needs fixing, refactoring what needs refactoring, and being happy when it comes back to life: maintainable, deployable, updatable and well tested.\n\nThere's a place for all approaches; sometimes a rewrite is what's needed, but often a simple \"\"port & mend\"\" approach is applicable, and when it is, it's less risky and cheaper. Advances in AI are making port & mend much cheaper and more accessible. \n\nThis talk is based on actual experience.",
+        "Bio (Max. 120 words)": "Matteo joined Thoughtworks as a developer 10 years ago, after a past as Extreme Programming coach. He worked on a number of software modernization efforts. His goal is to help organizations deliver better software, faster. He tries to make professional programming an enjoyable and fulfilling experience, for both developers and customers. Matteo's preferred tools are well known, but not that easy to apply in practice: Extreme Programming, Lean Thinking and TDD.",
+        "Mail adress": "mvaccari@thoughtworks.com",
+        "Headshot": "Upload here",
+        "Social Media Handles": ""
+      },
+      "full_text": "",
+      "metadata": {},
+      "source": "/Users/boscoh/p/chatboti/chatboti/data/2025-09-02-speaker-bio.csv",
+      "chunks": {
+        "Country": {
+          "faiss_id": 661,
+          "i_start": null,
+          "i_end": null
+        },
+        "Name": {
+          "faiss_id": 662,
+          "i_start": null,
+          "i_end": null
+        },
+        "Role": {
+          "faiss_id": 663,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final title": {
+          "faiss_id": 664,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final abstract (Max. 150 words)": {
+          "faiss_id": 665,
+          "i_start": null,
+          "i_end": null
+        },
+        "Bio (Max. 120 words)": {
+          "faiss_id": 666,
+          "i_start": null,
+          "i_end": null
+        },
+        "Mail adress": {
+          "faiss_id": 667,
+          "i_start": null,
+          "i_end": null
+        },
+        "Headshot": {
+          "faiss_id": 668,
+          "i_start": null,
+          "i_end": null
+        }
+      }
+    },
+    {
+      "id": "2025-09-02-speaker-bio-10",
+      "content": {
+        "Country": "UK & Germany",
+        "Name": "Fabian Nonnenmacher",
+        "Role": "Principal AI Engineer & Lead Developer",
+        "Final title": "Unlock the full potential of Generative AI with Agent Platforms",
+        "Final abstract (Max. 150 words)": "Many organizations are integrating Generative AI tools in an ad-hoc manner, missing the opportunity to build a strategic, unified capability. This talk offers a blueprint for enterprises ready to unlock the full potential of Generative AI agents.\n\nWe'll delve into the essential platform capabilities needed to support the entire agent lifecycle, from service creation and deployment to robust evaluations and fine-tuning. This platform empowers product teams to organically create and share AI tools and agents, enriching existing offerings and making them discoverable company-wide.\n\nWe'll also spotlight the Model Context Protocol (MCP) and show how it allows various AI agents to work together seamlessly throughout your organization. To round things out, we'll tackle the enterprise challenges you can't ignore \u2013 security, auditing, and practical governance that enables rather than blocks innovation.",
+        "Bio (Max. 120 words)": "Ben is a results-driven AI/Engineering leader with a track record of building high-performing teams and shipping business-critical AI, ML and data products at scale. He has deep expertise across the full data lifecycle from research to production deployment. Ben is adept at defining technical strategy, driving execution and partnering cross-functionally to deliver measurable impact.\n\nFabian joined ThoughtWorks five years ago as a Backend Software Developer, bringing a powerful blend of technical skill and a deep product mindset. This drive led him to excel in both developer and Business Analyst roles, always delivering impactful solutions. As a Business Analyst, he recently played a key role in delivering an MLOps Platform, empowering multiple teams to successfully launch their projects. His latest efforts were centered on preparing this platform to unlock the full potential of Generative AI.",
+        "Mail adress": "fabian.nonnenmacher@thoughtworks.com",
+        "Headshot": "Upload here",
+        "Social Media Handles": "https://www.linkedin.com/in/benomahony/ \n\nhttps://www.linkedin.com/in/fnonnenmacher/ "
+      },
+      "full_text": "",
+      "metadata": {},
+      "source": "/Users/boscoh/p/chatboti/chatboti/data/2025-09-02-speaker-bio.csv",
+      "chunks": {
+        "Country": {
+          "faiss_id": 669,
+          "i_start": null,
+          "i_end": null
+        },
+        "Name": {
+          "faiss_id": 670,
+          "i_start": null,
+          "i_end": null
+        },
+        "Role": {
+          "faiss_id": 671,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final title": {
+          "faiss_id": 672,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final abstract (Max. 150 words)": {
+          "faiss_id": 673,
+          "i_start": null,
+          "i_end": null
+        },
+        "Bio (Max. 120 words)": {
+          "faiss_id": 674,
+          "i_start": null,
+          "i_end": null
+        },
+        "Mail adress": {
+          "faiss_id": 675,
+          "i_start": null,
+          "i_end": null
+        },
+        "Headshot": {
+          "faiss_id": 676,
+          "i_start": null,
+          "i_end": null
+        },
+        "Social Media Handles": {
+          "faiss_id": 677,
+          "i_start": null,
+          "i_end": null
+        }
+      }
+    },
+    {
+      "id": "2025-09-02-speaker-bio-11",
+      "content": {
+        "Country": "Germany",
+        "Name": "Satish Kumar Nadarajan",
+        "Role": "Lead Infrastructure Consultant",
+        "Final title": "Pairing with the Machine: How AI Agents are Rewriting the Rules of Software Development",
+        "Final abstract (Max. 150 words)": "What if your coding partner could understand your codebase, recall architectural decisions, and evolve with your workflow?\n\nIn this talk, we explore how autonomous AI agents are reshaping software development by acting as intelligent pair programmers. Going beyond GitHub Copilot, these agents can reason across project context, suggest design improvements, surface decisions from team memory, and actively engage in architectural discussions.\n\nI\u2019ll walk through the building blocks\u2014LLMs, memory systems, retrieval-augmented generation (RAG), and tool orchestration\u2014using real-world prototypes integrated into VSCode.\n\nWe'll also address challenges like hallucinations, dependency drift, and trust.\n\nWhether you're an engineer, tech lead, or platform builder, this talk shows how AI-native development is no longer science fiction\u2014it\u2019s your next teammate.",
+        "Bio (Max. 120 words)": "Satish Kumar is a Lead Infrastructure Consultant at Thoughtworks, with over 15 years of experience in DevOps, cloud architecture, and platform engineering. He has led modernization and automation programs across Europe and India, influencing app modernization, SRE, and developer enablement at scale. Passionate about developer experience, Satish now focuses on integrating AI agents into engineering workflows to enhance productivity, collaboration, and system resilience.",
+        "Mail adress": "satish.nadarajan@thoughtworks.com",
+        "Headshot": "Upload here",
+        "Social Media Handles": "https://www.linkedin.com/in/schatzcloud/"
+      },
+      "full_text": "",
+      "metadata": {},
+      "source": "/Users/boscoh/p/chatboti/chatboti/data/2025-09-02-speaker-bio.csv",
+      "chunks": {
+        "Country": {
+          "faiss_id": 678,
+          "i_start": null,
+          "i_end": null
+        },
+        "Name": {
+          "faiss_id": 679,
+          "i_start": null,
+          "i_end": null
+        },
+        "Role": {
+          "faiss_id": 680,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final title": {
+          "faiss_id": 681,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final abstract (Max. 150 words)": {
+          "faiss_id": 682,
+          "i_start": null,
+          "i_end": null
+        },
+        "Bio (Max. 120 words)": {
+          "faiss_id": 683,
+          "i_start": null,
+          "i_end": null
+        },
+        "Mail adress": {
+          "faiss_id": 684,
+          "i_start": null,
+          "i_end": null
+        },
+        "Headshot": {
+          "faiss_id": 685,
+          "i_start": null,
+          "i_end": null
+        },
+        "Social Media Handles": {
+          "faiss_id": 686,
+          "i_start": null,
+          "i_end": null
+        }
+      }
+    },
+    {
+      "id": "2025-09-02-speaker-bio-12",
+      "content": {
+        "Country": "UK",
+        "Name": "Holly Cummins",
+        "Role": "External keynote",
+        "Final title": "Things you thought you didn\u2019t need to care about that have a big impact on your job",
+        "Final abstract (Max. 150 words)": "Development is about working with computers, right? Well, not quite. Development is all about working with computers (easy), and working with people (hard). Oh, and it\u2019s about physics.\n\nThings like the speed of light and thermodynamics influence APIs, because they influence hardware and networking. If, like Holly, you slept through statistics modules in university, it will be a surprise to discover how statistics has changed our development workflows. Finally, we mustn\u2019t forget economics. The end of zero-interest-rates has changed the employment landscape for many of us. In this wide-ranging talk, Holly will cover why the end of Moore\u2019s law means we might finally need to get to grips with concurrent programming, why is Loom a good idea now when green threads were a bad idea, why is AOT a good idea now when it used to be a bad idea, and how much you should care about business studies, finance, and statistics.",
+        "Bio (Max. 120 words)": "Holly Cummins is a Senior Principal Software Engineer on the Red Hat Quarkus team and a Java Champion. Over her career, Holly has been a full-stack javascript developer, a build architect, a client-facing consultant, a JVM performance engineer, and an innovation leader. Holly has led projects to understand climate risks, count fish, help a blind athlete run ultra-marathons in the desert solo, and invent stories (although not at all the same time). She gets worked up about sustainability, technical empathy, extreme programming, the importance of proper testing, and automating all the things. You can find her at http://hollycummins.com, or follow her on socials at @holly_cummins.",
+        "Mail adress": "-",
+        "Headshot": "Upload here",
+        "Social Media Handles": "http://hollycummins.com"
+      },
+      "full_text": "",
+      "metadata": {},
+      "source": "/Users/boscoh/p/chatboti/chatboti/data/2025-09-02-speaker-bio.csv",
+      "chunks": {
+        "Country": {
+          "faiss_id": 687,
+          "i_start": null,
+          "i_end": null
+        },
+        "Name": {
+          "faiss_id": 688,
+          "i_start": null,
+          "i_end": null
+        },
+        "Role": {
+          "faiss_id": 689,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final title": {
+          "faiss_id": 690,
+          "i_start": null,
+          "i_end": null
+        },
+        "Final abstract (Max. 150 words)": {
+          "faiss_id": 691,
+          "i_start": null,
+          "i_end": null
+        },
+        "Bio (Max. 120 words)": {
+          "faiss_id": 692,
+          "i_start": null,
+          "i_end": null
+        },
+        "Mail adress": {
+          "faiss_id": 693,
+          "i_start": null,
+          "i_end": null
+        },
+        "Headshot": {
+          "faiss_id": 694,
+          "i_start": null,
+          "i_end": null
+        },
+        "Social Media Handles": {
+          "faiss_id": 695,
+          "i_start": null,
+          "i_end": null
+        }
+      }
+    }
+  ]
+}

@@ -151,7 +151,7 @@ def speaker_data():
     return load_speaker_data()
 
 
-def test_show_available_configs():
+async def test_show_available_configs():
     """Show which provider configs will be tested based on successful initialization."""
     load_test_env()
     available = get_available_configs()
@@ -220,7 +220,7 @@ async def test_tool_metadata(provider_config):
 
         tool_names = [tool["function"]["name"] for tool in agent.tools]
         assert "list_all_speakers" in tool_names
-        assert "get_best_speaker" in tool_names
+        assert "get_matching_speakers" in tool_names
         print(f"[{name.upper()}] ✓ Tools loaded: {', '.join(tool_names)}")
 
 

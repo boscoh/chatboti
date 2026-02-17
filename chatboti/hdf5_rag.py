@@ -14,7 +14,7 @@ See docs/single-file-rag-backend-spec.md section 2.1 for format details.
 """
 
 import json
-from datetime import datetime
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Optional
 
@@ -123,13 +123,18 @@ class HDF5RAGService(FaissRAGService):
             # Load chunks from structured array
             if "chunks" in f:
                 chunk_data = f["chunks"][:]
-                self.chunk_refs = [
-                    ChunkRef(
-                        document_id=str(row["document_id"]),
-                        chunk_key=str(row["chunk_key"]),
+                self.chunk_refs = []
+                for row in chunk_data:
+                    # Properly decode bytes to strings
+                    doc_id = row["document_id"]
+                    chunk_key = row["chunk_key"]
+                    if isinstance(doc_id, bytes):
+                        doc_id = doc_id.decode("utf-8")
+                    if isinstance(chunk_key, bytes):
+                        chunk_key = chunk_key.decode("utf-8")
+                    self.chunk_refs.append(
+                        ChunkRef(document_id=doc_id, chunk_key=chunk_key)
                     )
-                    for row in chunk_data
-                ]
             else:
                 self.chunk_refs = []
 
@@ -137,8 +142,13 @@ class HDF5RAGService(FaissRAGService):
             if "documents" in f:
                 self.documents = {}
                 docs_group = f["documents"]
-                for doc_id in docs_group.keys():
-                    doc_group = docs_group[doc_id]
+                for doc_id_raw in docs_group.keys():
+                    # Decode doc_id if it's bytes
+                    doc_id = doc_id_raw
+                    if isinstance(doc_id, bytes):
+                        doc_id = doc_id.decode("utf-8")
+
+                    doc_group = docs_group[doc_id_raw]
 
                     # Load attributes
                     doc_data = {
@@ -196,9 +206,11 @@ class HDF5RAGService(FaissRAGService):
             # Store metadata as attributes
             f.attrs["model_name"] = self.model_name or ""
             f.attrs["embedding_dim"] = self.embedding_dim
-            f.attrs["created_at"] = datetime.utcnow().isoformat() + "Z"
+            f.attrs["created_at"] = datetime.now(UTC).isoformat().replace('+00:00', 'Z')
             f.attrs["format_version"] = "1.0"
             f.attrs["index_type"] = self.index.__class__.__name__
+            f.attrs["vector_count"] = self.index.ntotal
+            f.attrs["document_count"] = len(self.documents)
 
             # Store vectors as float32 array with compression
             n_vectors = self.index.ntotal

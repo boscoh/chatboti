@@ -41,6 +41,21 @@ class InfoAgent:
         await self.close()
         return False
 
+    async def _start_mcp_server(self, mcp_server_module: str):
+        """Start MCP server subprocess and return stdio streams.
+
+        :param mcp_server_module: Python module path for MCP server
+        :return: Tuple of (stdio_read, stdio_write) streams
+        """
+        logger.info(f"Starting MCP server: uv run -m {mcp_server_module}")
+        return await self._cleanup_manager.enter_async_context(
+            stdio_client(StdioServerParameters(
+                command="uv",
+                args=["run", "-m", mcp_server_module],
+                env=os.environ.copy(),
+            ))
+        )
+
     async def _create_mcp_session(self, mcp_server_module: str) -> ClientSession:
         """Create and initialize MCP session from server module path.
 
@@ -48,14 +63,7 @@ class InfoAgent:
         :return: Initialized ClientSession
         """
         try:
-            logger.info(f"Starting MCP server: uv run -m {mcp_server_module}")
-            stdio_read, stdio_write = await self._cleanup_manager.enter_async_context(
-                stdio_client(StdioServerParameters(
-                    command="uv",
-                    args=["run", "-m", mcp_server_module],
-                    env=os.environ.copy(),
-                ))
-            )
+            stdio_read, stdio_write = await self._start_mcp_server(mcp_server_module)
             logger.info("MCP stdio connection established")
 
             session = await self._cleanup_manager.enter_async_context(

@@ -102,6 +102,9 @@ async def faiss_service(tmp_path, embed_client_768):
         embed_client=embed_client_768,
     )
 
+    # Initialize the service
+    await service.__aenter__()
+
     # Add sample documents
     doc1 = Document(
         id="doc1",
@@ -127,6 +130,7 @@ async def faiss_service(tmp_path, embed_client_768):
 
     # Cleanup
     service.save()
+    await service.__aexit__(None, None, None)
 
 
 @pytest.fixture
@@ -136,6 +140,9 @@ async def hdf5_service(tmp_path, embed_client_768):
         hdf5_path=tmp_path / "test.h5", embed_client=embed_client_768
     )
 
+    # Initialize the service
+    await service.__aenter__()
+
     # Add sample documents
     doc1 = Document(
         id="doc1",
@@ -161,6 +168,7 @@ async def hdf5_service(tmp_path, embed_client_768):
 
     # Cleanup
     service.save()
+    await service.__aexit__(None, None, None)
 
 
 @pytest.fixture(params=["faiss", "hdf5"])
@@ -179,6 +187,9 @@ async def rag_service(request, tmp_path, embed_client_768):
             hdf5_path=tmp_path / "test.h5", embed_client=embed_client_768
         )
 
+    # Initialize the service
+    await service.__aenter__()
+
     # Add sample documents
     doc1 = Document(
         id="doc1",
@@ -204,6 +215,7 @@ async def rag_service(request, tmp_path, embed_client_768):
 
     # Cleanup
     service.save()
+    await service.__aexit__(None, None, None)
 
 
 @pytest.fixture

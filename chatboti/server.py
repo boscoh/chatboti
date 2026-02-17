@@ -99,7 +99,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
             logger.info("Shutting down MCP client...")
             if app.state.info_agent:
-                await app.state.info_agent.disconnect()
+                await app.state.info_agent.close()
                 app.state.info_agent = None
 
             if rag_service:
