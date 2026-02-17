@@ -279,6 +279,96 @@ class SimpleLLMClient(ABC):
         """Get the cost per 1K tokens for the model in AUD."""
         pass
 
+    def _build_error_response(self, error: Exception, start_time: float) -> Dict[str, Any]:
+        """Build standardized error response structure.
+
+        Args:
+            error: The exception that occurred
+            start_time: Request start time for elapsed calculation
+
+        Returns:
+            Dict with error information and metadata
+        """
+        return {
+            "text": f"Error: {str(error)}",
+            "metadata": {
+                "usage": {
+                    "prompt_tokens": 0,
+                    "completion_tokens": 0,
+                    "total_tokens": 0,
+                    "elapsed_seconds": time.time() - start_time,
+                },
+                "model": self.model,
+                "error": str(error),
+            },
+        }
+
+    def _build_usage_metadata(
+        self, prompt_tokens: int, completion_tokens: int, elapsed_seconds: float
+    ) -> Dict[str, Any]:
+        """Build standardized usage metadata structure.
+
+        Returns:
+            Dict with token counts and elapsed time
+        """
+        return {
+            "prompt_tokens": prompt_tokens,
+            "completion_tokens": completion_tokens,
+            "total_tokens": prompt_tokens + completion_tokens,
+            "elapsed_seconds": elapsed_seconds,
+        }
+
+    def _build_success_response(
+        self,
+        text: str,
+        usage: Dict[str, Any],
+        finish_reason: str,
+        tool_calls: Optional[List[Dict[str, Any]]] = None,
+    ) -> Dict[str, Any]:
+        """Build standardized success response structure.
+
+        Args:
+            text: Response text content
+            usage: Usage metadata from _build_usage_metadata()
+            finish_reason: Why generation stopped
+            tool_calls: Optional list of tool calls
+
+        Returns:
+            Dict with response data and metadata
+        """
+        result = {
+            "text": text,
+            "metadata": {
+                "usage": usage,
+                "model": self.model,
+                "finish_reason": finish_reason,
+            },
+        }
+        if tool_calls:
+            result["tool_calls"] = tool_calls
+        return result
+
+    def _format_tool_call_output(
+        self, name: str, arguments: str, tool_call_id: str
+    ) -> Dict[str, Any]:
+        """Format tool call into standardized output structure.
+
+        Args:
+            name: Function/tool name
+            arguments: JSON string of arguments
+            tool_call_id: Unique identifier for this tool call
+
+        Returns:
+            Dict with function call details
+        """
+        return {
+            "function": {
+                "name": name,
+                "arguments": arguments,
+                "tool_call_id": tool_call_id,
+            }
+        }
+
     async def connect(self):
         """Initialize async resources. Override in subclasses as needed."""
         pass
@@ -497,73 +587,35 @@ class OllamaClient(SimpleLLMClient):
                         function_name = func.get("name", "")
                         function_args = func.get("arguments", {})
                         tool_call_id = tool_call.get("id", f"call_{uuid.uuid4().hex[:8]}")
-                        
+
                         if isinstance(function_args, dict):
                             function_args = json.dumps(function_args)
                         elif not isinstance(function_args, str):
                             function_args = str(function_args)
-                        
+
                         tool_calls.append(
-                            {
-                                "function": {
-                                    "name": function_name,
-                                    "arguments": function_args,
-                                    "tool_call_id": tool_call_id,
-                                }
-                            }
+                            self._format_tool_call_output(function_name, function_args, tool_call_id)
                         )
                     elif hasattr(tool_call, "function"):
                         function = tool_call.function
                         function_name = getattr(function, "name", "")
                         function_args = getattr(function, "arguments", {})
                         tool_call_id = getattr(tool_call, "id", None) or f"call_{uuid.uuid4().hex[:8]}"
-                        
+
                         if isinstance(function_args, dict):
                             function_args = json.dumps(function_args)
                         elif not isinstance(function_args, str):
                             function_args = str(function_args)
-                        
+
                         tool_calls.append(
-                            {
-                                "function": {
-                                    "name": function_name,
-                                    "arguments": function_args,
-                                    "tool_call_id": tool_call_id,
-                                }
-                            }
+                            self._format_tool_call_output(function_name, function_args, tool_call_id)
                         )
 
-            result = {
-                "text": response_text,
-                "metadata": {
-                    "usage": {
-                        "prompt_tokens": prompt_tokens,
-                        "completion_tokens": completion_tokens,
-                        "total_tokens": total_tokens,
-                        "elapsed_seconds": elapsed_seconds,
-                    },
-                    "model": self.model,
-                    "finish_reason": done_reason,
-                },
-            }
-
-            if tool_calls:
-                result["tool_calls"] = tool_calls
-
-            return result
+            usage = self._build_usage_metadata(prompt_tokens, completion_tokens, elapsed_seconds)
+            return self._build_success_response(response_text, usage, done_reason, tool_calls)
         except Exception as e:
             logger.error(f"Error calling Ollama: {e}")
-            return {
-                "text": f"Error: {str(e)}",
-                "metadata": {
-                    "usage": {
-                        "prompt_tokens": 0,
-                        "completion_tokens": 0,
-                        "total_tokens": 0,
-                        "elapsed_seconds": time.time() - start_time,
-                    }
-                },
-            }
+            return self._build_error_response(e, start_time)
 
     async def embed(self, input: str) -> List[float]:
         """Generate text embeddings using Ollama's embedding capabilities."""
@@ -731,19 +783,13 @@ class OpenAIClient(SimpleLLMClient):
             text = completion.choices[0].message.content if completion.choices else ""
 
             if hasattr(completion, "usage") and completion.usage:
-                usage = {
-                    "prompt_tokens": completion.usage.prompt_tokens,
-                    "completion_tokens": completion.usage.completion_tokens,
-                    "total_tokens": completion.usage.total_tokens,
-                    "elapsed_seconds": elapsed_seconds,
-                }
+                usage = self._build_usage_metadata(
+                    completion.usage.prompt_tokens,
+                    completion.usage.completion_tokens,
+                    elapsed_seconds,
+                )
             else:
-                usage = {
-                    "prompt_tokens": 0,
-                    "completion_tokens": 0,
-                    "total_tokens": 0,
-                    "elapsed_seconds": elapsed_seconds,
-                }
+                usage = self._build_usage_metadata(0, 0, elapsed_seconds)
 
             # Extract tool calls if present
             tool_calls = None
@@ -751,41 +797,22 @@ class OpenAIClient(SimpleLLMClient):
                 tool_calls = []
                 for tool_call in completion.choices[0].message.tool_calls:
                     tool_calls.append(
-                        {
-                            "function": {
-                                "name": tool_call.function.name,
-                                "arguments": tool_call.function.arguments,
-                                "tool_call_id": tool_call.id,
-                            }
-                        }
+                        self._format_tool_call_output(
+                            tool_call.function.name,
+                            tool_call.function.arguments,
+                            tool_call.id,
+                        )
                     )
 
-            return {
-                "text": text,
-                "metadata": {
-                    "usage": usage,
-                    "model": self.model,
-                    "finish_reason": completion.choices[0].finish_reason
-                    if completion.choices and completion.choices[0].finish_reason
-                    else "stop",
-                },
-                "tool_calls": tool_calls,
-            }
+            finish_reason = (
+                completion.choices[0].finish_reason
+                if completion.choices and completion.choices[0].finish_reason
+                else "stop"
+            )
+            return self._build_success_response(text, usage, finish_reason, tool_calls)
         except Exception as e:
             logger.error(f"Error calling OpenAI: {e}")
-            return {
-                "text": f"Error: {str(e)}",
-                "metadata": {
-                    "usage": {
-                        "prompt_tokens": 0,
-                        "completion_tokens": 0,
-                        "total_tokens": 0,
-                        "elapsed_seconds": time.time() - start_time,
-                    },
-                    "model": self.model,
-                    "error": str(e),
-                },
-            }
+            return self._build_error_response(e, start_time)
 
     async def embed(self, input: str) -> List[float]:
         """Generate text embeddings using OpenAI's embedding model."""
@@ -1112,36 +1139,22 @@ class BedrockClient(SimpleLLMClient):
                         tool_use = content["toolUse"]
                         tool_call_id = tool_use.get("toolUseId", "")
                         tool_calls.append(
-                            {
-                                "function": {
-                                    "name": tool_use["name"],
-                                    "arguments": json.dumps(tool_use.get("input", {})),
-                                    "tool_call_id": tool_call_id,
-                                }
-                            }
+                            self._format_tool_call_output(
+                                tool_use["name"],
+                                json.dumps(tool_use.get("input", {})),
+                                tool_call_id,
+                            )
                         )
-            usage = response.get("usage", {})
+            usage_dict = response.get("usage", {})
             stop_reason = response.get("stopReason", "unknown")
 
-        result = {
-            "text": "\n".join(text_parts).strip(),
-            "metadata": {
-                "usage": {
-                    "prompt_tokens": usage.get("inputTokens", 0),
-                    "completion_tokens": usage.get("outputTokens", 0),
-                    "total_tokens": usage.get("inputTokens", 0)
-                    + usage.get("outputTokens", 0),
-                    "elapsed_seconds": time.time() - start_time,
-                },
-                "model": self.model,
-                "finish_reason": stop_reason,
-            },
-        }
-
-        if tool_calls:
-            result["tool_calls"] = tool_calls
-
-        return result
+        text = "\n".join(text_parts).strip()
+        usage = self._build_usage_metadata(
+            usage_dict.get("inputTokens", 0),
+            usage_dict.get("outputTokens", 0),
+            time.time() - start_time,
+        )
+        return self._build_success_response(text, usage, stop_reason, tool_calls if tool_calls else None)
 
     def _batch_consecutive_tool_messages(
         self, messages: List[Dict[str, Any]]
@@ -1353,19 +1366,7 @@ class BedrockClient(SimpleLLMClient):
 
         except Exception as e:
             logger.error(f"Error in get_completion: {e}")
-            return {
-                "text": f"Error: {str(e)}",
-                "metadata": {
-                    "usage": {
-                        "prompt_tokens": 0,
-                        "completion_tokens": 0,
-                        "total_tokens": 0,
-                        "elapsed_seconds": time.time() - start_time,
-                    },
-                    "model": self.model,
-                    "error": str(e),
-                },
-            }
+            return self._build_error_response(e, start_time)
 
     async def embed(self, input: str) -> List[float]:
         """Generate text embeddings using Bedrock's embedding model."""
