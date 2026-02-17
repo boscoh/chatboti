@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional
 import pydash as py_
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
-from microeval.llm import SimpleLLMClient
+from chatboti.llm import SimpleLLMClient
 
 from chatboti.config import get_chat_client
 
@@ -47,16 +47,14 @@ class InfoAgent:
 
         self._exit_stack = AsyncExitStack()
 
-        server_params = StdioServerParameters(
-            command="uv",
-            args=["run", "-m", "chatboti.mcp_server"],
-            env=os.environ.copy(),
-        )
-
         try:
             logger.info("Starting MCP stdio client with command: uv run -m chatboti.mcp_server")
             stdio_read, stdio_write = await self._exit_stack.enter_async_context(
-                stdio_client(server_params)
+                stdio_client(StdioServerParameters(
+                    command="uv",
+                    args=["run", "-m", "chatboti.mcp_server"],
+                    env=os.environ.copy(),
+                ))
             )
             logger.info("MCP stdio connection established")
 
@@ -176,7 +174,7 @@ class InfoAgent:
         return {}
 
     def _is_duplicate_call(
-        self, tool_name: str, tool_args: Dict[str, Any], seen_calls: set
+            self, tool_name: str, tool_args: Dict[str, Any], seen_calls: set
     ) -> bool:
         """Check if a tool call is a duplicate.
 
@@ -231,7 +229,7 @@ class InfoAgent:
         return result
 
     def _build_assistant_message(
-        self, response: Dict[str, Any], tool_calls: List[Dict[str, Any]]
+            self, response: Dict[str, Any], tool_calls: List[Dict[str, Any]]
     ) -> Optional[Dict[str, Any]]:
         formatted_calls = []
         for tc in tool_calls:
@@ -306,7 +304,7 @@ class InfoAgent:
     MAX_TOOL_ITERATIONS = 5
 
     async def _execute_tool(
-        self, tool_call: Dict[str, Any], seen_calls: set
+            self, tool_call: Dict[str, Any], seen_calls: set
     ) -> Optional[Dict[str, Any]]:
         tool_name = py_.get(tool_call, "function.name", "")
         tool_args = self._parse_tool_args(tool_call)
@@ -338,7 +336,7 @@ class InfoAgent:
         return result
 
     def _build_initial_messages(
-        self, query: str, history: Optional[List[Dict[str, Any]]]
+            self, query: str, history: Optional[List[Dict[str, Any]]]
     ) -> List[Dict[str, Any]]:
         messages = [{"role": "system", "content": self.SYSTEM_PROMPT}]
 
@@ -352,7 +350,7 @@ class InfoAgent:
         if messages:
             last_msg = messages[-1]
             if py_.get(last_msg, "role", "") == "user" and py_.get(
-                last_msg, "content", ""
+                    last_msg, "content", ""
             ) == str(query):
                 should_add_query = False
 
@@ -362,7 +360,7 @@ class InfoAgent:
         return messages
 
     async def process_query(
-        self, query: str, history: Optional[List[Dict[str, Any]]] = None
+            self, query: str, history: Optional[List[Dict[str, Any]]] = None
     ) -> str:
         """Process user query with multi-step tool chaining.
 
@@ -391,6 +389,8 @@ class InfoAgent:
             if assistant_msg:
                 messages.append(assistant_msg)
 
+            # Execute all tools and append results
+            # Note: Provider-specific batching (e.g., Bedrock) is handled in the client
             for tc in tool_calls:
                 result_msg = await self._execute_tool(tc, seen_calls)
                 if result_msg:
@@ -413,7 +413,7 @@ async def setup_async_exception_handler():
 
     def silence_event_loop_closed(loop, context):
         if "exception" not in context or not isinstance(
-            context["exception"], (RuntimeError, GeneratorExit)
+                context["exception"], (RuntimeError, GeneratorExit)
         ):
             loop.default_exception_handler(context)
 
@@ -449,3 +449,5 @@ async def amain():
                 conversation_history.append({"role": "assistant", "content": response})
     finally:
         await chat_client.close()
+        # Give asyncio time to clean up any pending tasks
+        await asyncio.sleep(0.1)

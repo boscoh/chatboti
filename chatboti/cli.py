@@ -25,12 +25,14 @@ setup_logging()
 
 logger = logging.getLogger(__name__)
 
-env_file = Path.cwd() / ".env"
+# Load .env from project root (relative to this module), not cwd
+# This ensures consistent behavior regardless of where the command is run from
+env_file = Path(__file__).resolve().parent.parent / ".env"
 if env_file.exists():
     logger.info(f"Loading environment from {env_file}")
     load_dotenv(env_file, verbose=True)
 else:
-    load_dotenv(env_file, verbose=True)
+    logger.warning(f".env file not found at {env_file}")
 
 
 app = App(name="chatboti", help="Chatboti - RAG starter kit")

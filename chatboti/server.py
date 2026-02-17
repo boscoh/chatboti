@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """FastAPI server for xConf Assistant's MCP client API."""
 
+import asyncio
 import logging
 import os
 import threading
@@ -13,9 +14,10 @@ from uuid import uuid4
 
 import httpx
 import uvicorn
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
-from microeval.llm import SimpleLLMClient
+from chatboti.llm import SimpleLLMClient
 from pydantic import BaseModel
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -30,6 +32,11 @@ from chatboti.config import (
 )
 from chatboti.faiss_rag import FaissRAGService
 from chatboti.utils import get_version
+
+# Load .env file from project root (relative to this module)
+# This ensures consistent behavior regardless of current working directory
+_env_path = Path(__file__).resolve().parent.parent / ".env"
+load_dotenv(_env_path)
 
 logger = logging.getLogger(__name__)
 
@@ -105,6 +112,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             if hasattr(app.state, "embed_client") and app.state.embed_client:
                 await app.state.embed_client.close()
                 app.state.embed_client = None
+
+            # Give asyncio time to clean up pending tasks and connections
+            await asyncio.sleep(0.1)
         except Exception as e:
             logger.error(f"Failed to initialize during startup: {e}")
             raise

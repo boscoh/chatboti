@@ -37,7 +37,7 @@ import logging
 import os
 from functools import lru_cache
 
-from microeval.llm import SimpleLLMClient, get_llm_client, load_config
+from chatboti.llm import SimpleLLMClient, get_llm_client, load_config
 
 logger = logging.getLogger(__name__)
 

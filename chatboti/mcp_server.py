@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from mcp.server.fastmcp import FastMCP
-from microeval.llm import SimpleLLMClient
+from chatboti.llm import SimpleLLMClient
 
 from chatboti.config import get_embed_client
 from chatboti.faiss_rag import FaissRAGService

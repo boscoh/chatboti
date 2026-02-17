@@ -8,7 +8,7 @@ from typing import Dict, List, Optional
 
 import faiss
 import numpy as np
-from microeval.llm import SimpleLLMClient
+from chatboti.llm import SimpleLLMClient
 
 from chatboti.document import ChunkRef, ChunkResult, Document
 from chatboti.loaders import load_documents
@@ -34,7 +34,7 @@ class FaissRAGService:
         """Initialize RAG service (lazy - call via context manager for async setup).
 
         Usage:
-            from microeval.llm import get_llm_client
+            from chatboti.llm import get_llm_client
 
             embed_client = get_llm_client("ollama", model="nomic-embed-text")
             await embed_client.connect()

@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import AsyncGenerator, Union
 
 import h5py
-from microeval.llm import SimpleLLMClient
+from chatboti.llm import SimpleLLMClient
 from rich.pretty import pprint
 
 from chatboti.config import get_embed_client
@@ -36,36 +36,47 @@ async def create_rag_service(
     else:
         data_dir = Path(data_dir)
 
-    if embed_client is None:
+    # Track if we created the client (so we know to close it)
+    created_client = embed_client is None
+
+    if created_client:
         embed_client = await get_embed_client()
 
-    use_hdf5 = index_path and Path(index_path).suffix == ".h5"
+    try:
+        use_hdf5 = index_path and Path(index_path).suffix == ".h5"
 
-    if verbose:
-        print(f"• Format: {'HDF5' if use_hdf5 else 'FAISS'}")
+        if verbose:
+            print(f"• Format: {'HDF5' if use_hdf5 else 'FAISS'}")
 
-    if use_hdf5:
-        async with HDF5RAGService(
-            embed_client=embed_client,
-            data_dir=data_dir,
-            hdf5_path=Path(index_path) if index_path else None,
-        ) as rag:
-            if verbose:
-                print(f"• HDF5 file: {rag.hdf5_path}")
-                print(f"• Embedding dim: {rag.embedding_dim}")
-            yield rag
-    else:
-        async with FaissRAGService(
-            embed_client=embed_client,
-            data_dir=data_dir,
-            index_path=Path(index_path) if index_path else None,
-            metadata_path=Path(metadata_path) if metadata_path else None,
-        ) as rag:
-            if verbose:
-                print(f"• Index: {rag.index_path}")
-                print(f"• Metadata: {rag.metadata_path}")
-                print(f"• Embedding dim: {rag.embedding_dim}")
-            yield rag
+        if use_hdf5:
+            async with HDF5RAGService(
+                embed_client=embed_client,
+                data_dir=data_dir,
+                hdf5_path=Path(index_path) if index_path else None,
+            ) as rag:
+                if verbose:
+                    print(f"• HDF5 file: {rag.hdf5_path}")
+                    print(f"• Embedding dim: {rag.embedding_dim}")
+                yield rag
+        else:
+            async with FaissRAGService(
+                embed_client=embed_client,
+                data_dir=data_dir,
+                index_path=Path(index_path) if index_path else None,
+                metadata_path=Path(metadata_path) if metadata_path else None,
+            ) as rag:
+                if verbose:
+                    print(f"• Index: {rag.index_path}")
+                    print(f"• Metadata: {rag.metadata_path}")
+                    print(f"• Embedding dim: {rag.embedding_dim}")
+                yield rag
+    finally:
+        # Close the client if we created it
+        if created_client and embed_client:
+            await embed_client.close()
+            # Give asyncio time to clean up aiohttp connections
+            import asyncio
+            await asyncio.sleep(0.1)
 
 
 async def build_embeddings(

@@ -22,7 +22,7 @@ from typing import Optional
 import faiss
 import h5py
 import numpy as np
-from microeval.llm import SimpleLLMClient
+from chatboti.llm import SimpleLLMClient
 
 # Local
 from chatboti.document import ChunkRef, Document
@@ -39,7 +39,7 @@ class HDF5RAGService(FaissRAGService):
         /documents (group with nested groups for each document)
 
     Usage:
-        from microeval.llm import get_llm_client
+        from chatboti.llm import get_llm_client
 
         embed_client = get_llm_client("ollama", model="nomic-embed-text")
         await embed_client.connect()
