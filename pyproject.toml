@@ -80,3 +80,8 @@ markers = [
     "integration: marks tests as integration tests"
 ]
 
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]
+
