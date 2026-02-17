@@ -707,6 +707,40 @@ class OpenAIClient(SimpleLLMClient):
             self.client = None
             self._closed = True
 
+    def _handle_incomplete_tool_sequence(self, msg: Dict, i: int, messages: List[Dict]) -> Optional[Dict]:
+        """Handle assistant message with tool_calls that has no following tool messages.
+
+        This occurs when loading conversation history with incomplete tool sequences.
+        OpenAI requires: assistant (with tool_calls) → tool → assistant
+
+        Returns cleaned message without tool_calls, or None to skip.
+        """
+        # Check if next message is a tool message
+        has_following_tool = (
+            i + 1 < len(messages) and messages[i + 1].get("role") == "tool"
+        )
+
+        if not has_following_tool:
+            # Incomplete sequence from history - strip tool_calls
+            clean_msg = {k: v for k, v in msg.items() if k != "tool_calls"}
+            if not clean_msg.get("content"):
+                clean_msg["content"] = ""
+            logger.debug("Stripped tool_calls from assistant message (incomplete sequence)")
+            return clean_msg
+
+        return msg
+
+    def _should_skip_orphaned_tool_message(self, in_active_sequence: bool) -> bool:
+        """Check if tool message should be skipped because it's orphaned.
+
+        Tool messages are only valid within an active tool sequence started by
+        an assistant message with tool_calls.
+        """
+        if not in_active_sequence:
+            logger.debug("Skipping orphaned tool message (no active tool sequence)")
+            return True
+        return False
+
     def _transform_messages(
         self, messages: List[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
@@ -719,55 +753,42 @@ class OpenAIClient(SimpleLLMClient):
         tool sequences to avoid 400 validation errors.
         """
         formatted_messages = []
+        # Track if we're in an active tool sequence (assistant with tool_calls → tool messages)
+        # This is needed because OpenAI validates strict message sequencing
         in_active_tool_sequence = False
 
         for i, msg in enumerate(messages):
             role = msg["role"]
 
-            # Track if we're in an active tool sequence (current iteration)
             # System messages always end any previous sequence
             if role == "system":
                 in_active_tool_sequence = False
                 formatted_messages.append(msg)
                 continue
 
-            # Check if this is the start of a new tool sequence (assistant with tool_calls)
-            if role == "assistant" and "tool_calls" in msg:
-                in_active_tool_sequence = True
-                formatted_messages.append(msg)
             # Tool messages are only valid within an active sequence
-            elif role == "tool":
-                if in_active_tool_sequence:
-                    formatted_messages.append(
-                        {
-                            "role": "tool",
-                            "content": msg.get("content", ""),
-                            "tool_call_id": msg.get("tool_call_id", ""),
-                        }
-                    )
-                else:
-                    # Skip orphaned tool messages from conversation history
-                    logger.debug(f"Skipping orphaned tool message (no active tool sequence)")
-            # Regular assistant/user messages
+            if role == "tool":
+                if not self._should_skip_orphaned_tool_message(in_active_tool_sequence):
+                    formatted_messages.append({
+                        "role": "tool",
+                        "content": msg.get("content", ""),
+                        "tool_call_id": msg.get("tool_call_id", ""),
+                    })
+            # Assistant messages
             elif role == "assistant":
-                in_active_tool_sequence = False
-                # For assistant messages from history, strip tool_calls if they exist
-                # but there are no following tool messages (incomplete sequence)
+                # Handle incomplete tool sequences from history
                 if "tool_calls" in msg:
-                    # Check if next message is a tool message
-                    has_following_tool = (
-                        i + 1 < len(messages) and messages[i + 1].get("role") == "tool"
-                    )
-                    if not has_following_tool:
-                        # Incomplete sequence from history - strip tool_calls
-                        clean_msg = {k: v for k, v in msg.items() if k != "tool_calls"}
-                        if not clean_msg.get("content"):
-                            clean_msg["content"] = ""
-                        formatted_messages.append(clean_msg)
-                        logger.debug("Stripped tool_calls from assistant message (incomplete sequence)")
-                    else:
-                        formatted_messages.append(msg)
+                    cleaned_msg = self._handle_incomplete_tool_sequence(msg, i, messages)
+                    if cleaned_msg:
+                        # Check if we kept tool_calls (complete sequence) or stripped them (incomplete)
+                        if "tool_calls" in cleaned_msg:
+                            in_active_tool_sequence = True
+                            formatted_messages.append(cleaned_msg)
+                        else:
+                            in_active_tool_sequence = False
+                            formatted_messages.append(cleaned_msg)
                 else:
+                    in_active_tool_sequence = False
                     formatted_messages.append(msg)
             elif role == "user":
                 in_active_tool_sequence = False
