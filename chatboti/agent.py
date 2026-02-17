@@ -253,7 +253,7 @@ class InfoAgent:
 
         return {
             "role": "assistant",
-            "content": py_.get(response, "text", None),
+            "content": py_.get(response, "text", ""),  # Empty string instead of None
             "tool_calls": formatted_calls,
         }
 
@@ -287,25 +287,28 @@ class InfoAgent:
            - Compare results from different searches
            - Look for complementary expertise across speakers
 
-        4. DON'T BE SHY ABOUT MULTIPLE CALLS:
-           - It's BETTER to make 5-10 focused searches than 1 vague search
-           - Each call gives you different information
-           - More data = better, more comprehensive answer
+        4. BE THOROUGH WITH TOOL CALLS:
+           - For complex queries, make 5-10 searches to get comprehensive data
+           - Each call should target a specific aspect or variation
+           - More data = better, richer answers
+           - Don't be shy about exploring multiple angles
 
-        5. SYNTHESIZE ALL FINDINGS into a complete answer
+        5. SYNTHESIZE ALL FINDINGS into a complete, detailed answer
 
         EXAMPLES:
-        - Query: "AI and cloud speakers" → get_matching_speakers("AI", n=3), get_matching_speakers("cloud", n=3)
+        - Query: "AI and cloud speakers" → get_matching_speakers("AI", n=3), get_matching_speakers("cloud", n=3), get_matching_speakers("machine learning", n=2)
         - Query: "compare Python vs JavaScript" → get_matching_speakers("Python", n=3), get_matching_speakers("JavaScript", n=3)
-        - Query: "who can speak about testing?" → get_matching_speakers("testing", n=5) to see all options
-        - Query: "best speaker for beginners in AI" → get_matching_speakers("AI beginner friendly", n=3)
+        - Query: "who can speak about testing?" → get_matching_speakers("testing", n=5), get_matching_speakers("QA", n=3)
+        - Query: "best speaker for beginners in AI" → get_matching_speakers("AI beginner", n=3), get_matching_speakers("AI intro", n=2)
 
-        REMEMBER: Making 10 tool calls is ENCOURAGED for thorough answers!
+        REMEMBER: Making multiple tool calls (5-10) is ENCOURAGED for thorough, comprehensive answers!
+        After gathering information, always provide a detailed final text response.
 
         NEVER SAY: "I would call X tool" or "To find Y, I would use Z"
         ALWAYS DO: Actually call the tool immediately - take action, don't describe it!""")
 
-    MAX_TOOL_ITERATIONS = 5
+    MAX_TOOL_ITERATIONS = 8  # More iterations for thorough exploration
+    MAX_TOOL_CALLS_PER_ITERATION = 30  # Tool calls are cheap, allow many per iteration
 
     async def _execute_tool(
             self, tool_call: Dict[str, Any], seen_calls: set
@@ -346,6 +349,7 @@ class InfoAgent:
 
         if history:
             for msg in history:
+                # Include all message types - provider-specific clients will filter as needed
                 if py_.get(msg, "role", "") in ("user", "assistant", "tool"):
                     messages.append(self._sanitize_message(msg))
 
@@ -385,6 +389,13 @@ class InfoAgent:
             if not tool_calls:
                 break
 
+            # Limit tool calls per iteration to prevent runaway loops
+            if len(tool_calls) > self.MAX_TOOL_CALLS_PER_ITERATION:
+                logger.warning(
+                    f"Truncating {len(tool_calls)} tool calls to {self.MAX_TOOL_CALLS_PER_ITERATION}"
+                )
+                tool_calls = tool_calls[:self.MAX_TOOL_CALLS_PER_ITERATION]
+
             logger.info(
                 f"Reasoning step {iteration + 1} with {len(tool_calls)} tool calls"
             )
@@ -402,14 +413,46 @@ class InfoAgent:
 
             self._log_messages(messages)
             response = await self.chat_client.get_completion(messages, self.tools)
-            tool_calls = py_.get(response, "tool_calls", None)
-        else:
-            if tool_calls:
-                logger.warning(
-                    f"Reached maximum tool iterations ({self.MAX_TOOL_ITERATIONS})"
-                )
 
-        return py_.get(response, "text", "")
+            # Check if we got a text response - if so, we're done
+            response_text = py_.get(response, "text", "")
+            tool_calls = py_.get(response, "tool_calls", None)
+
+            # If we have text and no more tool calls, we're done
+            if response_text and not tool_calls:
+                logger.info("Got final response with text, ending tool loop")
+                break
+
+            # If we have no tool calls and no text, force a final response
+            if not tool_calls and not response_text:
+                logger.warning("LLM returned neither text nor tool calls, requesting final answer")
+                messages.append({
+                    "role": "user",
+                    "content": "Please provide your answer based on the available information."
+                })
+                response = await self.chat_client.get_completion(messages, tools=None)
+                break
+        else:
+            # Loop completed without breaking - we hit max iterations
+            if tool_calls:
+                logger.info(
+                    f"Reached maximum tool iterations ({self.MAX_TOOL_ITERATIONS}), "
+                    f"generating final response from gathered data"
+                )
+                # Force a final text response by removing tools
+                messages.append({
+                    "role": "user",
+                    "content": "Based on all the information you've gathered, please provide a comprehensive final answer."
+                })
+                response = await self.chat_client.get_completion(messages, tools=None)
+
+        # Ensure we always return a valid string, never None or empty
+        final_text = py_.get(response, "text", "")
+        if not final_text:
+            logger.error("No text in final response, returning error message")
+            return "I apologize, but I encountered an issue generating a response. Please try again."
+
+        return final_text
 
 
 async def setup_async_exception_handler():

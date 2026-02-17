@@ -40,6 +40,10 @@
     }
 
     function renderMarkdown(text) {
+      // Handle empty content (e.g., assistant messages with tool calls)
+      if (!text) {
+        return '<em class="text-muted">(processing...)</em>';
+      }
       const html = marked.parse(text);
       return html;
     }

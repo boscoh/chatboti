@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 
 class SlimMessage(BaseModel):
     role: str
-    content: str
+    content: str  # Always a string (empty string if no content)
 
 
 class ChatRequest(BaseModel):
