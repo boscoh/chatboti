@@ -7,17 +7,23 @@ Simple chat client abstraction for LLM providers.
 - No langchain, litellm etc., just vendor-provided Python packages
 """
 
+# Standard library
+import asyncio
+import configparser
 import copy
 import json
 import logging
 import os
+import re
 import time
+import uuid
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, Set
 
+# Third-party
 import aioboto3
 import boto3
 import groq
@@ -26,6 +32,12 @@ import openai
 from botocore.exceptions import ClientError, ProfileNotFound
 
 logger = logging.getLogger(__name__)
+
+# Logging strategy:
+# - logger.error(): Exceptions returned as errors to caller
+# - logger.warning(): Recoverable issues with fallback (missing config, expired tokens, unknown models)
+# - logger.info(): Normal operations (initialization, config loading)
+# - logger.debug(): Diagnostic details (message transformations, batching)
 
 # Delay needed for aioboto3 to properly cleanup async resources
 AIOBOTO3_CLEANUP_DELAY_SECONDS = 0.1
@@ -399,10 +411,15 @@ class SimpleLLMClient(ABC):
         await self.close()
 
 
-def parse_response_as_json_list(response):
-    """Parse JSON from text response, extracting from markdown or .transactions if needed."""
-    import re
+def parse_response_as_json_list(response: Dict[str, Any] | str) -> Optional[Dict[str, Any] | List[Any]]:
+    """Parse JSON from text response, extracting from markdown or .transactions if needed.
 
+    Args:
+        response: Response dict with 'text' key or raw string
+
+    Returns:
+        Parsed JSON object (dict or list) or None if parsing fails
+    """
     if isinstance(response, dict):
         response_text = response.get("text", "")
     elif isinstance(response, str):
@@ -458,8 +475,6 @@ class OllamaClient(SimpleLLMClient):
 
         Returns None if tool_call format is unrecognized.
         """
-        import uuid
-
         function_name = None
         function_args = None
         tool_call_id = None
@@ -492,15 +507,16 @@ class OllamaClient(SimpleLLMClient):
         """Normalize Ollama response from dict or object format.
 
         Ollama returns dict when streaming=False, object when streaming=True (default).
+        Maps Ollama's 'done_reason' to standard 'finish_reason'.
         """
         if isinstance(response, dict):
             return {
                 "message": response.get("message", {}),
-                "done_reason": response.get("done_reason", "stop")
+                "finish_reason": response.get("done_reason", "stop")
             }
         else:
             message_obj = getattr(response, "message", None)
-            done_reason = getattr(response, "done_reason", "stop")
+            finish_reason = getattr(response, "done_reason", "stop")
 
             if message_obj is not None and hasattr(message_obj, "model_dump"):
                 message_dict = message_obj.model_dump()
@@ -512,7 +528,7 @@ class OllamaClient(SimpleLLMClient):
             else:
                 message_dict = {}
 
-            return {"message": message_dict, "done_reason": done_reason}
+            return {"message": message_dict, "finish_reason": finish_reason}
 
     def _ensure_dict_arguments(self, arguments: Any) -> dict:
         """Convert function arguments to dict format (required by Ollama API).
@@ -628,7 +644,7 @@ class OllamaClient(SimpleLLMClient):
 
             normalized = self._normalize_ollama_response(response)
             message_dict = normalized["message"]
-            done_reason = normalized["done_reason"]
+            finish_reason = normalized["finish_reason"]
 
             response_text = (message_dict.get("content") or "") if isinstance(message_dict, dict) else ""
             raw_tool_calls = message_dict.get("tool_calls") if isinstance(message_dict, dict) else None
@@ -646,7 +662,7 @@ class OllamaClient(SimpleLLMClient):
                         tool_calls.append(normalized)
 
             usage = self._build_usage_metadata(prompt_tokens, completion_tokens, elapsed_seconds)
-            return self._build_success_response(response_text, usage, done_reason, tool_calls)
+            return self._build_success_response(response_text, usage, finish_reason, tool_calls)
         except Exception as e:
             logger.error(f"Error calling Ollama: {e}")
             return self._build_error_response(e, start_time)
@@ -965,7 +981,6 @@ def _read_aws_profiles_from_file(file_path: str) -> Set[str]:
     if not os.path.exists(file_path):
         return set()
 
-    import configparser
     config = configparser.ConfigParser()
     config.read(file_path)
 
@@ -996,7 +1011,7 @@ def _discover_aws_profiles() -> Set[str]:
     return profiles
 
 
-def _check_sso_expiration(session, profile_name: str):
+def _check_sso_expiration(session: Any, profile_name: str) -> None:
     """Check if SSO session is expired and provide helpful error message.
 
     Args:
@@ -1060,7 +1075,7 @@ def _handle_aws_credential_error(error: Exception, profile_name: str) -> str:
 
 
 @lru_cache(maxsize=None)
-def get_aws_config(is_raise_exception: bool = True):
+def get_aws_config(is_raise_exception: bool = True) -> Dict[str, Any]:
     """
     Returns AWS configuration for boto3 client initialization.
 
@@ -1237,7 +1252,6 @@ class BedrockClient(SimpleLLMClient):
 
             # Give asyncio a moment to clean up pending tasks and connections
             # This ensures aiohttp connectors are properly closed
-            import asyncio
             await asyncio.sleep(AIOBOTO3_CLEANUP_DELAY_SECONDS)
 
     def _build_result_from_response(
