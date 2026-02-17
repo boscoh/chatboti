@@ -439,6 +439,83 @@ class OllamaClient(SimpleLLMClient):
         self.model = model
         self.client = None
 
+    def _normalize_tool_call(self, tool_call: Any) -> Optional[Dict[str, str]]:
+        """Normalize tool call from dict or object format to standard dict.
+
+        Returns None if tool_call format is unrecognized.
+        """
+        import uuid
+
+        function_name = None
+        function_args = None
+        tool_call_id = None
+
+        # Handle dict format
+        if isinstance(tool_call, dict) and "function" in tool_call:
+            func = tool_call["function"]
+            function_name = func.get("name", "")
+            function_args = func.get("arguments", {})
+            tool_call_id = tool_call.get("id", f"call_{uuid.uuid4().hex[:8]}")
+        # Handle object format
+        elif hasattr(tool_call, "function"):
+            function = tool_call.function
+            function_name = getattr(function, "name", "")
+            function_args = getattr(function, "arguments", {})
+            tool_call_id = getattr(tool_call, "id", f"call_{uuid.uuid4().hex[:8]}")
+        else:
+            logger.warning(f"Unknown tool_call format: {type(tool_call)}")
+            return None
+
+        # Convert args to JSON string if needed
+        if isinstance(function_args, dict):
+            function_args = json.dumps(function_args)
+        elif not isinstance(function_args, str):
+            function_args = str(function_args)
+
+        return self._format_tool_call_output(function_name, function_args, tool_call_id)
+
+    def _normalize_ollama_response(self, response: Any) -> Dict[str, Any]:
+        """Normalize Ollama response from dict or object format.
+
+        Ollama returns dict when streaming=False, object when streaming=True (default).
+        """
+        if isinstance(response, dict):
+            return {
+                "message": response.get("message", {}),
+                "done_reason": response.get("done_reason", "stop")
+            }
+        else:
+            message_obj = getattr(response, "message", None)
+            done_reason = getattr(response, "done_reason", "stop")
+
+            if message_obj is not None and hasattr(message_obj, "model_dump"):
+                message_dict = message_obj.model_dump()
+            elif message_obj is not None:
+                message_dict = {
+                    "role": getattr(message_obj, "role", "assistant"),
+                    "content": getattr(message_obj, "content", ""),
+                }
+            else:
+                message_dict = {}
+
+            return {"message": message_dict, "done_reason": done_reason}
+
+    def _ensure_dict_arguments(self, arguments: Any) -> dict:
+        """Convert function arguments to dict format (required by Ollama API).
+
+        Ollama requires tool arguments as dict, not JSON string.
+        """
+        if isinstance(arguments, str):
+            try:
+                return json.loads(arguments)
+            except json.JSONDecodeError:
+                logger.warning(f"Failed to parse tool arguments as JSON: {arguments}")
+                return {}
+        elif isinstance(arguments, dict):
+            return arguments
+        else:
+            return {}
+
     async def connect(self):
         if self.client:
             return
@@ -478,25 +555,7 @@ class OllamaClient(SimpleLLMClient):
                     if "function" in new_tc:
                         new_func = dict(new_tc["function"])
                         args = new_func.get("arguments", {})
-
-                        # Ensure arguments is always a dict for Ollama
-                        if isinstance(args, str):
-                            if args:  # Only parse non-empty strings
-                                try:
-                                    parsed_args = json.loads(args)
-                                    new_func["arguments"] = parsed_args
-                                    logger.debug(f"Converted string args to dict: {args[:50]}...")
-                                except json.JSONDecodeError as e:
-                                    logger.warning(f"Failed to parse tool arguments: {args[:50]}... Error: {e}")
-                                    new_func["arguments"] = {}
-                            else:
-                                new_func["arguments"] = {}
-                        elif not isinstance(args, dict):
-                            # Handle any other type by converting to dict
-                            logger.warning(f"Unexpected arguments type {type(args)}, converting to empty dict")
-                            new_func["arguments"] = {}
-                        # If already a dict, keep it as is
-
+                        new_func["arguments"] = self._ensure_dict_arguments(args)
                         new_tc["function"] = new_func
                     new_msg["tool_calls"].append(new_tc)
                 transformed.append(new_msg)
@@ -553,23 +612,10 @@ class OllamaClient(SimpleLLMClient):
             response = await self.client.chat(**chat_kwargs)
             elapsed_seconds = time.time() - start_time
 
-            if isinstance(response, dict):
-                message_dict = response.get("message", {})
-                done_reason = response.get("done_reason", "stop")
-            else:
-                message_obj = getattr(response, "message", None)
-                done_reason = getattr(response, "done_reason", "stop")
-                
-                if message_obj is not None and hasattr(message_obj, "model_dump"):
-                    message_dict = message_obj.model_dump()
-                elif message_obj is not None:
-                    message_dict = {
-                        "content": getattr(message_obj, "content", None) or "",
-                        "tool_calls": getattr(message_obj, "tool_calls", None),
-                    }
-                else:
-                    message_dict = {}
-            
+            normalized = self._normalize_ollama_response(response)
+            message_dict = normalized["message"]
+            done_reason = normalized["done_reason"]
+
             response_text = (message_dict.get("content") or "") if isinstance(message_dict, dict) else ""
             raw_tool_calls = message_dict.get("tool_calls") if isinstance(message_dict, dict) else None
             
@@ -580,36 +626,10 @@ class OllamaClient(SimpleLLMClient):
             tool_calls = None
             if raw_tool_calls:
                 tool_calls = []
-                import uuid
-                for idx, tool_call in enumerate(raw_tool_calls):
-                    if isinstance(tool_call, dict) and "function" in tool_call:
-                        func = tool_call["function"]
-                        function_name = func.get("name", "")
-                        function_args = func.get("arguments", {})
-                        tool_call_id = tool_call.get("id", f"call_{uuid.uuid4().hex[:8]}")
-
-                        if isinstance(function_args, dict):
-                            function_args = json.dumps(function_args)
-                        elif not isinstance(function_args, str):
-                            function_args = str(function_args)
-
-                        tool_calls.append(
-                            self._format_tool_call_output(function_name, function_args, tool_call_id)
-                        )
-                    elif hasattr(tool_call, "function"):
-                        function = tool_call.function
-                        function_name = getattr(function, "name", "")
-                        function_args = getattr(function, "arguments", {})
-                        tool_call_id = getattr(tool_call, "id", None) or f"call_{uuid.uuid4().hex[:8]}"
-
-                        if isinstance(function_args, dict):
-                            function_args = json.dumps(function_args)
-                        elif not isinstance(function_args, str):
-                            function_args = str(function_args)
-
-                        tool_calls.append(
-                            self._format_tool_call_output(function_name, function_args, tool_call_id)
-                        )
+                for tool_call in raw_tool_calls:
+                    normalized = self._normalize_tool_call(tool_call)
+                    if normalized:
+                        tool_calls.append(normalized)
 
             usage = self._build_usage_metadata(prompt_tokens, completion_tokens, elapsed_seconds)
             return self._build_success_response(response_text, usage, done_reason, tool_calls)
