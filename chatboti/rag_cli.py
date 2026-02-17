@@ -181,7 +181,7 @@ async def convert_to_hdf5(index_path: str, metadata_path: str, output_path: str)
             f"✓ Loaded: {len(rag_faiss.documents)} documents, {rag_faiss.index.ntotal} vectors\n"
         )
 
-        print(f"→ Converting to HDF5 format...")
+        print("→ Converting to HDF5 format...")
         async for rag_hdf5 in create_rag_service(
             index_path=output_path, data_dir=data_dir
         ):
@@ -221,7 +221,7 @@ async def convert_from_hdf5(
             f"✓ Loaded: {len(rag_hdf5.documents)} documents, {rag_hdf5.index.ntotal} vectors\n"
         )
 
-        print(f"→ Converting to FAISS+JSON format...")
+        print("→ Converting to FAISS+JSON format...")
         async for rag_faiss in create_rag_service(
             index_path=index_path, metadata_path=metadata_path, data_dir=data_dir
         ):

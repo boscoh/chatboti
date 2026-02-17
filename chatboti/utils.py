@@ -1,7 +1,6 @@
 """Utility functions for chatboti."""
 import json
 import re
-from pathlib import Path
 from typing import Dict, Any, Optional, List
 
 try:

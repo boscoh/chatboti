@@ -1,12 +1,11 @@
 """Comprehensive tests for document loaders."""
 
 import csv
-import os
 from pathlib import Path
 
 import pytest
 
-from chatboti.document import Document, DocumentChunk
+from chatboti.document import DocumentChunk
 from chatboti.loaders import load_csv, load_documents
 
 

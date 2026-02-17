@@ -1,7 +1,6 @@
 """Integration tests for HDF5RAGService using real implementation."""
 
 import json
-from pathlib import Path
 
 import numpy as np
 import pytest
@@ -456,7 +455,7 @@ class TestHDF5RAGServiceErrorHandling:
 
         # Attempt to load should raise error
         with pytest.raises((OSError, IOError)):
-            async with HDF5RAGService(hdf5_path=hdf5_path, embed_client=embed_client_768) as service:
+            async with HDF5RAGService(hdf5_path=hdf5_path, embed_client=embed_client_768) as _:
                 pass
 
     @pytest.mark.asyncio

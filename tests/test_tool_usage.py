@@ -7,18 +7,16 @@ Configure providers in .env with API keys/credentials.
 """
 
 import csv
-import os
 from pathlib import Path
 from typing import Any, Dict, Optional
 
 import pytest
 from dotenv import load_dotenv
 
-pytestmark = pytest.mark.asyncio
-
+from chatboti.agent import InfoAgent
 from chatboti.llm import get_llm_client, load_config
 
-from chatboti.agent import InfoAgent
+pytestmark = pytest.mark.asyncio
 
 
 def load_test_env():
@@ -107,7 +105,7 @@ async def try_initialize_config(config: Dict[str, Any]) -> Optional[Dict[str, An
             "embed_service": config.get("embed_service"),
             "embed_model": config.get("embed_model"),
         }
-    except Exception as e:
+    except Exception:
         # Initialization failed - service not available
         return None
 
@@ -175,11 +173,11 @@ async def test_show_available_configs():
         else:
             chat_service = config.get("chat_service")
             if chat_service == "ollama":
-                print(f"               → Ollama not running or model not available")
+                print("               → Ollama not running or model not available")
             elif chat_service == "openai":
-                print(f"               → Set OPENAI_API_KEY in .env")
+                print("               → Set OPENAI_API_KEY in .env")
             elif chat_service == "bedrock":
-                print(f"               → Set AWS_PROFILE or AWS credentials in .env")
+                print("               → Set AWS_PROFILE or AWS credentials in .env")
 
     print("=" * 70)
     print(
@@ -619,7 +617,6 @@ async def test_tool_call_extraction(provider_config):
 
 async def test_openai_specific_features(provider_config):
     """Test OpenAI-specific tool calling features."""
-    name = provider_config["name"]
     chat_service = provider_config["chat_service"]
     chat_model = provider_config["chat_model"]
 
@@ -679,7 +676,6 @@ async def test_openai_specific_features(provider_config):
 
 async def test_ollama_specific_features(provider_config):
     """Test Ollama-specific tool calling features."""
-    name = provider_config["name"]
     chat_service = provider_config["chat_service"]
     chat_model = provider_config["chat_model"]
 

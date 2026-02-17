@@ -1,13 +1,11 @@
 """Shared test utilities and fixtures for integration testing."""
 
-from pathlib import Path
-from typing import AsyncGenerator, List, Optional
+from typing import List
 
 import numpy as np
 import pytest
-from chatboti.llm import SimpleLLMClient, get_llm_client
 
-from chatboti.document import ChunkRef, Document, DocumentChunk
+from chatboti.document import Document, DocumentChunk
 from chatboti.faiss_rag import FaissRAGService
 from chatboti.hdf5_rag import HDF5RAGService
 

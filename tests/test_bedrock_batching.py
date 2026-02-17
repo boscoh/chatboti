@@ -29,8 +29,7 @@ FINDINGS:
 """
 
 import json
-from typing import Any, Dict, List
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 

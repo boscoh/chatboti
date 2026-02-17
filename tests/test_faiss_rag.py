@@ -1,9 +1,7 @@
 """Comprehensive tests for FaissRAGService."""
 
 import json
-from pathlib import Path
 
-import numpy as np
 import pytest
 
 from chatboti.document import ChunkRef, ChunkResult, Document, DocumentChunk

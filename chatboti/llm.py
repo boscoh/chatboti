@@ -599,7 +599,6 @@ class OllamaClient(SimpleLLMClient):
             
             completion_tokens = len(response_text.split()) if response_text else 0
             prompt_tokens = sum(len((m.get("content") or "").split()) for m in messages)
-            total_tokens = prompt_tokens + completion_tokens
 
             tool_calls = None
             if raw_tool_calls:
@@ -1088,9 +1087,9 @@ def get_aws_config(is_raise_exception: bool = True) -> Dict[str, Any]:
                     )
                 else:
                     raise ValueError(
-                        f"No AWS credentials found.\n"
-                        f"To configure: aws configure\n"
-                        f"Or set AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY environment variables"
+                        "No AWS credentials found.\n"
+                        "To configure: aws configure\n"
+                        "Or set AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY environment variables"
                     )
             return aws_config
 

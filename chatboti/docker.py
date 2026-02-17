@@ -85,9 +85,9 @@ def get_aws_config(is_raise_exception: bool = True):
                     sys.exit(1)
                 else:
                     logger.error(
-                        f"No AWS credentials found.\n"
-                        f"To configure: aws configure\n"
-                        f"Or set AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY environment variables"
+                        "No AWS credentials found.\n"
+                        "To configure: aws configure\n"
+                        "Or set AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY environment variables"
                     )
                     sys.exit(1)
             return aws_config
@@ -152,7 +152,7 @@ def get_aws_config(is_raise_exception: bool = True):
     except Exception as e:
         if is_raise_exception:
             raise
-        warn(f"AWS credential check failed: {e}")
+        logger.warning(f"AWS credential check failed: {e}")
 
     return aws_config
 

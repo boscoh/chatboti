@@ -1,7 +1,4 @@
-from pathlib import Path
-from typing import List
 
-import numpy as np
 import pytest
 
 from chatboti.faiss_rag import FaissRAGService
