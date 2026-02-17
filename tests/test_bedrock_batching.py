@@ -146,8 +146,12 @@ class TestBatchConsecutiveToolMessages:
         # Verify first toolResult
         tool_result_1 = batched["content"][0]
         assert "toolResult" in tool_result_1
-        assert tool_result_1["toolResult"]["toolUseId"] == "tooluse_S6hhcw36PqoKJAUBuu9hmw"
-        assert tool_result_1["toolResult"]["content"] == [{"text": "CSV data: [row1, row2, row3]"}]
+        assert (
+            tool_result_1["toolResult"]["toolUseId"] == "tooluse_S6hhcw36PqoKJAUBuu9hmw"
+        )
+        assert tool_result_1["toolResult"]["content"] == [
+            {"text": "CSV data: [row1, row2, row3]"}
+        ]
         assert tool_result_1["toolResult"]["status"] == "success"
 
         # Verify second toolResult
@@ -165,14 +169,41 @@ class TestBatchConsecutiveToolMessages:
                 "role": "assistant",
                 "content": None,
                 "tool_calls": [
-                    {"id": "tool1", "type": "function", "function": {"name": "fn1", "arguments": "{}"}},
-                    {"id": "tool2", "type": "function", "function": {"name": "fn2", "arguments": "{}"}},
-                    {"id": "tool3", "type": "function", "function": {"name": "fn3", "arguments": "{}"}},
+                    {
+                        "id": "tool1",
+                        "type": "function",
+                        "function": {"name": "fn1", "arguments": "{}"},
+                    },
+                    {
+                        "id": "tool2",
+                        "type": "function",
+                        "function": {"name": "fn2", "arguments": "{}"},
+                    },
+                    {
+                        "id": "tool3",
+                        "type": "function",
+                        "function": {"name": "fn3", "arguments": "{}"},
+                    },
                 ],
             },
-            {"role": "tool", "content": "Result 1", "tool_call_id": "tool1", "status": "success"},
-            {"role": "tool", "content": "Result 2", "tool_call_id": "tool2", "status": "success"},
-            {"role": "tool", "content": "Result 3", "tool_call_id": "tool3", "status": "success"},
+            {
+                "role": "tool",
+                "content": "Result 1",
+                "tool_call_id": "tool1",
+                "status": "success",
+            },
+            {
+                "role": "tool",
+                "content": "Result 2",
+                "tool_call_id": "tool2",
+                "status": "success",
+            },
+            {
+                "role": "tool",
+                "content": "Result 3",
+                "tool_call_id": "tool3",
+                "status": "success",
+            },
         ]
         result = bedrock_client._batch_consecutive_tool_messages(messages)
 
@@ -194,20 +225,38 @@ class TestBatchConsecutiveToolMessages:
                 "role": "assistant",
                 "content": None,
                 "tool_calls": [
-                    {"id": "tool1", "type": "function", "function": {"name": "fn1", "arguments": "{}"}},
+                    {
+                        "id": "tool1",
+                        "type": "function",
+                        "function": {"name": "fn1", "arguments": "{}"},
+                    },
                 ],
             },
-            {"role": "tool", "content": "Result 1", "tool_call_id": "tool1", "status": "success"},
+            {
+                "role": "tool",
+                "content": "Result 1",
+                "tool_call_id": "tool1",
+                "status": "success",
+            },
             {"role": "assistant", "content": "Got it, now second request"},
             {"role": "user", "content": "Second request"},
             {
                 "role": "assistant",
                 "content": None,
                 "tool_calls": [
-                    {"id": "tool2", "type": "function", "function": {"name": "fn2", "arguments": "{}"}},
+                    {
+                        "id": "tool2",
+                        "type": "function",
+                        "function": {"name": "fn2", "arguments": "{}"},
+                    },
                 ],
             },
-            {"role": "tool", "content": "Result 2", "tool_call_id": "tool2", "status": "success"},
+            {
+                "role": "tool",
+                "content": "Result 2",
+                "tool_call_id": "tool2",
+                "status": "success",
+            },
         ]
         result = bedrock_client._batch_consecutive_tool_messages(messages)
 
@@ -225,10 +274,18 @@ class TestBatchConsecutiveToolMessages:
                 "role": "assistant",
                 "content": None,
                 "tool_calls": [
-                    {"id": "tool1", "type": "function", "function": {"name": "fn1", "arguments": "{}"}},
+                    {
+                        "id": "tool1",
+                        "type": "function",
+                        "function": {"name": "fn1", "arguments": "{}"},
+                    },
                 ],
             },
-            {"role": "tool", "content": "Result", "status": "success"},  # Missing tool_call_id
+            {
+                "role": "tool",
+                "content": "Result",
+                "status": "success",
+            },  # Missing tool_call_id
         ]
         result = bedrock_client._batch_consecutive_tool_messages(messages)
 
@@ -274,9 +331,7 @@ class TestTransformMessages:
                     "description": "Get weather",
                     "parameters": {
                         "type": "object",
-                        "properties": {
-                            "location": {"type": "string"}
-                        },
+                        "properties": {"location": {"type": "string"}},
                         "required": ["location"],
                     },
                 },
@@ -359,7 +414,10 @@ class TestTransformMessages:
                 "function": {
                     "name": "read_csv",
                     "description": "Read CSV file",
-                    "parameters": {"type": "object", "properties": {"file": {"type": "string"}}},
+                    "parameters": {
+                        "type": "object",
+                        "properties": {"file": {"type": "string"}},
+                    },
                 },
             },
             {
@@ -367,7 +425,10 @@ class TestTransformMessages:
                 "function": {
                     "name": "count_items",
                     "description": "Count items",
-                    "parameters": {"type": "object", "properties": {"items": {"type": "array"}}},
+                    "parameters": {
+                        "type": "object",
+                        "properties": {"items": {"type": "array"}},
+                    },
                 },
             },
         ]
@@ -402,8 +463,13 @@ class TestTransformMessages:
         # Verify first toolResult
         tool_result_1 = formatted_messages[2]["content"][0]
         assert "toolResult" in tool_result_1
-        assert tool_result_1["toolResult"]["toolUseId"] == "tooluse_S6hhcw36PqoKJAUBuu9hmw"
-        assert tool_result_1["toolResult"]["content"][0]["text"] == "CSV data: [row1, row2, row3]"
+        assert (
+            tool_result_1["toolResult"]["toolUseId"] == "tooluse_S6hhcw36PqoKJAUBuu9hmw"
+        )
+        assert (
+            tool_result_1["toolResult"]["content"][0]["text"]
+            == "CSV data: [row1, row2, row3]"
+        )
         assert tool_result_1["toolResult"]["status"] == "success"
 
         # Verify second toolResult
@@ -421,20 +487,68 @@ class TestTransformMessages:
                 "role": "assistant",
                 "content": None,
                 "tool_calls": [
-                    {"id": "call_123", "type": "function", "function": {"name": "fn1", "arguments": "{}"}},
-                    {"id": "call_456", "type": "function", "function": {"name": "fn2", "arguments": "{}"}},
-                    {"id": "call_789", "type": "function", "function": {"name": "fn3", "arguments": "{}"}},
+                    {
+                        "id": "call_123",
+                        "type": "function",
+                        "function": {"name": "fn1", "arguments": "{}"},
+                    },
+                    {
+                        "id": "call_456",
+                        "type": "function",
+                        "function": {"name": "fn2", "arguments": "{}"},
+                    },
+                    {
+                        "id": "call_789",
+                        "type": "function",
+                        "function": {"name": "fn3", "arguments": "{}"},
+                    },
                 ],
             },
-            {"role": "tool", "content": "Result 1", "tool_call_id": "call_123", "status": "success"},
-            {"role": "tool", "content": "Result 2", "tool_call_id": "call_456", "status": "success"},
-            {"role": "tool", "content": "Result 3", "tool_call_id": "call_789", "status": "success"},
+            {
+                "role": "tool",
+                "content": "Result 1",
+                "tool_call_id": "call_123",
+                "status": "success",
+            },
+            {
+                "role": "tool",
+                "content": "Result 2",
+                "tool_call_id": "call_456",
+                "status": "success",
+            },
+            {
+                "role": "tool",
+                "content": "Result 3",
+                "tool_call_id": "call_789",
+                "status": "success",
+            },
         ]
 
         tools = [
-            {"type": "function", "function": {"name": "fn1", "description": "Fn 1", "parameters": {"type": "object"}}},
-            {"type": "function", "function": {"name": "fn2", "description": "Fn 2", "parameters": {"type": "object"}}},
-            {"type": "function", "function": {"name": "fn3", "description": "Fn 3", "parameters": {"type": "object"}}},
+            {
+                "type": "function",
+                "function": {
+                    "name": "fn1",
+                    "description": "Fn 1",
+                    "parameters": {"type": "object"},
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "fn2",
+                    "description": "Fn 2",
+                    "parameters": {"type": "object"},
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "fn3",
+                    "description": "Fn 3",
+                    "parameters": {"type": "object"},
+                },
+            },
         ]
 
         result = bedrock_client._transform_messages(messages, tools)
@@ -523,7 +637,9 @@ class TestBuildResultFromResponse:
         # Verify first tool call
         tool_call_1 = result["tool_calls"][0]
         assert tool_call_1["function"]["name"] == "read_csv"
-        assert tool_call_1["function"]["tool_call_id"] == "tooluse_S6hhcw36PqoKJAUBuu9hmw"
+        assert (
+            tool_call_1["function"]["tool_call_id"] == "tooluse_S6hhcw36PqoKJAUBuu9hmw"
+        )
         assert json.loads(tool_call_1["function"]["arguments"]) == {"file": "data.csv"}
 
         # Verify second tool call
@@ -562,7 +678,9 @@ class TestBuildResultFromResponse:
 
         # Verify tool_call_id is preserved exactly
         tool_call = result["tool_calls"][0]
-        assert tool_call["function"]["tool_call_id"] == "tooluse_VeryLongId_12345_ABCDEF"
+        assert (
+            tool_call["function"]["tool_call_id"] == "tooluse_VeryLongId_12345_ABCDEF"
+        )
 
 
 class TestToolCallIdBug:
@@ -625,8 +743,22 @@ class TestToolCallIdBug:
         ]
 
         tools = [
-            {"type": "function", "function": {"name": "read_csv", "description": "Read CSV", "parameters": {"type": "object"}}},
-            {"type": "function", "function": {"name": "count_items", "description": "Count", "parameters": {"type": "object"}}},
+            {
+                "type": "function",
+                "function": {
+                    "name": "read_csv",
+                    "description": "Read CSV",
+                    "parameters": {"type": "object"},
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "count_items",
+                    "description": "Count",
+                    "parameters": {"type": "object"},
+                },
+            },
         ]
 
         result = bedrock_client._transform_messages(messages, tools)
@@ -634,19 +766,28 @@ class TestToolCallIdBug:
 
         print(f"\n📋 Formatted messages count: {len(formatted_messages)}")
         for i, msg in enumerate(formatted_messages):
-            print(f"   [{i}] role={msg.get('role')}, content_length={len(msg.get('content', []))}")
+            print(
+                f"   [{i}] role={msg.get('role')}, content_length={len(msg.get('content', []))}"
+            )
 
         # BUG: The assistant message will have NO toolUse blocks because tool_call_id lookup failed
         # First, check if we even have enough messages
         if len(formatted_messages) < 2:
             print("\n⚠️  BUG CONFIRMED: Assistant message was completely dropped!")
-            print("    Expected at least 2 messages (user + assistant), got", len(formatted_messages))
+            print(
+                "    Expected at least 2 messages (user + assistant), got",
+                len(formatted_messages),
+            )
             return
 
         assistant_msg = formatted_messages[1]
         if assistant_msg.get("role") != "assistant":
-            print(f"\n⚠️  BUG CONFIRMED: Message at index 1 is '{assistant_msg.get('role')}', not 'assistant'")
-            print("    The assistant message with tool_calls was not properly formatted")
+            print(
+                f"\n⚠️  BUG CONFIRMED: Message at index 1 is '{assistant_msg.get('role')}', not 'assistant'"
+            )
+            print(
+                "    The assistant message with tool_calls was not properly formatted"
+            )
             return
 
         assert assistant_msg["role"] == "assistant"
@@ -713,8 +854,22 @@ class TestEndToEndBatching:
         # First request - get tool calls
         messages_1 = [{"role": "user", "content": "Read CSV and count items"}]
         tools = [
-            {"type": "function", "function": {"name": "read_csv", "description": "Read CSV", "parameters": {"type": "object"}}},
-            {"type": "function", "function": {"name": "count_items", "description": "Count", "parameters": {"type": "object"}}},
+            {
+                "type": "function",
+                "function": {
+                    "name": "read_csv",
+                    "description": "Read CSV",
+                    "parameters": {"type": "object"},
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "count_items",
+                    "description": "Count",
+                    "parameters": {"type": "object"},
+                },
+            },
         ]
 
         response_1 = await bedrock_client.get_completion(messages_1, tools=tools)
@@ -781,7 +936,9 @@ class TestEndToEndBatching:
         assert len(formatted_messages[2]["content"]) == 2
 
         # Verify BOTH toolUseIds are present in messages[2]
-        tool_result_ids = [tr["toolResult"]["toolUseId"] for tr in formatted_messages[2]["content"]]
+        tool_result_ids = [
+            tr["toolResult"]["toolUseId"] for tr in formatted_messages[2]["content"]
+        ]
         assert "tooluse_S6hhcw36PqoKJAUBuu9hmw" in tool_result_ids
         assert "tooluse_Xyz789AbcDef" in tool_result_ids
 

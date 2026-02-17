@@ -53,8 +53,6 @@ def load_config() -> Dict[str, Any]:
         return config
 
 
-
-
 def get_llm_client(client_type: LLMService, **kwargs) -> "SimpleLLMClient":
     """
     Gets a chat client that satisfies SimpleLLMClient interface.
@@ -72,7 +70,11 @@ def get_llm_client(client_type: LLMService, **kwargs) -> "SimpleLLMClient":
         default_models = config.get("chat_models", {}).get(client_type, [])
         if default_models:
             # Take the first model from the list as the default
-            kwargs["model"] = default_models[0] if isinstance(default_models, list) else default_models
+            kwargs["model"] = (
+                default_models[0]
+                if isinstance(default_models, list)
+                else default_models
+            )
 
     if client_type == "openai":
         return OpenAIClient(**kwargs)
@@ -265,7 +267,9 @@ class SimpleLLMClient(ABC):
         """Generate a text embedding vector for the given input string."""
         pass
 
-    def _build_error_response(self, error: Exception, start_time: float) -> Dict[str, Any]:
+    def _build_error_response(
+        self, error: Exception, start_time: float
+    ) -> Dict[str, Any]:
         """Build standardized error response structure.
 
         Args:
@@ -382,8 +386,10 @@ class SimpleLLMClient(ABC):
             Cost in USD, or None if pricing data not available
         """
         # Check if service attribute exists (all clients should have it)
-        if not hasattr(self, 'service'):
-            logger.warning(f"Client {self.__class__.__name__} missing 'service' attribute")
+        if not hasattr(self, "service"):
+            logger.warning(
+                f"Client {self.__class__.__name__} missing 'service' attribute"
+            )
             return None
 
         pricing = load_config().get("pricing", {}).get(self.service, {})
@@ -398,7 +404,9 @@ class SimpleLLMClient(ABC):
 
         if model_pricing:
             prompt_cost = (prompt_tokens / 1_000_000) * model_pricing["prompt"]
-            completion_cost = (completion_tokens / 1_000_000) * model_pricing["completion"]
+            completion_cost = (completion_tokens / 1_000_000) * model_pricing[
+                "completion"
+            ]
             return prompt_cost + completion_cost
 
         return None
@@ -460,7 +468,7 @@ class OllamaClient(SimpleLLMClient):
         if isinstance(response, dict):
             return {
                 "message": response.get("message", {}),
-                "finish_reason": response.get("done_reason", "stop")
+                "finish_reason": response.get("done_reason", "stop"),
             }
         else:
             message_obj = getattr(response, "message", None)
@@ -575,7 +583,9 @@ class OllamaClient(SimpleLLMClient):
                                 )
                                 # Force convert to dict as fallback
                                 try:
-                                    tc["function"]["arguments"] = json.loads(args) if args else {}
+                                    tc["function"]["arguments"] = (
+                                        json.loads(args) if args else {}
+                                    )
                                 except json.JSONDecodeError:
                                     tc["function"]["arguments"] = {}
 
@@ -594,9 +604,17 @@ class OllamaClient(SimpleLLMClient):
             message_dict = normalized["message"]
             finish_reason = normalized["finish_reason"]
 
-            response_text = (message_dict.get("content") or "") if isinstance(message_dict, dict) else ""
-            raw_tool_calls = message_dict.get("tool_calls") if isinstance(message_dict, dict) else None
-            
+            response_text = (
+                (message_dict.get("content") or "")
+                if isinstance(message_dict, dict)
+                else ""
+            )
+            raw_tool_calls = (
+                message_dict.get("tool_calls")
+                if isinstance(message_dict, dict)
+                else None
+            )
+
             completion_tokens = len(response_text.split()) if response_text else 0
             prompt_tokens = sum(len((m.get("content") or "").split()) for m in messages)
 
@@ -608,8 +626,12 @@ class OllamaClient(SimpleLLMClient):
                     if normalized:
                         tool_calls.append(normalized)
 
-            usage = self._build_usage_metadata(prompt_tokens, completion_tokens, elapsed_seconds)
-            return self._build_success_response(response_text, usage, finish_reason, tool_calls)
+            usage = self._build_usage_metadata(
+                prompt_tokens, completion_tokens, elapsed_seconds
+            )
+            return self._build_success_response(
+                response_text, usage, finish_reason, tool_calls
+            )
         except Exception as e:
             logger.error(f"Error calling Ollama: {e}")
             return self._build_error_response(e, start_time)
@@ -687,7 +709,9 @@ class OpenAIClient(SimpleLLMClient):
             self.client = None
             self._closed = True
 
-    def _handle_incomplete_tool_sequence(self, msg: Dict, i: int, messages: List[Dict]) -> Optional[Dict]:
+    def _handle_incomplete_tool_sequence(
+        self, msg: Dict, i: int, messages: List[Dict]
+    ) -> Optional[Dict]:
         """Handle assistant message with tool_calls that has no following tool messages.
 
         This occurs when loading conversation history with incomplete tool sequences.
@@ -705,7 +729,9 @@ class OpenAIClient(SimpleLLMClient):
             clean_msg = {k: v for k, v in msg.items() if k != "tool_calls"}
             if not clean_msg.get("content"):
                 clean_msg["content"] = ""
-            logger.debug("Stripped tool_calls from assistant message (incomplete sequence)")
+            logger.debug(
+                "Stripped tool_calls from assistant message (incomplete sequence)"
+            )
             return clean_msg
 
         return msg
@@ -749,16 +775,20 @@ class OpenAIClient(SimpleLLMClient):
             # Tool messages are only valid within an active sequence
             if role == "tool":
                 if not self._should_skip_orphaned_tool_message(in_active_tool_sequence):
-                    formatted_messages.append({
-                        "role": "tool",
-                        "content": msg.get("content", ""),
-                        "tool_call_id": msg.get("tool_call_id", ""),
-                    })
+                    formatted_messages.append(
+                        {
+                            "role": "tool",
+                            "content": msg.get("content", ""),
+                            "tool_call_id": msg.get("tool_call_id", ""),
+                        }
+                    )
             # Assistant messages
             elif role == "assistant":
                 # Handle incomplete tool sequences from history
                 if "tool_calls" in msg:
-                    cleaned_msg = self._handle_incomplete_tool_sequence(msg, i, messages)
+                    cleaned_msg = self._handle_incomplete_tool_sequence(
+                        msg, i, messages
+                    )
                     if cleaned_msg:
                         # Check if we kept tool_calls (complete sequence) or stripped them (incomplete)
                         if "tool_calls" in cleaned_msg:
@@ -1061,7 +1091,9 @@ def get_aws_config(is_raise_exception: bool = True) -> Dict[str, Any]:
         if profile_name in available_profiles:
             aws_config["profile_name"] = profile_name
         else:
-            logger.info(f"AWS profile '{profile_name}' not found, using default credential chain")
+            logger.info(
+                f"AWS profile '{profile_name}' not found, using default credential chain"
+            )
             profile_not_found = True
 
     region = os.getenv("AWS_REGION")
@@ -1095,7 +1127,9 @@ def get_aws_config(is_raise_exception: bool = True) -> Dict[str, Any]:
 
         if not credentials.access_key or not credentials.secret_key:
             if is_raise_exception:
-                raise ValueError("Incomplete AWS credentials (missing access key or secret key)")
+                raise ValueError(
+                    "Incomplete AWS credentials (missing access key or secret key)"
+                )
             logger.warning("Incomplete AWS credentials")
             return aws_config
 
@@ -1123,11 +1157,15 @@ def get_aws_config(is_raise_exception: bool = True) -> Dict[str, Any]:
         if error_code == "ExpiredToken":
             profile_to_check = aws_config.get("profile_name", profile_name)
             if profile_to_check:
-                logger.warning(f"AWS SSO session expired for profile '{profile_to_check}'. Run: aws sso login --profile {profile_to_check}")
+                logger.warning(
+                    f"AWS SSO session expired for profile '{profile_to_check}'. Run: aws sso login --profile {profile_to_check}"
+                )
             else:
                 logger.warning("AWS credentials have expired")
         elif error_code == "InvalidClientTokenId":
-            logger.warning("AWS credentials are invalid. Please reconfigure: aws configure")
+            logger.warning(
+                "AWS credentials are invalid. Please reconfigure: aws configure"
+            )
         else:
             logger.warning(f"AWS API error: {error_code}")
     except Exception as e:
@@ -1248,7 +1286,9 @@ class BedrockClient(SimpleLLMClient):
             usage_dict.get("outputTokens", 0),
             time.time() - start_time,
         )
-        return self._build_success_response(text, usage, stop_reason, tool_calls if tool_calls else None)
+        return self._build_success_response(
+            text, usage, stop_reason, tool_calls if tool_calls else None
+        )
 
     def _batch_consecutive_tool_messages(
         self, messages: List[Dict[str, Any]]
@@ -1284,18 +1324,19 @@ class BedrockClient(SimpleLLMClient):
                     )
                     combined_content = []
                     for tool_msg in tool_batch:
-                        combined_content.append({
-                            "toolResult": {
-                                "toolUseId": tool_msg.get("tool_call_id", ""),
-                                "content": [{"text": str(tool_msg.get("content", ""))}],
-                                "status": tool_msg.get("status", "success"),
+                        combined_content.append(
+                            {
+                                "toolResult": {
+                                    "toolUseId": tool_msg.get("tool_call_id", ""),
+                                    "content": [
+                                        {"text": str(tool_msg.get("content", ""))}
+                                    ],
+                                    "status": tool_msg.get("status", "success"),
+                                }
                             }
-                        })
+                        )
 
-                    batched.append({
-                        "role": "user",
-                        "content": combined_content
-                    })
+                    batched.append({"role": "user", "content": combined_content})
                 elif len(tool_batch) == 1:
                     # Single tool result: keep as-is, will be formatted below
                     batched.append(tool_batch[0])
@@ -1335,7 +1376,9 @@ class BedrockClient(SimpleLLMClient):
                     assistant_content.append({"text": content})
                 for tool_call in msg.get("tool_calls", []):
                     # Bedrock stores tool_call_id in function.tool_call_id (line 1206), not top-level 'id'
-                    tool_call_id = tool_call.get("id") or tool_call.get("function", {}).get("tool_call_id", "")
+                    tool_call_id = tool_call.get("id") or tool_call.get(
+                        "function", {}
+                    ).get("tool_call_id", "")
                     if tool_call_id:
                         assistant_content.append(
                             {
@@ -1353,7 +1396,9 @@ class BedrockClient(SimpleLLMClient):
                             }
                         )
                     else:
-                        logger.warning(f"Tool call missing tool_call_id, skipping: {tool_call.get('function', {}).get('name', 'unknown')}")
+                        logger.warning(
+                            f"Tool call missing tool_call_id, skipping: {tool_call.get('function', {}).get('name', 'unknown')}"
+                        )
                 if assistant_content:
                     formatted_messages.append(
                         {
@@ -1472,4 +1517,3 @@ class BedrockClient(SimpleLLMClient):
         except Exception as e:
             logger.error(f"Error calling Bedrock embed: {e}")
             raise RuntimeError(f"Error generating embedding: {str(e)}")
-

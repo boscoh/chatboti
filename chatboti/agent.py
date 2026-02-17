@@ -56,17 +56,23 @@ class InfoAgent:
         # This prevents AWS SSO/credential issues during tests
         if "PYTEST_CURRENT_TEST" in env or "CI" in env:
             env["EMBED_SERVICE"] = "ollama"
-            logger.debug("Test/CI environment detected: using EMBED_SERVICE=ollama for MCP server")
+            logger.debug(
+                "Test/CI environment detected: using EMBED_SERVICE=ollama for MCP server"
+            )
         elif "EMBED_SERVICE" not in env and "CHAT_SERVICE" not in env:
             # Default to ollama if no service is configured
             env["EMBED_SERVICE"] = "ollama"
-            logger.debug("No service configured: using default EMBED_SERVICE=ollama for MCP server")
+            logger.debug(
+                "No service configured: using default EMBED_SERVICE=ollama for MCP server"
+            )
 
-        return stdio_client(StdioServerParameters(
-            command="uv",
-            args=["run", "-m", mcp_server_module],
-            env=env,
-        ))
+        return stdio_client(
+            StdioServerParameters(
+                command="uv",
+                args=["run", "-m", mcp_server_module],
+                env=env,
+            )
+        )
 
     async def connect(self):
         """Connect to MCP server and chat client."""
@@ -79,10 +85,14 @@ class InfoAgent:
             mcp_server_module = "chatboti.mcp_server"
             logger.info(f"Starting MCP server: uv run -m {mcp_server_module}")
             stdio_ctx = self.start_mcp_server_with_stdio_ctx(mcp_server_module)
-            stdio_read, stdio_write = await self._cleanup_manager.enter_async_context(stdio_ctx)
+            stdio_read, stdio_write = await self._cleanup_manager.enter_async_context(
+                stdio_ctx
+            )
 
             client_ctx = ClientSession(stdio_read, stdio_write)
-            self._mcp_session = await self._cleanup_manager.enter_async_context(client_ctx)
+            self._mcp_session = await self._cleanup_manager.enter_async_context(
+                client_ctx
+            )
 
             logger.info("MCP session created, initializing...")
             await self._mcp_session.initialize()
@@ -116,7 +126,9 @@ class InfoAgent:
                 # This can occur when cleanup happens in a different async context
                 # (e.g., during pytest teardown) than where the context was entered
                 if "cancel scope" in str(e).lower():
-                    logger.debug(f"Ignoring anyio cancel scope error during cleanup: {e}")
+                    logger.debug(
+                        f"Ignoring anyio cancel scope error during cleanup: {e}"
+                    )
                 else:
                     logger.warning(f"Error closing MCP resources: {e}")
             except Exception as e:
@@ -194,7 +206,7 @@ class InfoAgent:
         return {}
 
     def _is_duplicate_call(
-            self, tool_name: str, tool_args: Dict[str, Any], seen_calls: set
+        self, tool_name: str, tool_args: Dict[str, Any], seen_calls: set
     ) -> bool:
         """Check if a tool call is a duplicate.
 
@@ -232,7 +244,9 @@ class InfoAgent:
         Checks both the top-level 'id' field (after formatting by _build_assistant_message)
         and the nested 'function.tool_call_id' field (from Bedrock response).
         """
-        return py_.get(tool_call, "id", "") or py_.get(tool_call, "function.tool_call_id", "")
+        return py_.get(tool_call, "id", "") or py_.get(
+            tool_call, "function.tool_call_id", ""
+        )
 
     def _sanitize_tool_call(self, tool_call: Dict[str, Any]) -> Dict[str, Any]:
         """Normalize tool call arguments to valid JSON string with sorted keys.
@@ -254,7 +268,7 @@ class InfoAgent:
         return result
 
     def _build_assistant_message(
-            self, response: Dict[str, Any], tool_calls: List[Dict[str, Any]]
+        self, response: Dict[str, Any], tool_calls: List[Dict[str, Any]]
     ) -> Optional[Dict[str, Any]]:
         formatted_calls = []
         for tc in tool_calls:
@@ -332,7 +346,7 @@ class InfoAgent:
     MAX_TOOL_CALLS_PER_ITERATION = 30  # Tool calls are cheap, allow many per iteration
 
     async def _execute_tool(
-            self, tool_call: Dict[str, Any], seen_calls: set
+        self, tool_call: Dict[str, Any], seen_calls: set
     ) -> Optional[Dict[str, Any]]:
         tool_name = py_.get(tool_call, "function.name", "")
         tool_args = self._parse_tool_args(tool_call)
@@ -364,7 +378,7 @@ class InfoAgent:
         return result
 
     def _build_initial_messages(
-            self, query: str, history: Optional[List[Dict[str, Any]]]
+        self, query: str, history: Optional[List[Dict[str, Any]]]
     ) -> List[Dict[str, Any]]:
         messages = [{"role": "system", "content": self.SYSTEM_PROMPT}]
 
@@ -379,7 +393,7 @@ class InfoAgent:
         if messages:
             last_msg = messages[-1]
             if py_.get(last_msg, "role", "") == "user" and py_.get(
-                    last_msg, "content", ""
+                last_msg, "content", ""
             ) == str(query):
                 should_add_query = False
 
@@ -389,7 +403,7 @@ class InfoAgent:
         return messages
 
     async def process_query(
-            self, query: str, history: Optional[List[Dict[str, Any]]] = None
+        self, query: str, history: Optional[List[Dict[str, Any]]] = None
     ) -> str:
         """Process user query with multi-step tool chaining.
 
@@ -415,7 +429,7 @@ class InfoAgent:
                 logger.warning(
                     f"Truncating {len(tool_calls)} tool calls to {self.MAX_TOOL_CALLS_PER_ITERATION}"
                 )
-                tool_calls = tool_calls[:self.MAX_TOOL_CALLS_PER_ITERATION]
+                tool_calls = tool_calls[: self.MAX_TOOL_CALLS_PER_ITERATION]
 
             logger.info(
                 f"Reasoning step {iteration + 1} with {len(tool_calls)} tool calls"
@@ -446,11 +460,15 @@ class InfoAgent:
 
             # If we have no tool calls and no text, force a final response
             if not tool_calls and not response_text:
-                logger.warning("LLM returned neither text nor tool calls, requesting final answer")
-                messages.append({
-                    "role": "user",
-                    "content": "Please provide your answer based on the available information."
-                })
+                logger.warning(
+                    "LLM returned neither text nor tool calls, requesting final answer"
+                )
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": "Please provide your answer based on the available information.",
+                    }
+                )
                 response = await self.chat_client.get_completion(messages, tools=None)
                 break
         else:
@@ -461,10 +479,12 @@ class InfoAgent:
                     f"generating final response from gathered data"
                 )
                 # Force a final text response by removing tools
-                messages.append({
-                    "role": "user",
-                    "content": "Based on all the information you've gathered, please provide a comprehensive final answer."
-                })
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": "Based on all the information you've gathered, please provide a comprehensive final answer.",
+                    }
+                )
                 response = await self.chat_client.get_completion(messages, tools=None)
 
         # Ensure we always return a valid string, never None or empty
@@ -481,7 +501,7 @@ async def setup_async_exception_handler():
 
     def silence_event_loop_closed(loop, context):
         if "exception" not in context or not isinstance(
-                context["exception"], (RuntimeError, GeneratorExit)
+            context["exception"], (RuntimeError, GeneratorExit)
         ):
             loop.default_exception_handler(context)
 

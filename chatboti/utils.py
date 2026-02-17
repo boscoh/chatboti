@@ -1,4 +1,5 @@
 """Utility functions for chatboti."""
+
 import json
 import re
 from typing import Dict, Any, Optional, List
@@ -38,7 +39,9 @@ def make_slug(text: str, strip_latest: bool = False) -> str:
     return slug
 
 
-def parse_response_as_json_list(response: Dict[str, Any] | str) -> Optional[Dict[str, Any] | List[Any]]:
+def parse_response_as_json_list(
+    response: Dict[str, Any] | str,
+) -> Optional[Dict[str, Any] | List[Any]]:
     """Parse JSON from text response, extracting from markdown or .transactions if needed.
 
     Args:

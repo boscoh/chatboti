@@ -206,7 +206,7 @@ class HDF5RAGService(FaissRAGService):
             # Store metadata as attributes
             f.attrs["model_name"] = self.model_name or ""
             f.attrs["embedding_dim"] = self.embedding_dim
-            f.attrs["created_at"] = datetime.now(UTC).isoformat().replace('+00:00', 'Z')
+            f.attrs["created_at"] = datetime.now(UTC).isoformat().replace("+00:00", "Z")
             f.attrs["format_version"] = "1.0"
             f.attrs["index_type"] = self.index.__class__.__name__
             f.attrs["vector_count"] = self.index.ntotal

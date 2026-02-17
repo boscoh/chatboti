@@ -156,7 +156,9 @@ class TestHDF5RAGServiceSaveLoad:
         """Test saving empty service creates valid HDF5 file."""
         hdf5_path = tmp_path / "empty.h5"
 
-        async with HDF5RAGService(hdf5_path=hdf5_path, embed_client=embed_client_768) as service:
+        async with HDF5RAGService(
+            hdf5_path=hdf5_path, embed_client=embed_client_768
+        ) as service:
             service.save()
 
         # Load and verify
@@ -179,7 +181,9 @@ class TestHDF5RAGServiceMetadata:
 
         # Create service and manually set up for low-level testing
         embed_client_512 = DeterministicEmbedClient(embedding_dim=512)
-        async with HDF5RAGService(hdf5_path=hdf5_path, embed_client=embed_client_512) as service:
+        async with HDF5RAGService(
+            hdf5_path=hdf5_path, embed_client=embed_client_512
+        ) as service:
             service.model_name = "custom-embed-model"
 
             # Add some data
@@ -204,7 +208,9 @@ class TestHDF5RAGServiceMetadata:
             assert f.attrs["document_count"] == 1
 
         # Verify loading preserves metadata
-        async with HDF5RAGService(hdf5_path=hdf5_path, embed_client=embed_client_512) as service2:
+        async with HDF5RAGService(
+            hdf5_path=hdf5_path, embed_client=embed_client_512
+        ) as service2:
             assert service2.model_name == "custom-embed-model"
             assert service2.embedding_dim == 512
 
@@ -218,7 +224,9 @@ class TestHDF5RAGServiceStructure:
         """Test that HDF5 file has correct structure."""
         hdf5_path = tmp_path / "structure.h5"
 
-        async with HDF5RAGService(hdf5_path=hdf5_path, embed_client=embed_client_768) as service:
+        async with HDF5RAGService(
+            hdf5_path=hdf5_path, embed_client=embed_client_768
+        ) as service:
             # Add test data
             doc = Document(
                 id="doc1",
@@ -270,7 +278,9 @@ class TestHDF5RAGServiceDocumentManagement:
         """Test add_document() with embed_client."""
         hdf5_path = tmp_path / "documents.h5"
 
-        async with HDF5RAGService(hdf5_path=hdf5_path, embed_client=embed_client) as service:
+        async with HDF5RAGService(
+            hdf5_path=hdf5_path, embed_client=embed_client
+        ) as service:
             # Create document with chunks
             doc = Document(
                 id="test_doc",
@@ -316,7 +326,9 @@ class TestHDF5RAGServiceSearch:
         """Test that search works correctly after HDF5 load."""
         hdf5_path = tmp_path / "search.h5"
 
-        async with HDF5RAGService(hdf5_path=hdf5_path, embed_client=embed_client) as service:
+        async with HDF5RAGService(
+            hdf5_path=hdf5_path, embed_client=embed_client
+        ) as service:
             # Add document
             doc = Document(
                 id="doc1",
@@ -345,7 +357,9 @@ class TestHDF5RAGServiceSearch:
         """Test search() with include_documents=True."""
         hdf5_path = tmp_path / "search_docs.h5"
 
-        async with HDF5RAGService(hdf5_path=hdf5_path, embed_client=embed_client) as service:
+        async with HDF5RAGService(
+            hdf5_path=hdf5_path, embed_client=embed_client
+        ) as service:
             # Add document with full_text
             doc = Document(
                 id="doc1",
@@ -455,7 +469,9 @@ class TestHDF5RAGServiceErrorHandling:
 
         # Attempt to load should raise error
         with pytest.raises((OSError, IOError)):
-            async with HDF5RAGService(hdf5_path=hdf5_path, embed_client=embed_client_768) as _:
+            async with HDF5RAGService(
+                hdf5_path=hdf5_path, embed_client=embed_client_768
+            ) as _:
                 pass
 
     @pytest.mark.asyncio
@@ -464,7 +480,9 @@ class TestHDF5RAGServiceErrorHandling:
         hdf5_path = tmp_path / "nonexistent.h5"
 
         # Creating service with non-existent file should work (new service)
-        async with HDF5RAGService(hdf5_path=hdf5_path, embed_client=embed_client_768) as service:
+        async with HDF5RAGService(
+            hdf5_path=hdf5_path, embed_client=embed_client_768
+        ) as service:
             assert len(service.documents) == 0
 
     @pytest.mark.asyncio
@@ -472,7 +490,9 @@ class TestHDF5RAGServiceErrorHandling:
         """Test explicit load of missing file raises error."""
         hdf5_path = tmp_path / "missing.h5"
 
-        async with HDF5RAGService(hdf5_path=hdf5_path, embed_client=embed_client_768) as service:
+        async with HDF5RAGService(
+            hdf5_path=hdf5_path, embed_client=embed_client_768
+        ) as service:
             # Explicit load should fail
             with pytest.raises(FileNotFoundError):
                 service.load_from_hdf5(hdf5_path)
@@ -483,7 +503,9 @@ class TestHDF5RAGServiceErrorHandling:
         hdf5_path = tmp_path / "dimension.h5"
 
         # Create service with 768 dimensions
-        async with HDF5RAGService(hdf5_path=hdf5_path, embed_client=embed_client_768) as service1:
+        async with HDF5RAGService(
+            hdf5_path=hdf5_path, embed_client=embed_client_768
+        ) as service1:
             vector = np.random.randn(1, 768).astype(np.float32)
             service1.index.add(vector)
             service1.chunk_refs.append(ChunkRef(document_id="doc1", chunk_key="chunk0"))
@@ -514,7 +536,9 @@ class TestHDF5RAGServiceCompression:
         """Test that vectors are compressed in HDF5 file."""
         hdf5_path = tmp_path / "compressed.h5"
 
-        async with HDF5RAGService(hdf5_path=hdf5_path, embed_client=embed_client_768) as service:
+        async with HDF5RAGService(
+            hdf5_path=hdf5_path, embed_client=embed_client_768
+        ) as service:
             # Add large number of vectors
             n_vectors = 100
             vectors = np.random.randn(n_vectors, 768).astype(np.float32)

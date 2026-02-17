@@ -76,6 +76,7 @@ async def create_rag_service(
             await embed_client.close()
             # Give asyncio time to clean up aiohttp connections
             import asyncio
+
             await asyncio.sleep(0.1)
 
 
@@ -175,8 +176,8 @@ async def convert_to_hdf5(index_path: str, metadata_path: str, output_path: str)
     data_dir = Path(__file__).parent / "data"
 
     async for rag_faiss in create_rag_service(
-            index_path=index_path, metadata_path=metadata_path, data_dir=data_dir
-        ):
+        index_path=index_path, metadata_path=metadata_path, data_dir=data_dir
+    ):
         print(
             f"✓ Loaded: {len(rag_faiss.documents)} documents, {rag_faiss.index.ntotal} vectors\n"
         )
@@ -214,9 +215,7 @@ async def convert_from_hdf5(
 
     data_dir = Path(__file__).parent / "data"
 
-    async for rag_hdf5 in create_rag_service(
-            index_path=input_path, data_dir=data_dir
-        ):
+    async for rag_hdf5 in create_rag_service(index_path=input_path, data_dir=data_dir):
         print(
             f"✓ Loaded: {len(rag_hdf5.documents)} documents, {rag_hdf5.index.ntotal} vectors\n"
         )

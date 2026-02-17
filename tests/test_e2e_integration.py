@@ -1,4 +1,3 @@
-
 import pytest
 
 from chatboti.faiss_rag import FaissRAGService

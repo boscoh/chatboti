@@ -1,6 +1,5 @@
 """Comprehensive tests for Document class and dataclasses."""
 
-
 from chatboti.document import ChunkRef, ChunkResult, Document, DocumentChunk
 
 
