@@ -53,11 +53,13 @@ limiter = Limiter(key_func=get_remote_address)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    if not load_env():
+        logger.warning("No .env file found")
     app.state.info_agent: Optional[InfoAgent] = None
     app.state.chat_client: Optional[SimpleLLMClient] = None
     app.state.embed_client: Optional[SimpleLLMClient] = None
+    app.state.rag_service: Optional[FaissRAGService] = None
     app.state.ready = False
-    rag_service: Optional[FaissRAGService] = None
 
     chat_service = os.getenv("CHAT_SERVICE")
 
@@ -73,20 +75,19 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
             app.state.embed_client = await get_embed_client()
 
-            rag_service = FaissRAGService(
+            app.state.rag_service = FaissRAGService(
                 embed_client=app.state.embed_client, data_dir=data_dir
             )
-            await rag_service.__aenter__()
+            await app.state.rag_service.__aenter__()
             logger.info(
-                f"RAG loaded: {len(rag_service.documents)} documents, {rag_service.index.ntotal} vectors"
+                f"RAG loaded: {len(app.state.rag_service.documents)} documents, {app.state.rag_service.index.ntotal} vectors"
             )
 
             # Manual lifecycle management avoids asyncio task context issues with anyio cancel scopes in Python 3.13
             logger.info("Initializing chat client and MCP agent...")
             app.state.chat_client = await get_chat_client()
-            agent = InfoAgent(chat_client=app.state.chat_client)
-            await agent.connect()
-            app.state.info_agent = agent
+            app.state.info_agent = InfoAgent(chat_client=app.state.chat_client)
+            await app.state.info_agent.connect()
             logger.info("MCP client initialized successfully")
             app.state.ready = True
 
@@ -97,8 +98,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
                 await app.state.info_agent.close()
                 app.state.info_agent = None
 
-            if rag_service:
-                await rag_service.__aexit__(None, None, None)
+            if app.state.rag_service:
+                await app.state.rag_service.__aexit__(None, None, None)
+                app.state.rag_service = None
 
             if hasattr(app.state, "chat_client") and app.state.chat_client:
                 await app.state.chat_client.close()
@@ -220,9 +222,6 @@ def wait_and_open_browser(check_url: str, open_url: str):
 
 
 def run_server(host: str, port: int, open_browser: bool = False, reload: bool = False):
-    if not load_env():
-        logger.warning("No .env file found")
-
     if open_browser:
         base_url = f"http://{host}:{port}"
         thread = threading.Thread(

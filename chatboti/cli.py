@@ -8,7 +8,6 @@ from pathlib import Path
 from cyclopts import App
 
 from chatboti.agent import amain as agent_amain
-from chatboti.config import load_env
 from chatboti.docker import main as run_docker_main
 from chatboti.logger import setup_logging
 from chatboti.rag_cli import (
@@ -24,11 +23,6 @@ from chatboti.utils import get_version
 setup_logging()
 
 logger = logging.getLogger(__name__)
-
-# Load .env
-if not load_env():
-    logger.warning("No .env file found")
-
 
 app = App(name="chatboti", help="Chatboti - RAG starter kit")
 

@@ -38,6 +38,8 @@ import os
 from functools import lru_cache
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 from chatboti.llm import SimpleLLMClient, get_llm_client, load_config
 
 logger = logging.getLogger(__name__)
@@ -46,33 +48,26 @@ logger = logging.getLogger(__name__)
 _env_loaded = False
 
 
-def load_env(verbose: bool = False, force: bool = False) -> bool:
+def load_env() -> bool:
     """Load environment variables from .env file (idempotent).
 
     Searches for .env file in:
     1. Current working directory
     2. Module parent directory (chatboti package location)
 
-    Only loads once per process unless force=True is specified.
-    Logs the location of the .env file when found.
-
-    :param verbose: If True, pass verbose flag to load_dotenv
-    :param force: If True, reload even if already loaded
     :return: True if .env file was found and loaded (or already loaded)
     """
     global _env_loaded
 
     # Skip if already loaded (unless forced)
-    if _env_loaded and not force:
+    if _env_loaded:
         return True
-
-    from dotenv import load_dotenv
 
     # Try current working directory first
     cwd_env = Path.cwd() / ".env"
     if cwd_env.exists():
         logger.info(f"Loading .env from: {cwd_env}")
-        load_dotenv(cwd_env, verbose=verbose)
+        load_dotenv(cwd_env, verbose=True)
         _env_loaded = True
         return True
 
@@ -81,7 +76,7 @@ def load_env(verbose: bool = False, force: bool = False) -> bool:
     module_env = module_dir / ".env"
     if module_env.exists():
         logger.info(f"Loading .env from: {module_env}")
-        load_dotenv(module_env, verbose=verbose)
+        load_dotenv(module_env, verbose=True)
         _env_loaded = True
         return True
 
@@ -123,6 +118,7 @@ async def get_chat_client() -> SimpleLLMClient:
     :return: Connected chat client
     :raises ValueError: If service or model cannot be determined
     """
+    load_env()
     service = get_chat_service()
     model = os.getenv("CHAT_MODEL") or _get_default_model(service, "chat_models")
 
@@ -156,6 +152,7 @@ async def get_embed_client() -> SimpleLLMClient:
     :return: Connected embedding client
     :raises ValueError: If service cannot be determined
     """
+    load_env()
     service = get_embed_service()
     model = os.getenv("EMBED_MODEL") or _get_default_model(service, "embed_models")
 
