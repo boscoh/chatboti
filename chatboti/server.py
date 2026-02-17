@@ -14,7 +14,6 @@ from uuid import uuid4
 
 import httpx
 import uvicorn
-from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
 from chatboti.llm import SimpleLLMClient
@@ -29,14 +28,10 @@ from chatboti.config import (
     get_chat_service,
     get_embed_client,
     get_embed_service,
+    load_env,
 )
 from chatboti.faiss_rag import FaissRAGService
 from chatboti.utils import get_version
-
-# Load .env file from project root (relative to this module)
-# This ensures consistent behavior regardless of current working directory
-_env_path = Path(__file__).resolve().parent.parent / ".env"
-load_dotenv(_env_path)
 
 logger = logging.getLogger(__name__)
 
@@ -225,6 +220,9 @@ def wait_and_open_browser(check_url: str, open_url: str):
 
 
 def run_server(host: str, port: int, open_browser: bool = False, reload: bool = False):
+    if not load_env():
+        logger.warning("No .env file found")
+
     if open_browser:
         base_url = f"http://{host}:{port}"
         thread = threading.Thread(

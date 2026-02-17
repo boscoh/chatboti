@@ -66,6 +66,7 @@ class InfoAgent:
                 "No service configured: using default EMBED_SERVICE=ollama for MCP server"
             )
 
+        logger.info(f"Starting MCP server: uv run -m {mcp_server_module}")
         return stdio_client(
             StdioServerParameters(
                 command="uv",
@@ -82,13 +83,10 @@ class InfoAgent:
         self._cleanup_manager = AsyncExitStack()
 
         try:
-            mcp_server_module = "chatboti.mcp_server"
-            logger.info(f"Starting MCP server: uv run -m {mcp_server_module}")
-            stdio_ctx = self.start_mcp_server_with_stdio_ctx(mcp_server_module)
+            stdio_ctx = self.start_mcp_server_with_stdio_ctx("chatboti.mcp_server")
             stdio_read, stdio_write = await self._cleanup_manager.enter_async_context(
                 stdio_ctx
             )
-
             client_ctx = ClientSession(stdio_read, stdio_write)
             self._mcp_session = await self._cleanup_manager.enter_async_context(
                 client_ctx

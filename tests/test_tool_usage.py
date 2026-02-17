@@ -11,9 +11,9 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 import pytest
-from dotenv import load_dotenv
 
 from chatboti.agent import InfoAgent
+from chatboti.config import load_env
 from chatboti.llm import get_llm_client, load_config
 
 pytestmark = pytest.mark.asyncio
@@ -21,11 +21,7 @@ pytestmark = pytest.mark.asyncio
 
 def load_test_env():
     """Load environment variables from .env file."""
-    env_path = Path(__file__).parent.parent / ".env"
-    if env_path.exists():
-        load_dotenv(env_path)
-    else:
-        load_dotenv()
+    load_env()
 
 
 def load_speaker_data():

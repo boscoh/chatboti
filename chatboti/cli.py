@@ -6,9 +6,9 @@ import logging
 from pathlib import Path
 
 from cyclopts import App
-from dotenv import load_dotenv
 
 from chatboti.agent import amain as agent_amain
+from chatboti.config import load_env
 from chatboti.docker import main as run_docker_main
 from chatboti.logger import setup_logging
 from chatboti.rag_cli import (
@@ -25,14 +25,9 @@ setup_logging()
 
 logger = logging.getLogger(__name__)
 
-# Load .env from project root (relative to this module), not cwd
-# This ensures consistent behavior regardless of where the command is run from
-env_file = Path(__file__).resolve().parent.parent / ".env"
-if env_file.exists():
-    logger.info(f"Loading environment from {env_file}")
-    load_dotenv(env_file, verbose=True)
-else:
-    logger.warning(f".env file not found at {env_file}")
+# Load .env
+if not load_env():
+    logger.warning("No .env file found")
 
 
 app = App(name="chatboti", help="Chatboti - RAG starter kit")

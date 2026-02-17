@@ -9,7 +9,7 @@ from typing import Any, Dict, Optional
 from mcp.server.fastmcp import FastMCP
 from chatboti.llm import SimpleLLMClient
 
-from chatboti.config import get_embed_client
+from chatboti.config import get_embed_client, load_env
 from chatboti.faiss_rag import FaissRAGService
 from chatboti.logger import setup_logging
 
@@ -120,6 +120,8 @@ def main():
     """Run the MCP server."""
     try:
         setup_logging()
+        if not load_env():
+            logger.warning("No .env file found")
         logger.info("Starting MCP Server...")
         mcp.run()
     except Exception as e:

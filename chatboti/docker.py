@@ -13,7 +13,8 @@ from pathlib import Path
 
 import boto3
 from botocore.exceptions import ClientError
-from dotenv import load_dotenv
+
+from chatboti.config import load_env
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,7 @@ def get_aws_config(is_raise_exception: bool = True):
     :param is_raise_exception: Raise exceptions or warn on errors
     :return: Dict with profile_name and region_name keys
     """
-    load_dotenv()
+    load_env()
 
     aws_config = {}
     available_profiles = set()
@@ -221,15 +222,11 @@ def main():
     script_dir = Path(__file__).parent
     project_root = script_dir.parent
 
-    env_file = project_root / ".env"
     env_docker_file = project_root / ".env.docker"
 
-    if not env_file.exists():
-        logger.error(f".env file not found at {env_file}")
+    if not load_env():
+        logger.error(".env file not found")
         sys.exit(1)
-
-    logger.info(f"Loading environment from {env_file}")
-    load_dotenv(env_file, verbose=True)
 
     chat_service = os.getenv("CHAT_SERVICE", "openai")
     embed_service = os.getenv("EMBED_SERVICE", "openai")
