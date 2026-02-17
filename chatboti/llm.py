@@ -27,6 +27,9 @@ from botocore.exceptions import ClientError, ProfileNotFound
 
 logger = logging.getLogger(__name__)
 
+# Delay needed for aioboto3 to properly cleanup async resources
+AIOBOTO3_CLEANUP_DELAY_SECONDS = 0.1
+
 LLMService = Literal["openai", "ollama", "bedrock", "groq"]
 
 
@@ -1232,17 +1235,42 @@ class BedrockClient(SimpleLLMClient):
             # Give asyncio a moment to clean up pending tasks and connections
             # This ensures aiohttp connectors are properly closed
             import asyncio
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(AIOBOTO3_CLEANUP_DELAY_SECONDS)
 
     def _build_result_from_response(
         self, response: Any, start_time: float
     ) -> Dict[str, Any]:
-        """Build standardized result structure from Bedrock response."""
-        text_parts = []
+        """Build result from Bedrock Converse API response.
+
+        Bedrock Converse API returns responses in format:
+        {
+          "output": {
+            "message": {
+              "content": [
+                {"text": "..."} or
+                {"toolUse": {"toolUseId": "...", "name": "...", "input": {...}}}
+              ]
+            }
+          },
+          "usage": {"inputTokens": X, "outputTokens": Y, ...},
+          "stopReason": "end_turn" | "tool_use" | ...
+        }
+
+        This method extracts text, tool calls, and usage data into our
+        standardized response format.
+
+        Args:
+            response: Bedrock Converse API response (dict) or error string
+            start_time: Request start time for elapsed calculation
+
+        Returns:
+            Standardized response dict with text, metadata, and optional tool_calls
+        """
+        response_text_blocks = []
         tool_calls = []
 
         if isinstance(response, str):
-            text_parts.append(response)
+            response_text_blocks.append(response)
             usage = {}
             stop_reason = "stop"
         else:
@@ -1251,7 +1279,7 @@ class BedrockClient(SimpleLLMClient):
                 message = output["message"]
                 for content in message.get("content", []):
                     if "text" in content:
-                        text_parts.append(content["text"])
+                        response_text_blocks.append(content["text"])
                     elif "toolUse" in content:
                         tool_use = content["toolUse"]
                         tool_call_id = tool_use.get("toolUseId", "")
@@ -1265,7 +1293,7 @@ class BedrockClient(SimpleLLMClient):
             usage_dict = response.get("usage", {})
             stop_reason = response.get("stopReason", "unknown")
 
-        text = "\n".join(text_parts).strip()
+        text = "\n".join(response_text_blocks).strip()
         usage = self._build_usage_metadata(
             usage_dict.get("inputTokens", 0),
             usage_dict.get("outputTokens", 0),
@@ -1357,11 +1385,7 @@ class BedrockClient(SimpleLLMClient):
                 if content:
                     assistant_content.append({"text": content})
                 for tool_call in msg.get("tool_calls", []):
-                    # Extract tool_call_id - check both locations for compatibility.
-                    # Fixed bug where tool_call_id was only checked at top-level "id" field,
-                    # but Bedrock responses store it in function.tool_call_id (line 1118).
-                    # This caused tool_calls to be silently dropped, resulting in
-                    # "Expected toolResult blocks" ValidationException from Bedrock.
+                    # Bedrock stores tool_call_id in function.tool_call_id (line 1206), not top-level 'id'
                     tool_call_id = tool_call.get("id") or tool_call.get("function", {}).get("tool_call_id", "")
                     if tool_call_id:
                         assistant_content.append(
@@ -1457,13 +1481,12 @@ class BedrockClient(SimpleLLMClient):
         max_tokens: Optional[int] = None,
         temperature: float = 0.0,
     ) -> Dict[str, Any]:
-        """Bedrock implementation using Converse API with tool support."""
+        """Get completion from Bedrock Converse API."""
         await self.connect()
         start_time = time.time()
 
         try:
             request_kwargs = self._transform_messages(messages, tools)
-
             request_kwargs.update(
                 {
                     "modelId": self.model,
@@ -1474,15 +1497,11 @@ class BedrockClient(SimpleLLMClient):
                 }
             )
 
-            try:
-                response = await self.client.converse(**request_kwargs)
-                return self._build_result_from_response(response, start_time)
-            except Exception as e:
-                logger.error(f"Error in Converse API call: {str(e)}")
-                raise
+            response = await self.client.converse(**request_kwargs)
+            return self._build_result_from_response(response, start_time)
 
         except Exception as e:
-            logger.error(f"Error in get_completion: {e}")
+            logger.error(f"Error in Bedrock get_completion: {e}")
             return self._build_error_response(e, start_time)
 
     async def embed(self, input: str) -> List[float]:
