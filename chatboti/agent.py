@@ -49,10 +49,23 @@ class InfoAgent:
         :param mcp_server_module: Python module path for MCP server
         :return: stdio_client context manager yielding (stdio_read, stdio_write)
         """
+        # Prepare environment with defaults for MCP server
+        env = os.environ.copy()
+
+        # For testing/development, override to use ollama which doesn't require credentials
+        # This prevents AWS SSO/credential issues during tests
+        if "PYTEST_CURRENT_TEST" in env or "CI" in env:
+            env["EMBED_SERVICE"] = "ollama"
+            logger.debug("Test/CI environment detected: using EMBED_SERVICE=ollama for MCP server")
+        elif "EMBED_SERVICE" not in env and "CHAT_SERVICE" not in env:
+            # Default to ollama if no service is configured
+            env["EMBED_SERVICE"] = "ollama"
+            logger.debug("No service configured: using default EMBED_SERVICE=ollama for MCP server")
+
         return stdio_client(StdioServerParameters(
             command="uv",
             args=["run", "-m", mcp_server_module],
-            env=os.environ.copy(),
+            env=env,
         ))
 
     async def connect(self):
@@ -98,6 +111,14 @@ class InfoAgent:
         if self._cleanup_manager:
             try:
                 await self._cleanup_manager.aclose()
+            except RuntimeError as e:
+                # Handle anyio task scope error during cleanup
+                # This can occur when cleanup happens in a different async context
+                # (e.g., during pytest teardown) than where the context was entered
+                if "cancel scope" in str(e).lower():
+                    logger.debug(f"Ignoring anyio cancel scope error during cleanup: {e}")
+                else:
+                    logger.warning(f"Error closing MCP resources: {e}")
             except Exception as e:
                 logger.warning(f"Error closing MCP resources: {e}")
 
