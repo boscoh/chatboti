@@ -10,11 +10,9 @@ Simple chat client abstraction for LLM providers.
 # Standard library
 import asyncio
 import configparser
-import copy
 import json
 import logging
 import os
-import re
 import time
 import uuid
 from abc import ABC, abstractmethod
@@ -29,7 +27,7 @@ import boto3
 import groq
 import ollama
 import openai
-from botocore.exceptions import ClientError, ProfileNotFound
+from botocore.exceptions import ClientError
 
 logger = logging.getLogger(__name__)
 
@@ -267,40 +265,6 @@ class SimpleLLMClient(ABC):
         """Generate a text embedding vector for the given input string."""
         pass
 
-    def get_token_cost(
-        self, prompt_tokens: int, completion_tokens: int
-    ) -> Optional[float]:
-        """Calculate token cost using pricing from models.json.
-
-        Args:
-            prompt_tokens: Number of tokens in the prompt
-            completion_tokens: Number of tokens in the completion
-
-        Returns:
-            Cost in USD, or None if pricing data not available
-        """
-        # Check if service attribute exists (all clients should have it)
-        if not hasattr(self, 'service'):
-            logger.warning(f"Client {self.__class__.__name__} missing 'service' attribute")
-            return None
-
-        pricing = load_config().get("pricing", {}).get(self.service, {})
-        model_pricing = pricing.get(self.model)
-
-        # Fallback: try partial model name matching (useful for Bedrock)
-        if not model_pricing:
-            for model_key in pricing.keys():
-                if model_key in self.model:
-                    model_pricing = pricing[model_key]
-                    break
-
-        if model_pricing:
-            prompt_cost = (prompt_tokens / 1_000_000) * model_pricing["prompt"]
-            completion_cost = (completion_tokens / 1_000_000) * model_pricing["completion"]
-            return prompt_cost + completion_cost
-
-        return None
-
     def _build_error_response(self, error: Exception, start_time: float) -> Dict[str, Any]:
         """Build standardized error response structure.
 
@@ -405,51 +369,39 @@ class SimpleLLMClient(ABC):
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.close()
 
+    def get_token_cost(
+        self, prompt_tokens: int, completion_tokens: int
+    ) -> Optional[float]:
+        """Calculate token cost using pricing from models.json.
 
-def parse_response_as_json_list(response: Dict[str, Any] | str) -> Optional[Dict[str, Any] | List[Any]]:
-    """Parse JSON from text response, extracting from markdown or .transactions if needed.
+        Args:
+            prompt_tokens: Number of tokens in the prompt
+            completion_tokens: Number of tokens in the completion
 
-    Args:
-        response: Response dict with 'text' key or raw string
-
-    Returns:
-        Parsed JSON object (dict or list) or None if parsing fails
-    """
-    if isinstance(response, dict):
-        response_text = response.get("text", "")
-    elif isinstance(response, str):
-        response_text = response
-    else:
-        return None
-
-    if not response_text:
-        return None
-
-    def try_parse(text):
-        try:
-            return json.loads(text)
-        except json.JSONDecodeError:
+        Returns:
+            Cost in USD, or None if pricing data not available
+        """
+        # Check if service attribute exists (all clients should have it)
+        if not hasattr(self, 'service'):
+            logger.warning(f"Client {self.__class__.__name__} missing 'service' attribute")
             return None
 
-    parsed = try_parse(response_text)
-    if parsed:
-        return parsed
+        pricing = load_config().get("pricing", {}).get(self.service, {})
+        model_pricing = pricing.get(self.model)
 
-    patterns = [
-        r"```(?:json|python)?\s*([\s\S]*?)\s*```",
-        r"```(?:json)?\s*({[\s\S]*})\s*```",
-        r"\{[\s\S]*\}",
-        r"({[\s\S]*})",
-    ]
+        # Fallback: try partial model name matching (useful for Bedrock)
+        if not model_pricing:
+            for model_key in pricing.keys():
+                if model_key in self.model:
+                    model_pricing = pricing[model_key]
+                    break
 
-    for pattern in patterns:
-        matches = re.findall(pattern, response_text, re.IGNORECASE)
-        for match in matches:
-            parsed = try_parse(match)
-            if parsed:
-                return parsed
+        if model_pricing:
+            prompt_cost = (prompt_tokens / 1_000_000) * model_pricing["prompt"]
+            completion_cost = (completion_tokens / 1_000_000) * model_pricing["completion"]
+            return prompt_cost + completion_cost
 
-    return None
+        return None
 
 
 class OllamaClient(SimpleLLMClient):
@@ -1209,6 +1161,7 @@ class BedrockClient(SimpleLLMClient):
         self.model = model
         self.client = None
         self._session = None
+        self._client_ctx = None
         self._closed = True
 
     async def connect(self):
@@ -1219,13 +1172,14 @@ class BedrockClient(SimpleLLMClient):
         logger.info(f"Initializing 'bedrock:{self.model}'")
         aws_config = get_aws_config()
         self._session = aioboto3.Session(**aws_config)
-        self.client = await self._session.client("bedrock-runtime").__aenter__()
+        self._client_ctx = self._session.client("bedrock-runtime")
+        self.client = await self._client_ctx.__aenter__()
         self._closed = False
 
     async def close(self):
         """Close the client and properly clean up aiohttp sessions."""
         if self.client is not None and not self._closed:
-            await self.client.__aexit__(None, None, None)
+            await self._client_ctx.__aexit__(None, None, None)
             self.client = None
             self._closed = True
 
