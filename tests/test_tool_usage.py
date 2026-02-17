@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 
 pytestmark = pytest.mark.asyncio
 
-from microeval.llm import get_llm_client, load_config
+from chatboti.llm import get_llm_client, load_config
 
 from chatboti.agent import InfoAgent
 
@@ -87,6 +87,9 @@ async def try_initialize_config(config: Dict[str, Any]) -> Optional[Dict[str, An
     if not chat_model:
         model_config = load_config()
         chat_model = model_config.get("chat_models", {}).get(chat_service)
+        # If chat_model is a list, take the first one
+        if isinstance(chat_model, list) and chat_model:
+            chat_model = chat_model[0]
 
     if not chat_model:
         return None
@@ -623,7 +626,7 @@ async def test_openai_specific_features(provider_config):
     if chat_service != "openai":
         pytest.skip("This test is OpenAI-specific")
 
-    from microeval.llm import OpenAIClient
+    from chatboti.llm import OpenAIClient
 
     client = OpenAIClient(model=chat_model)
     await client.connect()
@@ -683,7 +686,7 @@ async def test_ollama_specific_features(provider_config):
     if chat_service != "ollama":
         pytest.skip("This test is Ollama-specific")
 
-    from microeval.llm import OllamaClient
+    from chatboti.llm import OllamaClient
 
     client = OllamaClient(model=chat_model)
     await client.connect()

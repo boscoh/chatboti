@@ -1,11 +1,11 @@
 {
   "chat_models": {
     "bedrock": [
+      "amazon.nova-pro-v1:0",
       "au.anthropic.claude-sonnet-4-5-20250929-v1:0",
       "au.anthropic.claude-haiku-4-5-20251001-v1:0",
       "au.anthropic.claude-opus-4-6-v1",
-      "apac.anthropic.claude-3-7-sonnet-20250219-v1:0",
-      "amazon.nova-pro-v1:0"
+      "apac.anthropic.claude-3-7-sonnet-20250219-v1:0"
     ],
     "openai": ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"],
     "ollama": ["llama3.2"],

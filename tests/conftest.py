@@ -5,7 +5,7 @@ from typing import AsyncGenerator, List, Optional
 
 import numpy as np
 import pytest
-from microeval.llm import SimpleLLMClient, get_llm_client
+from chatboti.llm import SimpleLLMClient, get_llm_client
 
 from chatboti.document import ChunkRef, Document, DocumentChunk
 from chatboti.faiss_rag import FaissRAGService

@@ -1226,12 +1226,9 @@ class BedrockClient(SimpleLLMClient):
                 if content:
                     assistant_content.append({"text": content})
                 for tool_call in msg.get("tool_calls", []):
-                    # TODO(chatboti-8a0.3): BUG - tool_call_id lookup is inconsistent
-                    # All LLM clients store tool_call_id in function.tool_call_id (lines 758, 1118, 511)
-                    # but here we only check tool_call.id. This causes tool_calls to be silently dropped
-                    # when tool_call_id is not at the top level, resulting in missing toolResult blocks.
-                    # Fix: Check both tool_call.get("id") and tool_call["function"].get("tool_call_id")
-                    tool_call_id = tool_call.get("id", "")
+                    # Extract tool_call_id - check both locations for compatibility
+                    # Bedrock responses store it in function.tool_call_id (line 1118)
+                    tool_call_id = tool_call.get("id") or tool_call.get("function", {}).get("tool_call_id", "")
                     if tool_call_id:
                         assistant_content.append(
                             {
