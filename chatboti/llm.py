@@ -300,10 +300,39 @@ class SimpleLLMClient(ABC):
         """Generate a text embedding vector for the given input string."""
         pass
 
-    @abstractmethod
-    def get_token_cost(self) -> float:
-        """Get the cost per 1K tokens for the model in AUD."""
-        pass
+    def get_token_cost(
+        self, prompt_tokens: int, completion_tokens: int
+    ) -> Optional[float]:
+        """Calculate token cost using pricing from models.json.
+
+        Args:
+            prompt_tokens: Number of tokens in the prompt
+            completion_tokens: Number of tokens in the completion
+
+        Returns:
+            Cost in USD, or None if pricing data not available
+        """
+        # Check if service attribute exists (all clients should have it)
+        if not hasattr(self, 'service'):
+            logger.warning(f"Client {self.__class__.__name__} missing 'service' attribute")
+            return None
+
+        pricing = load_pricing().get(self.service, {})
+        model_pricing = pricing.get(self.model)
+
+        # Fallback: try partial model name matching (useful for Bedrock)
+        if not model_pricing:
+            for model_key in pricing.keys():
+                if model_key in self.model:
+                    model_pricing = pricing[model_key]
+                    break
+
+        if model_pricing:
+            prompt_cost = (prompt_tokens / 1_000_000) * model_pricing["prompt"]
+            completion_cost = (completion_tokens / 1_000_000) * model_pricing["completion"]
+            return prompt_cost + completion_cost
+
+        return None
 
     def _build_error_response(self, error: Exception, start_time: float) -> Dict[str, Any]:
         """Build standardized error response structure.
@@ -340,7 +369,6 @@ class SimpleLLMClient(ABC):
         return {
             "prompt_tokens": prompt_tokens,
             "completion_tokens": completion_tokens,
-            "total_tokens": prompt_tokens + completion_tokens,
             "elapsed_seconds": elapsed_seconds,
         }
 
@@ -467,6 +495,7 @@ class OllamaClient(SimpleLLMClient):
         Raises:
             RuntimeError: If Ollama is not running or the model is not available
         """
+        self.service = "ollama"
         self.model = model
         self.client = None
 
@@ -678,8 +707,10 @@ class OllamaClient(SimpleLLMClient):
             logger.error(f"Error calling Ollama embed: {e}")
             raise RuntimeError(f"Error generating embedding: {str(e)}")
 
-    def get_token_cost(self) -> float:
-        """Returns 0.0 AUD since Ollama runs locally with no API costs."""
+    def get_token_cost(
+        self, prompt_tokens: int, completion_tokens: int
+    ) -> Optional[float]:
+        """Returns 0.0 since Ollama runs locally with no API costs."""
         return 0.0
 
 
@@ -697,6 +728,7 @@ class OpenAIClient(SimpleLLMClient):
             ValueError: If OPENAI_API_KEY environment variable is not set
             RuntimeError: If the API key is invalid or the model is not available
         """
+        self.service = "openai"
         self.model = model
         self.client = None
         self._closed = True
@@ -898,21 +930,6 @@ class OpenAIClient(SimpleLLMClient):
             logger.error(f"Error calling OpenAI embed: {e}")
             raise RuntimeError(f"Error generating embedding: {str(e)}")
 
-    def get_token_cost(
-        self, prompt_tokens: int, completion_tokens: int
-    ) -> Optional[float]:
-        """Calculate token cost based on OpenAI pricing."""
-        pricing = load_pricing().get("openai", {})
-        model_pricing = pricing.get(self.model)
-
-        if model_pricing:
-            prompt_cost = (prompt_tokens / 1_000_000) * model_pricing["prompt"]
-            completion_cost = (completion_tokens / 1_000_000) * model_pricing["completion"]
-            return prompt_cost + completion_cost
-
-        logger.warning(f"No pricing data for model: {self.model}")
-        return None
-
 
 class GroqClient(OpenAIClient):
     """Groq chat client that inherits from OpenAI client (Groq uses OpenAI-compatible API).
@@ -925,6 +942,15 @@ class GroqClient(OpenAIClient):
     - Usage tracking with _build_usage_metadata()
     - Response formatting with _build_success_response()
     """
+
+    def __init__(self, model: str = None):
+        """Initialize Groq chat client.
+
+        Args:
+            model: Name of the Groq model to use (default from config)
+        """
+        super().__init__(model=model)
+        self.service = "groq"
 
     async def connect(self):
         """Initialize connection to Groq API.
@@ -952,21 +978,6 @@ class GroqClient(OpenAIClient):
             "Groq does not currently support text embeddings. "
             "Please use OpenAI or another provider for embedding generation."
         )
-
-    def get_token_cost(
-        self, prompt_tokens: int, completion_tokens: int
-    ) -> Optional[float]:
-        """Calculate token cost based on Groq pricing."""
-        pricing = load_pricing().get("groq", {})
-        model_pricing = pricing.get(self.model)
-
-        if model_pricing:
-            prompt_cost = (prompt_tokens / 1_000_000) * model_pricing["prompt"]
-            completion_cost = (completion_tokens / 1_000_000) * model_pricing["completion"]
-            return prompt_cost + completion_cost
-
-        logger.warning(f"No pricing data for Groq model: {self.model}")
-        return None
 
 
 def _read_aws_profiles_from_file(file_path: str) -> Set[str]:
@@ -1227,6 +1238,7 @@ class BedrockClient(SimpleLLMClient):
         Args:
             model: Claude model ID for Bedrock (default from config).
         """
+        self.service = "bedrock"
         self.model = model
         self.client = None
         self._session = None
@@ -1541,26 +1553,3 @@ class BedrockClient(SimpleLLMClient):
             logger.error(f"Error calling Bedrock embed: {e}")
             raise RuntimeError(f"Error generating embedding: {str(e)}")
 
-    def get_token_cost(
-        self, prompt_tokens: int, completion_tokens: int
-    ) -> Optional[float]:
-        """Calculate token cost based on Bedrock pricing."""
-        pricing = load_pricing().get("bedrock", {})
-
-        # Try exact model match first
-        model_pricing = pricing.get(self.model)
-
-        # Fall back to simplified model name matching
-        if not model_pricing:
-            for model_key in pricing.keys():
-                if model_key in self.model:
-                    model_pricing = pricing[model_key]
-                    break
-
-        if model_pricing:
-            prompt_cost = (prompt_tokens / 1_000_000) * model_pricing["prompt"]
-            completion_cost = (completion_tokens / 1_000_000) * model_pricing["completion"]
-            return prompt_cost + completion_cost
-
-        logger.warning(f"No pricing data for Bedrock model: {self.model}")
-        return None
