@@ -29,7 +29,7 @@ class InfoAgent:
         self.chat_client = chat_client
 
         self._mcp_session: Optional[ClientSession] = None
-        self._exit_stack: Optional[AsyncExitStack] = None
+        self._cleanup_manager: Optional[AsyncExitStack] = None
 
         self.tools: Optional[List[Dict[str, Any]]] = None
 
@@ -38,33 +38,35 @@ class InfoAgent:
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.disconnect()
+        await self.close()
         return False
 
-    async def connect(self):
-        if self._mcp_session:
-            return
+    async def _create_mcp_session(self, mcp_server_module: str) -> ClientSession:
+        """Create and initialize MCP session from server module path.
 
-        self._exit_stack = AsyncExitStack()
-
+        :param mcp_server_module: Python module path for MCP server
+        :return: Initialized ClientSession
+        """
         try:
-            logger.info("Starting MCP stdio client with command: uv run -m chatboti.mcp_server")
-            stdio_read, stdio_write = await self._exit_stack.enter_async_context(
+            logger.info(f"Starting MCP stdio client with command: uv run -m {mcp_server_module}")
+            stdio_read, stdio_write = await self._cleanup_manager.enter_async_context(
                 stdio_client(StdioServerParameters(
                     command="uv",
-                    args=["run", "-m", "chatboti.mcp_server"],
+                    args=["run", "-m", mcp_server_module],
                     env=os.environ.copy(),
                 ))
             )
             logger.info("MCP stdio connection established")
 
-            self._mcp_session = await self._exit_stack.enter_async_context(
+            session = await self._cleanup_manager.enter_async_context(
                 ClientSession(stdio_read, stdio_write)
             )
             logger.info("MCP session created, initializing...")
 
-            await self._mcp_session.initialize()
+            await session.initialize()
             logger.info("MCP session initialized successfully")
+
+            return session
         except Exception as e:
             logger.error(f"Failed to initialize MCP client: {e}")
             logger.error(
@@ -77,33 +79,31 @@ class InfoAgent:
             )
             raise
 
+    async def connect(self):
+        """Connect to MCP server and chat client."""
+        if self._mcp_session:
+            return
+
+        self._cleanup_manager = AsyncExitStack()
+        self._mcp_session = await self._create_mcp_session("chatboti.mcp_server")
+
         self.tools = await self.get_tools()
-        names = [py_.get(tool, "function.name", "") for tool in self.tools]
+        names = [py_.get(t, "function.name", "") for t in self.tools]
         logger.info(f"Connected Server to MCP tools: {', '.join(names)}")
 
-        try:
-            logger.info("Connecting chat client...")
-            await self.chat_client.connect()
-            logger.info("Chat client connected successfully")
-        except Exception as e:
-            logger.error(f"Failed to connect chat client: {e}")
-            raise
+        logger.info("Connecting chat client...")
+        await self.chat_client.connect()
+        logger.info("Chat client connected successfully")
 
-    async def disconnect(self):
-        try:
-            if self.chat_client:
-                await self.chat_client.close()
-        except Exception:
-            pass
-
-        if self._exit_stack:
+    async def close(self):
+        if self._cleanup_manager:
             try:
-                await self._exit_stack.aclose()
+                await self._cleanup_manager.aclose()
             except Exception as e:
                 logger.warning(f"Error closing MCP resources: {e}")
 
         self._mcp_session = None
-        self._exit_stack = None
+        self._cleanup_manager = None
 
     async def get_tools(self):
         response = await self._mcp_session.list_tools()
