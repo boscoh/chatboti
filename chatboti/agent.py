@@ -7,8 +7,8 @@ import logging
 import os
 import re
 import textwrap
-from contextlib import AsyncExitStack
-from typing import Any, Dict, List, Optional
+from contextlib import AbstractAsyncContextManager, AsyncExitStack
+from typing import Any, Dict, List, Optional, Tuple
 
 import pydash as py_
 from mcp import ClientSession, StdioServerParameters
@@ -41,40 +41,39 @@ class InfoAgent:
         await self.close()
         return False
 
-    async def _start_mcp_server(self, mcp_server_module: str):
-        """Start MCP server subprocess and return stdio streams.
+    def start_mcp_server(
+        self, mcp_server_module: str
+    ) -> AbstractAsyncContextManager[Tuple[Any, Any]]:
+        """Start MCP server subprocess and return stdio client context.
 
         :param mcp_server_module: Python module path for MCP server
-        :return: Tuple of (stdio_read, stdio_write) streams
+        :return: stdio_client context manager yielding (stdio_read, stdio_write)
         """
-        logger.info(f"Starting MCP server: uv run -m {mcp_server_module}")
-        return await self._cleanup_manager.enter_async_context(
-            stdio_client(StdioServerParameters(
-                command="uv",
-                args=["run", "-m", mcp_server_module],
-                env=os.environ.copy(),
-            ))
-        )
+        return stdio_client(StdioServerParameters(
+            command="uv",
+            args=["run", "-m", mcp_server_module],
+            env=os.environ.copy(),
+        ))
 
-    async def _create_mcp_session(self, mcp_server_module: str) -> ClientSession:
-        """Create and initialize MCP session from server module path.
+    async def connect(self):
+        """Connect to MCP server and chat client."""
+        if self._mcp_session:
+            return
 
-        :param mcp_server_module: Python module path for MCP server
-        :return: Initialized ClientSession
-        """
+        self._cleanup_manager = AsyncExitStack()
+
         try:
-            stdio_read, stdio_write = await self._start_mcp_server(mcp_server_module)
-            logger.info("MCP stdio connection established")
+            mcp_server_module = "chatboti.mcp_server"
+            logger.info(f"Starting MCP server: uv run -m {mcp_server_module}")
+            stdio_ctx = self.start_mcp_server(mcp_server_module)
+            stdio_read, stdio_write = await self._cleanup_manager.enter_async_context(stdio_ctx)
 
-            session = await self._cleanup_manager.enter_async_context(
-                ClientSession(stdio_read, stdio_write)
-            )
+            client_ctx = ClientSession(stdio_read, stdio_write)
+            self._mcp_session = await self._cleanup_manager.enter_async_context(client_ctx)
+
             logger.info("MCP session created, initializing...")
-
-            await session.initialize()
+            await self._mcp_session.initialize()
             logger.info("MCP session initialized successfully")
-
-            return session
         except Exception as e:
             logger.error(f"Failed to initialize MCP client: {e}")
             logger.error(
@@ -86,14 +85,6 @@ class InfoAgent:
                 "  5. Port already in use"
             )
             raise
-
-    async def connect(self):
-        """Connect to MCP server and chat client."""
-        if self._mcp_session:
-            return
-
-        self._cleanup_manager = AsyncExitStack()
-        self._mcp_session = await self._create_mcp_session("chatboti.mcp_server")
 
         self.tools = await self.get_tools()
         names = [py_.get(t, "function.name", "") for t in self.tools]
@@ -215,7 +206,12 @@ class InfoAgent:
             logger.info(f"- {py_.get(msg, 'role', 'unknown')}: {truncated}")
 
     def _get_tool_call_id(self, tool_call: Dict[str, Any]) -> str:
-        return py_.get(tool_call, "function.tool_call_id", "")
+        """Extract tool call ID from tool call dict.
+
+        Checks both the top-level 'id' field (after formatting by _build_assistant_message)
+        and the nested 'function.tool_call_id' field (from Bedrock response).
+        """
+        return py_.get(tool_call, "id", "") or py_.get(tool_call, "function.tool_call_id", "")
 
     def _sanitize_tool_call(self, tool_call: Dict[str, Any]) -> Dict[str, Any]:
         """Normalize tool call arguments to valid JSON string with sorted keys.
