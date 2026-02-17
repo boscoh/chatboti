@@ -9,7 +9,14 @@
     ],
     "openai": ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"],
     "ollama": ["llama3.2"],
-    "groq": ["llama-3.3-70b-versatile"]
+    "groq": [
+      "llama-3.3-70b-versatile",
+      "llama-3.1-8b-instant",
+      "openai/gpt-oss-120b",
+      "openai/gpt-oss-20b",
+      "groq/compound",
+      "groq/compound-mini"
+    ]
   },
   "embed_models": {
     "openai": ["text-embedding-3-small", "text-embedding-3-large", "text-embedding-ada-002"],
@@ -26,8 +33,11 @@
     },
     "groq": {
       "llama-3.3-70b-versatile": {"prompt": 0.000349, "completion": 0.000699},
-      "llama-3.1-70b-versatile": {"prompt": 0.00029, "completion": 0.00059},
-      "llama-3.1-8b-instant": {"prompt": 0.000025, "completion": 0.00005}
+      "llama-3.1-8b-instant": {"prompt": 0.000025, "completion": 0.00005},
+      "openai/gpt-oss-120b": {"prompt": 0.0005, "completion": 0.0008},
+      "openai/gpt-oss-20b": {"prompt": 0.0001, "completion": 0.0002},
+      "groq/compound": {"prompt": 0.0005, "completion": 0.0008},
+      "groq/compound-mini": {"prompt": 0.0001, "completion": 0.0002}
     },
     "bedrock": {
       "claude-opus-4-6": {"prompt": 0.0228, "completion": 0.1216},

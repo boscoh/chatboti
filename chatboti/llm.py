@@ -920,6 +920,77 @@ class GroqClient(OpenAIClient):
         self.client = groq.AsyncGroq(api_key=api_key)
         self._closed = False
 
+    async def get_completion(
+        self,
+        messages: List[Dict[str, Any]],
+        tools: Optional[List[Dict[str, Any]]] = None,
+        max_tokens: Optional[int] = None,
+        temperature: float = 0.0,
+    ) -> Dict[str, Any]:
+        """Groq implementation with parallel_tool_calls disabled for better reliability.
+
+        Note: Groq models have known issues with parallel tool calling where they
+        sometimes generate invalid XML-like formats instead of proper JSON.
+        Disabling parallel_tool_calls may improve reliability.
+        """
+        await self.connect()
+
+        start_time = time.time()
+
+        try:
+            formatted_messages = self._transform_messages(messages)
+
+            # Build API call parameters
+            api_params = {
+                "model": self.model,
+                "messages": formatted_messages,
+                "max_tokens": max_tokens,
+                "temperature": temperature,
+            }
+
+            # Only add tools-related params if tools are provided
+            if tools:
+                api_params["tools"] = tools
+                # Disable parallel tool calls for better reliability with Groq
+                api_params["parallel_tool_calls"] = False
+
+            completion = await self.client.chat.completions.create(**api_params)
+            elapsed_seconds = time.time() - start_time
+
+            text = completion.choices[0].message.content if completion.choices else ""
+
+            if hasattr(completion, "usage") and completion.usage:
+                usage = self._build_usage_metadata(
+                    completion.usage.prompt_tokens,
+                    completion.usage.completion_tokens,
+                    elapsed_seconds,
+                )
+            else:
+                usage = self._build_usage_metadata(0, 0, elapsed_seconds)
+
+            # Extract tool calls if present
+            tool_calls = None
+            if completion.choices and completion.choices[0].message.tool_calls:
+                tool_calls = []
+                for tool_call in completion.choices[0].message.tool_calls:
+                    tool_calls.append(
+                        self._format_tool_call_output(
+                            tool_call.function.name,
+                            tool_call.function.arguments,
+                            tool_call.id,
+                        )
+                    )
+
+            finish_reason = (
+                completion.choices[0].finish_reason
+                if completion.choices and completion.choices[0].finish_reason
+                else "stop"
+            )
+            return self._build_success_response(text, usage, finish_reason, tool_calls)
+        except Exception as e:
+            logger.error(f"Error calling Groq: {e}")
+            return self._build_error_response(e, start_time)
+
     async def embed(self, input: str) -> List[float]:
         """Groq does not currently support embeddings."""
         raise NotImplementedError(
