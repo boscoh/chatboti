@@ -854,9 +854,23 @@ class OpenAIClient(SimpleLLMClient):
 
 
 class GroqClient(OpenAIClient):
-    """Groq chat client that inherits from OpenAI client (Groq uses OpenAI-compatible API)."""
+    """Groq chat client that inherits from OpenAI client (Groq uses OpenAI-compatible API).
+
+    Groq provides fast inference for open-source models using their custom LPU hardware.
+    Inherits all functionality from OpenAIClient including:
+    - Tool/function calling support
+    - Standard message formatting
+    - Error handling with _build_error_response()
+    - Usage tracking with _build_usage_metadata()
+    - Response formatting with _build_success_response()
+    """
 
     async def connect(self):
+        """Initialize connection to Groq API.
+
+        Raises:
+            ValueError: If GROQ_API_KEY environment variable is not set
+        """
         if self.client and not self._closed:
             return
 
@@ -884,10 +898,15 @@ class GroqClient(OpenAIClient):
         USD prices converted to AUD using 1.52 exchange rate (Dec 2024).
         Blended rates assume 50% input / 50% output token mix:
         - llama-3.3-70b: $0.00069 USD → $0.001049 AUD per 1K tokens (blended: $0.00059 in + $0.00079 out)
-        - llama-3.1-70b: $0.00069 USD → $0.001049 AUD per 1K tokens (blended: $0.00059 in + $0.00079 out)
+        - llama-3.1-70b: $0.00069 USD → $0.001049 AUD per 1K tokens (may be retired, verify availability)
         - llama-3.1-8b: $0.000065 USD → $0.0001 AUD per 1K tokens (blended: $0.00005 in + $0.00008 out)
-        - mixtral-8x7b: $0.00024 USD → $0.00036 AUD per 1K tokens (estimated blended)
+        - mixtral-8x7b: $0.00024 USD → $0.00036 AUD per 1K tokens (DEPRECATED as of Feb 2026)
         - gemma2-9b: $0.0002 USD → $0.0003 AUD per 1K tokens (estimated blended)
+
+        Note: Pricing will be moved to models.json in task 44r.6 for centralized management.
+
+        Returns:
+            Cost per 1K tokens in AUD, or 0.0 for unknown models
         """
         pricing = {
             "llama-3.3-70b-versatile": 0.001049,
@@ -895,7 +914,7 @@ class GroqClient(OpenAIClient):
             "llama-3.1-8b-instant": 0.0001,
             "llama3-70b-8192": 0.001049,
             "llama3-8b-8192": 0.0001,
-            "mixtral-8x7b-32768": 0.00036,
+            "mixtral-8x7b-32768": 0.00036,  # DEPRECATED
             "gemma2-9b-it": 0.0003,
         }
         model_key = self.model.lower()
