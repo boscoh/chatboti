@@ -41,7 +41,7 @@ class InfoAgent:
         await self.close()
         return False
 
-    def start_mcp_server(
+    def start_mcp_server_with_stdio_ctx(
         self, mcp_server_module: str
     ) -> AbstractAsyncContextManager[Tuple[Any, Any]]:
         """Start MCP server subprocess and return stdio client context.
@@ -65,7 +65,7 @@ class InfoAgent:
         try:
             mcp_server_module = "chatboti.mcp_server"
             logger.info(f"Starting MCP server: uv run -m {mcp_server_module}")
-            stdio_ctx = self.start_mcp_server(mcp_server_module)
+            stdio_ctx = self.start_mcp_server_with_stdio_ctx(mcp_server_module)
             stdio_read, stdio_write = await self._cleanup_manager.enter_async_context(stdio_ctx)
 
             client_ctx = ClientSession(stdio_read, stdio_write)
