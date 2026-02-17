@@ -67,6 +67,17 @@ def load_config() -> Dict[str, Any]:
         raise
 
 
+@lru_cache
+def load_pricing() -> Dict[str, Dict[str, Dict[str, float]]]:
+    """Load token pricing from models.json.
+
+    Returns:
+        Dict mapping provider -> model -> {prompt: X, completion: Y}
+    """
+    config = load_config()
+    return config.get("pricing", {})
+
+
 def get_llm_client(client_type: LLMService, **kwargs) -> "SimpleLLMClient":
     """
     Gets a chat client that satisfies SimpleLLMClient interface.
@@ -871,30 +882,20 @@ class OpenAIClient(SimpleLLMClient):
             logger.error(f"Error calling OpenAI embed: {e}")
             raise RuntimeError(f"Error generating embedding: {str(e)}")
 
-    def get_token_cost(self) -> float:
-        """Returns OpenAI model pricing per 1K tokens in AUD.
+    def get_token_cost(
+        self, prompt_tokens: int, completion_tokens: int
+    ) -> Optional[float]:
+        """Calculate token cost based on OpenAI pricing."""
+        pricing = load_pricing().get("openai", {})
+        model_pricing = pricing.get(self.model)
 
-        USD prices converted to AUD using 1.52 exchange rate (Dec 2024).
-        Blended rates assume 50% input / 50% output token mix:
-        - gpt-4: $0.045 USD → $0.0684 AUD per 1K tokens (blended: $0.03 in + $0.06 out)
-        - gpt-4o: $0.00625 USD → $0.0095 AUD per 1K tokens (blended: $0.0025 in + $0.01 out)
-        - gpt-4o-mini: $0.000375 USD → $0.00057 AUD per 1K tokens (blended: $0.00015 in + $0.0006 out)
-        - gpt-4-turbo: $0.02 USD → $0.0304 AUD per 1K tokens (blended: $0.01 in + $0.03 out)
-        - gpt-3.5-turbo: $0.001 USD → $0.00152 AUD per 1K tokens (blended: $0.0005 in + $0.0015 out)
-        """
-        pricing = {
-            "gpt-4": 0.0684,
-            "gpt-4o": 0.0095,
-            "gpt-4o-mini": 0.00057,
-            "gpt-4-turbo": 0.0304,
-            "gpt-3.5-turbo": 0.00152,
-        }
-        model_key = self.model.lower()
-        if model_key not in pricing:
-            logger.warning(
-                f"Unknown OpenAI model '{self.model}', using default cost of 0.0 AUD"
-            )
-        return pricing.get(model_key, 0.0)
+        if model_pricing:
+            prompt_cost = (prompt_tokens / 1_000_000) * model_pricing["prompt"]
+            completion_cost = (completion_tokens / 1_000_000) * model_pricing["completion"]
+            return prompt_cost + completion_cost
+
+        logger.warning(f"No pricing data for model: {self.model}")
+        return None
 
 
 class GroqClient(OpenAIClient):
@@ -936,37 +937,20 @@ class GroqClient(OpenAIClient):
             "Please use OpenAI or another provider for embedding generation."
         )
 
-    def get_token_cost(self) -> float:
-        """Returns Groq model pricing per 1K tokens in AUD.
+    def get_token_cost(
+        self, prompt_tokens: int, completion_tokens: int
+    ) -> Optional[float]:
+        """Calculate token cost based on Groq pricing."""
+        pricing = load_pricing().get("groq", {})
+        model_pricing = pricing.get(self.model)
 
-        USD prices converted to AUD using 1.52 exchange rate (Dec 2024).
-        Blended rates assume 50% input / 50% output token mix:
-        - llama-3.3-70b: $0.00069 USD → $0.001049 AUD per 1K tokens (blended: $0.00059 in + $0.00079 out)
-        - llama-3.1-70b: $0.00069 USD → $0.001049 AUD per 1K tokens (may be retired, verify availability)
-        - llama-3.1-8b: $0.000065 USD → $0.0001 AUD per 1K tokens (blended: $0.00005 in + $0.00008 out)
-        - mixtral-8x7b: $0.00024 USD → $0.00036 AUD per 1K tokens (DEPRECATED as of Feb 2026)
-        - gemma2-9b: $0.0002 USD → $0.0003 AUD per 1K tokens (estimated blended)
+        if model_pricing:
+            prompt_cost = (prompt_tokens / 1_000_000) * model_pricing["prompt"]
+            completion_cost = (completion_tokens / 1_000_000) * model_pricing["completion"]
+            return prompt_cost + completion_cost
 
-        Note: Pricing will be moved to models.json in task 44r.6 for centralized management.
-
-        Returns:
-            Cost per 1K tokens in AUD, or 0.0 for unknown models
-        """
-        pricing = {
-            "llama-3.3-70b-versatile": 0.001049,
-            "llama-3.1-70b-versatile": 0.001049,
-            "llama-3.1-8b-instant": 0.0001,
-            "llama3-70b-8192": 0.001049,
-            "llama3-8b-8192": 0.0001,
-            "mixtral-8x7b-32768": 0.00036,  # DEPRECATED
-            "gemma2-9b-it": 0.0003,
-        }
-        model_key = self.model.lower()
-        if model_key not in pricing:
-            logger.warning(
-                f"Unknown Groq model '{self.model}', using default cost of 0.0 AUD"
-            )
-        return pricing.get(model_key, 0.0)
+        logger.warning(f"No pricing data for Groq model: {self.model}")
+        return None
 
 
 def _read_aws_profiles_from_file(file_path: str) -> Set[str]:
@@ -1543,37 +1527,26 @@ class BedrockClient(SimpleLLMClient):
             logger.error(f"Error calling Bedrock embed: {e}")
             raise RuntimeError(f"Error generating embedding: {str(e)}")
 
-    def get_token_cost(self) -> float:
-        """Returns Bedrock model pricing per 1K tokens in AUD based on model type.
+    def get_token_cost(
+        self, prompt_tokens: int, completion_tokens: int
+    ) -> Optional[float]:
+        """Calculate token cost based on Bedrock pricing."""
+        pricing = load_pricing().get("bedrock", {})
 
-        USD prices converted to AUD using 1.52 exchange rate (Dec 2024).
-        Blended rates assume 50% input / 50% output token mix:
-        - Claude Opus: $0.015 USD → $0.0228 AUD per 1K tokens (estimated blended)
-        - Claude Sonnet: $0.009 USD → $0.01368 AUD per 1K tokens (blended: $0.003 in + $0.015 out)
-        - Claude Haiku: $0.00025 USD → $0.00038 AUD per 1K tokens (estimated blended)
-        - Amazon Nova Pro: $0.002 USD → $0.00304 AUD per 1K tokens (blended: $0.0008 in + $0.0032 out)
-        - Amazon Nova Lite: $0.00006 USD → $0.000091 AUD per 1K tokens (estimated blended)
-        - Amazon Nova Micro: $0.000035 USD → $0.000053 AUD per 1K tokens (estimated blended)
-        """
-        model_lower = self.model.lower()
+        # Try exact model match first
+        model_pricing = pricing.get(self.model)
 
-        if "opus" in model_lower:
-            return 0.0228
-        elif "sonnet" in model_lower:
-            return 0.01368
-        elif "haiku" in model_lower:
-            return 0.00038
-        elif "nova-pro" in model_lower or "novapro" in model_lower:
-            return 0.00304
-        elif "nova-lite" in model_lower or "novalite" in model_lower:
-            return 0.000091
-        elif "nova-micro" in model_lower or "novamicro" in model_lower:
-            return 0.000053
-        elif "nova" in model_lower:
-            logger.info(f"Using Nova Pro pricing for model '{self.model}'")
-            return 0.00304
-        else:
-            logger.warning(
-                f"Unknown Bedrock model '{self.model}', using default cost of 0.0 AUD"
-            )
-            return 0.0
+        # Fall back to simplified model name matching
+        if not model_pricing:
+            for model_key in pricing.keys():
+                if model_key in self.model:
+                    model_pricing = pricing[model_key]
+                    break
+
+        if model_pricing:
+            prompt_cost = (prompt_tokens / 1_000_000) * model_pricing["prompt"]
+            completion_cost = (completion_tokens / 1_000_000) * model_pricing["completion"]
+            return prompt_cost + completion_cost
+
+        logger.warning(f"No pricing data for Bedrock model: {self.model}")
+        return None
