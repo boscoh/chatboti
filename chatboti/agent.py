@@ -48,7 +48,7 @@ class InfoAgent:
         :return: Initialized ClientSession
         """
         try:
-            logger.info(f"Starting MCP stdio client with command: uv run -m {mcp_server_module}")
+            logger.info(f"Starting MCP server: uv run -m {mcp_server_module}")
             stdio_read, stdio_write = await self._cleanup_manager.enter_async_context(
                 stdio_client(StdioServerParameters(
                     command="uv",
