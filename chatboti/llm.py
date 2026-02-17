@@ -45,49 +45,16 @@ AIOBOTO3_CLEANUP_DELAY_SECONDS = 0.1
 LLMService = Literal["openai", "ollama", "bedrock", "groq"]
 
 
-def load_config() -> Dict[str, Any]:
-    """
-    Load and return the models configuration from models.json.
-
-    Returns:
-        Dict[str, Any]: Configuration dictionary with chat_models and embed_models
-    """
-    config_path = Path(__file__).parent / "models.json"
-    try:
-        with open(config_path, "r") as f:
-            config = json.load(f)
-            logger.info(f"Loaded selectable models from '{config_path}'")
-            return config
-    except FileNotFoundError:
-        logger.warning(f"Config file not found at {config_path}, using fallback config")
-        # Fallback config if file doesn't exist
-        return {
-            "chat_models": {
-                "bedrock": ["amazon.nova-pro-v1:0"],
-                "openai": ["gpt-4o"],
-                "ollama": ["llama3.2"],
-                "groq": ["llama-3.3-70b-versatile"],
-            },
-            "embed_models": {
-                "openai": ["text-embedding-3-small", "text-embedding-3-large", "text-embedding-ada-002"],
-                "ollama": ["nomic-embed-text", "mxbai-embed-large", "all-minilm"],
-                "bedrock": ["amazon.titan-embed-text-v2:0", "amazon.titan-embed-text-v1", "cohere.embed-english-v3", "cohere.embed-multilingual-v3"],
-            },
-        }
-    except json.JSONDecodeError as e:
-        logger.error(f"Error parsing models.json: {e}")
-        raise
-
-
 @lru_cache
-def load_pricing() -> Dict[str, Dict[str, Dict[str, float]]]:
-    """Load token pricing from models.json.
+def load_config() -> Dict[str, Any]:
+    """Load and return the models configuration from models.json."""
+    config_path = Path(__file__).parent / "models.json"
+    with open(config_path, "r") as f:
+        config = json.load(f)
+        logger.info(f"Loaded selectable models from '{config_path}'")
+        return config
 
-    Returns:
-        Dict mapping provider -> model -> {prompt: X, completion: Y}
-    """
-    config = load_config()
-    return config.get("pricing", {})
+
 
 
 def get_llm_client(client_type: LLMService, **kwargs) -> "SimpleLLMClient":
@@ -317,7 +284,7 @@ class SimpleLLMClient(ABC):
             logger.warning(f"Client {self.__class__.__name__} missing 'service' attribute")
             return None
 
-        pricing = load_pricing().get(self.service, {})
+        pricing = load_config().get("pricing", {}).get(self.service, {})
         model_pricing = pricing.get(self.model)
 
         # Fallback: try partial model name matching (useful for Bedrock)
