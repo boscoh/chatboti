@@ -927,11 +927,10 @@ class GroqClient(OpenAIClient):
         max_tokens: Optional[int] = None,
         temperature: float = 0.0,
     ) -> Dict[str, Any]:
-        """Groq implementation with parallel_tool_calls disabled for better reliability.
+        """Groq implementation with intelligent parallel_tool_calls handling.
 
-        Note: Groq models have known issues with parallel tool calling where they
-        sometimes generate invalid XML-like formats instead of proper JSON.
-        Disabling parallel_tool_calls may improve reliability.
+        Note: Only certain Groq models support parallel tool calling.
+        GPT-OSS models (openai/gpt-oss-*) do NOT support parallel_tool_calls.
         """
         await self.connect()
 
@@ -951,8 +950,24 @@ class GroqClient(OpenAIClient):
             # Only add tools-related params if tools are provided
             if tools:
                 api_params["tools"] = tools
-                # Disable parallel tool calls for better reliability with Groq
-                api_params["parallel_tool_calls"] = False
+
+                # Models that support parallel_tool_calls
+                # Based on https://console.groq.com/docs/models (Feb 2026)
+                supports_parallel = any([
+                    self.model.startswith("llama-3."),
+                    self.model.startswith("llama-4"),
+                    self.model.startswith("meta-llama/llama-4"),
+                    self.model.startswith("qwen/"),
+                    self.model.startswith("moonshotai/"),
+                ])
+
+                # GPT-OSS models do NOT support parallel_tool_calls
+                if supports_parallel:
+                    api_params["parallel_tool_calls"] = True
+                else:
+                    # Don't set the parameter for models that don't support it
+                    # (GPT-OSS, compound models, etc.)
+                    pass
 
             completion = await self.client.chat.completions.create(**api_params)
             elapsed_seconds = time.time() - start_time
