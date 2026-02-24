@@ -29,38 +29,69 @@ from chatboti.faiss_rag import FaissRAGService
 
 
 class VectorBuffer:
-    """In-memory buffer of float32 embedding vectors backed by a numpy array."""
+    """In-memory buffer of pre-normalized float32 embedding vectors.
+
+    Vectors are L2-normalized on insert so that cosine similarity reduces to
+    a single dot product (matrix multiply) at search time.
+
+    Vectors are accumulated in a list and materialized into a contiguous array
+    lazily, so add() is O(1) per call rather than O(n) copy.
+    """
 
     def __init__(self, embedding_dim: int):
         self.embedding_dim = embedding_dim
-        self.data = np.empty((0, embedding_dim), dtype=np.float32)
+        self._rows: list[np.ndarray] = []
+        self._data: Optional[np.ndarray] = None
 
     def add(self, vectors: np.ndarray) -> None:
-        """Append one or more vectors to the buffer.
+        """Append and L2-normalize one or more vectors.
 
         :param vectors: Array of shape (dim,), (1, dim), or (n, dim)
         """
         arr = np.asarray(vectors, dtype=np.float32)
         if arr.ndim == 1:
             arr = arr.reshape(1, -1)
-        self.data = np.vstack([self.data, arr]) if len(self.data) else arr.copy()
+        norms = np.linalg.norm(arr, axis=1, keepdims=True)
+        arr = arr / np.where(norms > 0, norms, 1.0)
+        self._rows.append(arr)
+        self._data = None  # invalidate materialized cache
+
+    @property
+    def data(self) -> np.ndarray:
+        """Contiguous float32 array of shape (ntotal, embedding_dim)."""
+        if self._data is None:
+            self._data = (
+                np.vstack(self._rows)
+                if self._rows
+                else np.empty((0, self.embedding_dim), dtype=np.float32)
+            )
+        return self._data
+
+    @data.setter
+    def data(self, value: np.ndarray) -> None:
+        """Assign a pre-built array (e.g. loaded from HDF5) directly."""
+        self._data = value
+        self._rows = []
 
     @property
     def ntotal(self) -> int:
-        return len(self.data)
+        if self._data is not None:
+            return len(self._data)
+        return sum(len(r) for r in self._rows)
 
 
 def cosine_similarity(query: np.ndarray, vectors: np.ndarray) -> np.ndarray:
-    """Compute cosine similarity between a query vector and a matrix of vectors.
+    """Dot-product similarity against pre-normalized vectors.
+
+    Assumes vectors are already L2-normalized (as stored by VectorBuffer).
 
     :param query: Query vector shape (1, dim) or (dim,)
-    :param vectors: Matrix of vectors shape (n, dim)
+    :param vectors: Pre-normalized matrix shape (n, dim)
     :return: Array of similarities shape (n,)
     """
     q = query.flatten()
     q_norm = q / (np.linalg.norm(q) + 1e-10)
-    norms = np.linalg.norm(vectors, axis=1, keepdims=True) + 1e-10
-    return (vectors / norms) @ q_norm
+    return vectors @ q_norm
 
 
 class HDF5RAGService(FaissRAGService):
@@ -173,9 +204,11 @@ class HDF5RAGService(FaissRAGService):
 
             self.vectors = VectorBuffer(self.embedding_dim)
             if "vectors" in f:
-                data = f["vectors"][:]
+                data = f["vectors"][:].astype(np.float32)
                 if len(data) > 0:
-                    self.vectors.data = data.astype(np.float32)
+                    # Normalize on load to handle both old (raw) and new (pre-normalized) files
+                    norms = np.linalg.norm(data, axis=1, keepdims=True)
+                    self.vectors.data = data / np.where(norms > 0, norms, 1.0)
 
             if "chunks" in f:
                 chunk_data = f["chunks"][:]
