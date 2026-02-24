@@ -53,6 +53,7 @@ class Document:
         metadata: Optional[dict] = None,
         chunks: Optional[Dict[str, DocumentChunk]] = None,
         source: str = "",
+        i_vector_start: Optional[int] = None,
     ):
         """Initialize a document.
 
@@ -62,6 +63,7 @@ class Document:
         :param metadata: Source, timestamp, and other metadata
         :param chunks: Mapping of field names or indices to chunks
         :param source: Original source file path
+        :param i_vector_start: Index of first chunk's vector in the store (set by add_document)
         """
         self.id = id
         self.content = content if content is not None else {}
@@ -69,6 +71,7 @@ class Document:
         self.metadata = metadata if metadata is not None else {}
         self.chunks = chunks if chunks is not None else {}
         self.source = source
+        self.i_vector_start = i_vector_start
 
     def get_chunk_text(self, key: str) -> str:
         """Get chunk text by field name or index.
@@ -113,6 +116,7 @@ class Document:
             "full_text": self.full_text,
             "metadata": self.metadata,
             "source": self.source,
+            "i_vector_start": self.i_vector_start,
             "chunks": {
                 key: {
                     "faiss_id": chunk.faiss_id,
@@ -139,6 +143,13 @@ class Document:
             for key, chunk_data in data.get("chunks", {}).items()
         }
 
+        # Infer i_vector_start from chunks if not stored (backwards compat)
+        i_vector_start = data.get("i_vector_start")
+        if i_vector_start is None and chunks:
+            ids = [c.faiss_id for c in chunks.values() if c.faiss_id >= 0]
+            if ids:
+                i_vector_start = min(ids)
+
         return Document(
             id=data["id"],
             content=data.get("content", {}),
@@ -146,4 +157,5 @@ class Document:
             metadata=data.get("metadata", {}),
             chunks=chunks,
             source=data.get("source", ""),
+            i_vector_start=i_vector_start,
         )

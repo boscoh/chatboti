@@ -146,6 +146,7 @@ class FaissRAGService:
 
         :param doc: Document with chunks to add
         """
+        doc.i_vector_start = len(self.chunk_refs)
         for chunk_key, chunk in doc.chunks.items():
             faiss_id = len(self.chunk_refs)
 

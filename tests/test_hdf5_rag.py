@@ -340,6 +340,105 @@ class TestHDF5RAGServiceSearch:
 
 
 @pytest.mark.skipif(not HDF5_AVAILABLE, reason="h5py not installed")
+class TestHDF5RAGServiceDocumentFilter:
+    """Test document-filtered search."""
+
+    @pytest.mark.asyncio
+    async def test_i_vector_start_set_on_add(self, tmp_path, embed_client):
+        """Test that i_vector_start is set correctly on each document."""
+        hdf5_path = tmp_path / "filter.h5"
+
+        async with HDF5RAGService(
+            hdf5_path=hdf5_path, embed_client=embed_client
+        ) as service:
+            doc1 = Document(
+                id="doc1",
+                content={"a": "text a", "b": "text b"},
+                chunks={"a": DocumentChunk(faiss_id=-1), "b": DocumentChunk(faiss_id=-1)},
+            )
+            doc2 = Document(
+                id="doc2",
+                content={"c": "text c"},
+                chunks={"c": DocumentChunk(faiss_id=-1)},
+            )
+            await service.add_document(doc1)
+            await service.add_document(doc2)
+
+            assert doc1.i_vector_start == 0
+            assert doc2.i_vector_start == 2  # doc1 has 2 chunks
+
+    @pytest.mark.asyncio
+    async def test_filtered_search_returns_only_selected_docs(self, tmp_path, embed_client):
+        """Test that doc_ids filter restricts results to selected documents."""
+        hdf5_path = tmp_path / "filter.h5"
+
+        async with HDF5RAGService(
+            hdf5_path=hdf5_path, embed_client=embed_client
+        ) as service:
+            doc1 = Document(
+                id="doc1",
+                content={"field": "alpha content"},
+                chunks={"field": DocumentChunk(faiss_id=-1)},
+            )
+            doc2 = Document(
+                id="doc2",
+                content={"field": "beta content"},
+                chunks={"field": DocumentChunk(faiss_id=-1)},
+            )
+            await service.add_document(doc1)
+            await service.add_document(doc2)
+
+            results = await service.search("query", k=5, doc_ids=["doc1"])
+            assert all(r.document_id == "doc1" for r in results)
+
+            results = await service.search("query", k=5, doc_ids=["doc2"])
+            assert all(r.document_id == "doc2" for r in results)
+
+    @pytest.mark.asyncio
+    async def test_filtered_search_roundtrip(self, tmp_path, embed_client):
+        """Test that doc_ids filter works after save/load roundtrip."""
+        hdf5_path = tmp_path / "filter.h5"
+
+        async with HDF5RAGService(
+            hdf5_path=hdf5_path, embed_client=embed_client
+        ) as service:
+            for i in range(3):
+                doc = Document(
+                    id=f"doc{i}",
+                    content={"field": f"content {i}"},
+                    chunks={"field": DocumentChunk(faiss_id=-1)},
+                )
+                await service.add_document(doc)
+            service.save()
+
+        async with HDF5RAGService(
+            hdf5_path=hdf5_path, embed_client=embed_client
+        ) as service2:
+            results = await service2.search("query", k=5, doc_ids=["doc0", "doc2"])
+            result_doc_ids = {r.document_id for r in results}
+            assert result_doc_ids == {"doc0", "doc2"}
+            assert "doc1" not in result_doc_ids
+
+    @pytest.mark.asyncio
+    async def test_filtered_search_empty_doc_ids(self, tmp_path, embed_client):
+        """Test that empty doc_ids list returns no results."""
+        hdf5_path = tmp_path / "filter.h5"
+
+        async with HDF5RAGService(
+            hdf5_path=hdf5_path, embed_client=embed_client
+        ) as service:
+            doc = Document(
+                id="doc1",
+                content={"field": "content"},
+                chunks={"field": DocumentChunk(faiss_id=-1)},
+            )
+            await service.add_document(doc)
+
+            results = await service.search("query", doc_ids=[])
+            assert results == []
+
+
+@pytest.mark.skipif(not HDF5_AVAILABLE, reason="h5py not installed")
 class TestHDF5RAGServiceConversion:
     """Test conversion from FAISS+JSON to HDF5."""
 

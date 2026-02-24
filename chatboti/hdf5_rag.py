@@ -167,6 +167,7 @@ class HDF5RAGService(FaissRAGService):
 
         :param doc: Document with chunks to add
         """
+        doc.i_vector_start = len(self.chunk_refs)
         for chunk_key, chunk in doc.chunks.items():
             faiss_id = len(self.chunk_refs)
             chunk_text = doc.get_chunk_text(chunk_key)
@@ -239,6 +240,7 @@ class HDF5RAGService(FaissRAGService):
                     doc_data = {
                         "id": doc_id,
                         "source": doc_group.attrs.get("source", ""),
+                        "i_vector_start": doc_group.attrs.get("i_vector_start", None),
                         "full_text": "",
                         "content": {},
                         "metadata": {},
@@ -327,6 +329,8 @@ class HDF5RAGService(FaissRAGService):
             for doc_id, doc in self.documents.items():
                 doc_group = docs_group.create_group(doc_id)
                 doc_group.attrs["source"] = doc.source
+                if doc.i_vector_start is not None:
+                    doc_group.attrs["i_vector_start"] = doc.i_vector_start
 
                 if doc.full_text:
                     doc_group.create_dataset("full_text", data=doc.full_text)
@@ -353,6 +357,79 @@ class HDF5RAGService(FaissRAGService):
                     doc_group.create_dataset(
                         "chunks", data=json.dumps(chunks_dict)
                     )
+
+    async def search(
+        self,
+        query: str,
+        k: int = 5,
+        include_documents: bool = False,
+        doc_ids: Optional[list[str]] = None,
+    ) -> list:
+        """Search for relevant chunks, optionally restricted to selected documents.
+
+        :param query: Search query text
+        :param k: Number of results to return
+        :param include_documents: Include full document in results
+        :param doc_ids: If given, restrict search to these document IDs
+        :return: List of chunk results with text
+        """
+        query_emb = await self.get_embedding(query)
+
+        if doc_ids is not None:
+            valid_ids = self._filtered_search(query_emb, k, doc_ids)
+        else:
+            _, faiss_ids = self.vector_search(query_emb, k)
+            valid_ids = [fid for fid in faiss_ids.tolist() if fid >= 0]
+
+        if not valid_ids:
+            return []
+
+        results = []
+        for ref in self.get_chunk_refs(valid_ids):
+            doc = self.documents[ref.document_id]
+            from chatboti.document import ChunkResult
+            result = ChunkResult(
+                document_id=ref.document_id,
+                chunk_key=ref.chunk_key,
+                text=self.get_chunk_text(ref),
+            )
+            if doc.full_text:
+                result.document_text = doc.full_text
+            if include_documents and doc.content:
+                result.content = doc.content
+            results.append(result)
+        return results
+
+    def _filtered_search(
+        self, query_emb: np.ndarray, k: int, doc_ids: list[str]
+    ) -> list[int]:
+        """Return global vector indices of top-k results within selected documents.
+
+        Slices each document's contiguous vector range directly from the buffer,
+        so only the selected documents' vectors are touched.
+
+        :param query_emb: Query embedding shape (1, dim)
+        :param k: Number of results
+        :param doc_ids: Document IDs to search within
+        :return: List of global vector indices (sorted by similarity, descending)
+        """
+        global_indices = []
+        for doc_id in doc_ids:
+            doc = self.documents[doc_id]
+            if doc.i_vector_start is None:
+                continue
+            n = len(doc.chunks)
+            global_indices.extend(range(doc.i_vector_start, doc.i_vector_start + n))
+
+        if not global_indices:
+            return []
+
+        idx = np.array(global_indices, dtype=np.int64)
+        sims = cosine_similarity(query_emb, self.vectors.data[idx])
+        k_actual = min(k, len(idx))
+        top_local = np.argpartition(sims, -k_actual)[-k_actual:]
+        top_local = top_local[np.argsort(sims[top_local])[::-1]]
+        return idx[top_local].tolist()
 
     def save(self) -> None:
         """Persist vector buffer and metadata to HDF5 file."""
