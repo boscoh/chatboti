@@ -19,7 +19,6 @@ from pathlib import Path
 from typing import Optional
 
 # Third-party
-import faiss
 import h5py
 import numpy as np
 from chatboti.llm import SimpleLLMClient
@@ -29,8 +28,43 @@ from chatboti.document import ChunkRef, Document
 from chatboti.faiss_rag import FaissRAGService
 
 
+class VectorBuffer:
+    """In-memory buffer of float32 embedding vectors backed by a numpy array."""
+
+    def __init__(self, embedding_dim: int):
+        self.embedding_dim = embedding_dim
+        self.data = np.empty((0, embedding_dim), dtype=np.float32)
+
+    def add(self, vectors: np.ndarray) -> None:
+        """Append one or more vectors to the buffer.
+
+        :param vectors: Array of shape (dim,), (1, dim), or (n, dim)
+        """
+        arr = np.asarray(vectors, dtype=np.float32)
+        if arr.ndim == 1:
+            arr = arr.reshape(1, -1)
+        self.data = np.vstack([self.data, arr]) if len(self.data) else arr.copy()
+
+    @property
+    def ntotal(self) -> int:
+        return len(self.data)
+
+
+def cosine_similarity(query: np.ndarray, vectors: np.ndarray) -> np.ndarray:
+    """Compute cosine similarity between a query vector and a matrix of vectors.
+
+    :param query: Query vector shape (1, dim) or (dim,)
+    :param vectors: Matrix of vectors shape (n, dim)
+    :return: Array of similarities shape (n,)
+    """
+    q = query.flatten()
+    q_norm = q / (np.linalg.norm(q) + 1e-10)
+    norms = np.linalg.norm(vectors, axis=1, keepdims=True) + 1e-10
+    return (vectors / norms) @ q_norm
+
+
 class HDF5RAGService(FaissRAGService):
-    """RAG service using HDF5 single-file backend.
+    """RAG service using HDF5 single-file backend with numpy vector store.
 
     Storage format:
         /metadata (attributes: model_name, embedding_dim, created_at, etc.)
@@ -63,21 +97,19 @@ class HDF5RAGService(FaissRAGService):
         :param data_dir: Data directory (default: chatboti/data)
         :param hdf5_path: Path to HDF5 file (overrides auto-detection)
         """
-        # Call parent
         super().__init__(
             embed_client=embed_client,
             data_dir=data_dir,
-            index_path=None,  # Not used
-            metadata_path=None,  # Not used
+            index_path=None,
+            metadata_path=None,
         )
         self.hdf5_path = hdf5_path
+        self.vectors: Optional[VectorBuffer] = None
 
     async def __aenter__(self):
         """Async context manager entry - performs async initialization."""
-        # First call parent to set up embed client and paths
         await super().__aenter__()
 
-        # Set HDF5 path if not provided
         if not self.hdf5_path:
             from chatboti.utils import make_slug
 
@@ -91,41 +123,64 @@ class HDF5RAGService(FaissRAGService):
         return self
 
     def initialize_search_backend(self):
-        """Load or create search backend from HDF5 file."""
-
+        """Load or create vector buffer from HDF5 file."""
         if self.hdf5_path.exists():
             self.load_from_hdf5(self.hdf5_path)
         else:
-            # Create empty index
-            self.index = faiss.IndexFlatIP(self.embedding_dim)
+            self.vectors = VectorBuffer(self.embedding_dim)
             self.chunk_refs = []
             self.documents = {}
 
+    async def add_document(self, doc: Document) -> None:
+        """Add document and its chunk embeddings to the vector buffer.
+
+        :param doc: Document with chunks to add
+        """
+        for chunk_key, chunk in doc.chunks.items():
+            faiss_id = len(self.chunk_refs)
+            chunk_text = doc.get_chunk_text(chunk_key)
+            embedding = await self.get_embedding(chunk_text)
+            self.vectors.add(embedding)
+            self.chunk_refs.append(ChunkRef(document_id=doc.id, chunk_key=chunk_key))
+            chunk.faiss_id = faiss_id
+        self.documents[doc.id] = doc
+
+    def vector_search(
+        self, query_emb: np.ndarray, k: int
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Cosine similarity search over the vector buffer.
+
+        :param query_emb: Query embedding shape (1, dim)
+        :param k: Number of results
+        :return: (similarities, indices) both shape (k,)
+        """
+        if self.vectors.ntotal == 0:
+            return np.array([]), np.array([], dtype=np.int64)
+        sims = cosine_similarity(query_emb, self.vectors.data)
+        k = min(k, self.vectors.ntotal)
+        top_k = np.argpartition(sims, -k)[-k:]
+        top_k = top_k[np.argsort(sims[top_k])[::-1]]
+        return sims[top_k], top_k.astype(np.int64)
+
     def load_from_hdf5(self, path: Path) -> None:
-        """Load FAISS index, chunks, and documents from HDF5 file.
+        """Load vector buffer, chunks, and documents from HDF5 file.
 
         :param path: Path to HDF5 file
         """
         with h5py.File(path, "r") as f:
-            # Load metadata from attributes
             self.model_name = f.attrs.get("model_name", self.model_name)
             self.embedding_dim = int(f.attrs["embedding_dim"])
 
-            # Load vectors and rebuild FAISS index
+            self.vectors = VectorBuffer(self.embedding_dim)
             if "vectors" in f:
-                vectors = f["vectors"][:]
-                self.index = faiss.IndexFlatIP(self.embedding_dim)
-                if len(vectors) > 0:
-                    self.index.add(vectors)
-            else:
-                self.index = faiss.IndexFlatIP(self.embedding_dim)
+                data = f["vectors"][:]
+                if len(data) > 0:
+                    self.vectors.data = data.astype(np.float32)
 
-            # Load chunks from structured array
             if "chunks" in f:
                 chunk_data = f["chunks"][:]
                 self.chunk_refs = []
                 for row in chunk_data:
-                    # Properly decode bytes to strings
                     doc_id = row["document_id"]
                     chunk_key = row["chunk_key"]
                     if isinstance(doc_id, bytes):
@@ -138,19 +193,16 @@ class HDF5RAGService(FaissRAGService):
             else:
                 self.chunk_refs = []
 
-            # Load documents from nested groups
             if "documents" in f:
                 self.documents = {}
                 docs_group = f["documents"]
                 for doc_id_raw in docs_group.keys():
-                    # Decode doc_id if it's bytes
                     doc_id = doc_id_raw
                     if isinstance(doc_id, bytes):
                         doc_id = doc_id.decode("utf-8")
 
                     doc_group = docs_group[doc_id_raw]
 
-                    # Load attributes
                     doc_data = {
                         "id": doc_id,
                         "source": doc_group.attrs.get("source", ""),
@@ -160,7 +212,6 @@ class HDF5RAGService(FaissRAGService):
                         "chunks": {},
                     }
 
-                    # Load full_text if present
                     if "full_text" in doc_group:
                         doc_data["full_text"] = doc_group["full_text"][()]
                         if isinstance(doc_data["full_text"], bytes):
@@ -168,64 +219,51 @@ class HDF5RAGService(FaissRAGService):
                                 "utf-8"
                             )
 
-                    # Load content (JSON) if present
                     if "content" in doc_group:
                         content_str = doc_group["content"][()]
                         if isinstance(content_str, bytes):
                             content_str = content_str.decode("utf-8")
                         doc_data["content"] = json.loads(content_str)
 
-                    # Load metadata (JSON) if present
                     if "metadata" in doc_group:
                         metadata_str = doc_group["metadata"][()]
                         if isinstance(metadata_str, bytes):
                             metadata_str = metadata_str.decode("utf-8")
                         doc_data["metadata"] = json.loads(metadata_str)
 
-                    # Load chunks (JSON) if present
                     if "chunks" in doc_group:
                         chunks_str = doc_group["chunks"][()]
                         if isinstance(chunks_str, bytes):
                             chunks_str = chunks_str.decode("utf-8")
                         doc_data["chunks"] = json.loads(chunks_str)
 
-                    # Create document from dict
                     self.documents[doc_id] = Document.from_dict(doc_data)
             else:
                 self.documents = {}
 
     def save_to_hdf5(self, path: Path) -> None:
-        """Save FAISS index, chunks, and documents to HDF5 file.
+        """Save vector buffer, chunks, and documents to HDF5 file.
 
         :param path: Path to HDF5 file
         """
-        # Ensure parent directory exists
         path.parent.mkdir(parents=True, exist_ok=True)
 
         with h5py.File(path, "w") as f:
-            # Store metadata as attributes
             f.attrs["model_name"] = self.model_name or ""
             f.attrs["embedding_dim"] = self.embedding_dim
             f.attrs["created_at"] = datetime.now(UTC).isoformat().replace("+00:00", "Z")
             f.attrs["format_version"] = "1.0"
-            f.attrs["index_type"] = self.index.__class__.__name__
-            f.attrs["vector_count"] = self.index.ntotal
+            f.attrs["vector_count"] = self.vectors.ntotal
             f.attrs["document_count"] = len(self.documents)
 
-            # Store vectors as float32 array with compression
-            n_vectors = self.index.ntotal
-            if n_vectors > 0:
-                vectors = np.zeros((n_vectors, self.embedding_dim), dtype=np.float32)
-                for i in range(n_vectors):
-                    vectors[i] = self.index.reconstruct(i)
-                f.create_dataset("vectors", data=vectors, compression="gzip")
+            # Write vectors directly from buffer
+            if self.vectors.ntotal > 0:
+                f.create_dataset("vectors", data=self.vectors.data, compression="gzip")
             else:
-                # Create empty dataset
                 f.create_dataset(
                     "vectors", shape=(0, self.embedding_dim), dtype=np.float32
                 )
 
-            # Store chunks as structured array
             if self.chunk_refs:
                 chunk_dtype = np.dtype(
                     [
@@ -243,7 +281,6 @@ class HDF5RAGService(FaissRAGService):
                 )
                 f.create_dataset("chunks", data=chunk_array)
             else:
-                # Create empty dataset
                 chunk_dtype = np.dtype(
                     [
                         ("faiss_id", "i8"),
@@ -253,29 +290,24 @@ class HDF5RAGService(FaissRAGService):
                 )
                 f.create_dataset("chunks", shape=(0,), dtype=chunk_dtype)
 
-            # Store documents as nested groups
             docs_group = f.create_group("documents")
             for doc_id, doc in self.documents.items():
                 doc_group = docs_group.create_group(doc_id)
-
-                # Store attributes
                 doc_group.attrs["source"] = doc.source
 
-                # Store full_text as dataset
                 if doc.full_text:
                     doc_group.create_dataset("full_text", data=doc.full_text)
 
-                # Store content as JSON string
                 if doc.content:
-                    content_str = json.dumps(doc.content)
-                    doc_group.create_dataset("content", data=content_str)
+                    doc_group.create_dataset(
+                        "content", data=json.dumps(doc.content)
+                    )
 
-                # Store metadata as JSON string
                 if doc.metadata:
-                    metadata_str = json.dumps(doc.metadata)
-                    doc_group.create_dataset("metadata", data=metadata_str)
+                    doc_group.create_dataset(
+                        "metadata", data=json.dumps(doc.metadata)
+                    )
 
-                # Store chunks as JSON string (contains faiss_id, i_start, i_end)
                 if doc.chunks:
                     chunks_dict = {
                         key: {
@@ -285,9 +317,10 @@ class HDF5RAGService(FaissRAGService):
                         }
                         for key, chunk in doc.chunks.items()
                     }
-                    chunks_str = json.dumps(chunks_dict)
-                    doc_group.create_dataset("chunks", data=chunks_str)
+                    doc_group.create_dataset(
+                        "chunks", data=json.dumps(chunks_dict)
+                    )
 
     def save(self) -> None:
-        """Persist index and metadata to HDF5 file."""
+        """Persist vector buffer and metadata to HDF5 file."""
         self.save_to_hdf5(self.hdf5_path)
