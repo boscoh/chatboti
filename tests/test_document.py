@@ -8,8 +8,8 @@ class TestDocumentChunk:
 
     def test_chunk_with_indices(self):
         """Test chunk-level chunk with text indices."""
-        chunk = DocumentChunk(faiss_id=456, i_start=100, i_end=200)
-        assert chunk.faiss_id == 456
+        chunk = DocumentChunk(id=456, i_start=100, i_end=200)
+        assert chunk.id == 456
         assert chunk.i_start == 100
         assert chunk.i_end == 200
 
@@ -45,7 +45,7 @@ class TestDocumentGetChunkText:
     def test_field_level_chunking(self):
         """Test field-level: returns content[key] when no indices."""
         content = {"bio": "Alice is a software engineer", "skills": "Python, Go, Rust"}
-        chunks = {"bio": DocumentChunk(faiss_id=1), "skills": DocumentChunk(faiss_id=2)}
+        chunks = {"bio": DocumentChunk(id=1), "skills": DocumentChunk(id=2)}
         doc = Document(id="doc1", content=content, chunks=chunks)
 
         assert doc.get_chunk_text("bio") == "Alice is a software engineer"
@@ -55,8 +55,8 @@ class TestDocumentGetChunkText:
         """Test chunk-level: returns sliced text with i_start/i_end."""
         full_text = "The quick brown fox jumps over the lazy dog. The end."
         chunks = {
-            "0": DocumentChunk(faiss_id=1, i_start=0, i_end=45),
-            "1": DocumentChunk(faiss_id=2, i_start=45, i_end=53),
+            "0": DocumentChunk(id=1, i_start=0, i_end=45),
+            "1": DocumentChunk(id=2, i_start=45, i_end=53),
         }
         doc = Document(id="doc2", full_text=full_text, chunks=chunks)
 
@@ -72,8 +72,8 @@ class TestDocumentGetChunkText:
             content={"title": "Introduction"},
             full_text="A longer text document for chunking.",
             chunks={
-                "title": DocumentChunk(faiss_id=1),
-                "0": DocumentChunk(faiss_id=2, i_start=0, i_end=20),
+                "title": DocumentChunk(id=1),
+                "0": DocumentChunk(id=2, i_start=0, i_end=20),
             },
         )
 
@@ -87,7 +87,7 @@ class TestDocumentGetChunkWithContext:
     def test_field_level_no_context(self):
         """Test field-level: returns ('', chunk_text, '')."""
         content = {"bio": "Alice is a software engineer"}
-        chunks = {"bio": DocumentChunk(faiss_id=1)}
+        chunks = {"bio": DocumentChunk(id=1)}
         doc = Document(id="doc1", content=content, chunks=chunks)
 
         before, chunk, after = doc.get_chunk_with_context("bio")
@@ -98,7 +98,7 @@ class TestDocumentGetChunkWithContext:
     def test_chunk_level_with_context(self):
         """Test chunk-level: returns proper before/chunk/after."""
         full_text = "The quick brown fox jumps over the lazy dog and continues running."
-        chunks = {"0": DocumentChunk(faiss_id=1, i_start=16, i_end=44)}
+        chunks = {"0": DocumentChunk(id=1, i_start=16, i_end=44)}
         doc = Document(id="doc2", full_text=full_text, chunks=chunks)
 
         before, chunk, after = doc.get_chunk_with_context("0", context_chars=10)
@@ -109,7 +109,7 @@ class TestDocumentGetChunkWithContext:
     def test_chunk_at_start_with_context(self):
         """Test context when chunk is at start of text."""
         full_text = "Start of document with more text following."
-        chunks = {"0": DocumentChunk(faiss_id=1, i_start=0, i_end=17)}
+        chunks = {"0": DocumentChunk(id=1, i_start=0, i_end=17)}
         doc = Document(id="doc3", full_text=full_text, chunks=chunks)
 
         before, chunk, after = doc.get_chunk_with_context("0", context_chars=10)
@@ -120,7 +120,7 @@ class TestDocumentGetChunkWithContext:
     def test_chunk_at_end_with_context(self):
         """Test context when chunk is at end of text."""
         full_text = "Text leading up to the end."
-        chunks = {"0": DocumentChunk(faiss_id=1, i_start=23, i_end=27)}
+        chunks = {"0": DocumentChunk(id=1, i_start=23, i_end=27)}
         doc = Document(id="doc4", full_text=full_text, chunks=chunks)
 
         before, chunk, after = doc.get_chunk_with_context("0", context_chars=10)
@@ -131,7 +131,7 @@ class TestDocumentGetChunkWithContext:
     def test_context_chars_larger_than_available(self):
         """Test when context_chars exceeds available text."""
         full_text = "Short text."
-        chunks = {"0": DocumentChunk(faiss_id=1, i_start=6, i_end=10)}
+        chunks = {"0": DocumentChunk(id=1, i_start=6, i_end=10)}
         doc = Document(id="doc5", full_text=full_text, chunks=chunks)
 
         before, chunk, after = doc.get_chunk_with_context("0", context_chars=100)
@@ -142,7 +142,7 @@ class TestDocumentGetChunkWithContext:
     def test_default_context_chars(self):
         """Test default context_chars=200."""
         full_text = "a" * 500
-        chunks = {"0": DocumentChunk(faiss_id=1, i_start=250, i_end=260)}
+        chunks = {"0": DocumentChunk(id=1, i_start=250, i_end=260)}
         doc = Document(id="doc6", full_text=full_text, chunks=chunks)
 
         before, chunk, after = doc.get_chunk_with_context("0")
@@ -162,8 +162,8 @@ class TestDocumentSerialization:
             full_text="Full text content",
             metadata={"source": "test.txt", "timestamp": "2026-01-01"},
             chunks={
-                "title": DocumentChunk(faiss_id=1),
-                "0": DocumentChunk(faiss_id=2, i_start=0, i_end=10),
+                "title": DocumentChunk(id=1),
+                "0": DocumentChunk(id=2, i_start=0, i_end=10),
             },
         )
 
@@ -174,11 +174,11 @@ class TestDocumentSerialization:
         assert result["metadata"] == {"source": "test.txt", "timestamp": "2026-01-01"}
         assert "chunks" in result
         assert result["chunks"]["title"] == {
-            "faiss_id": 1,
+            "id": 1,
             "i_start": None,
             "i_end": None,
         }
-        assert result["chunks"]["0"] == {"faiss_id": 2, "i_start": 0, "i_end": 10}
+        assert result["chunks"]["0"] == {"id": 2, "i_start": 0, "i_end": 10}
 
     def test_from_dict_complete(self):
         """Test from_dict() reconstruction."""
@@ -188,8 +188,8 @@ class TestDocumentSerialization:
             "full_text": "Full text",
             "metadata": {"source": "db"},
             "chunks": {
-                "bio": {"faiss_id": 10, "i_start": None, "i_end": None},
-                "0": {"faiss_id": 20, "i_start": 5, "i_end": 15},
+                "bio": {"id": 10, "i_start": None, "i_end": None},
+                "0": {"id": 20, "i_start": 5, "i_end": 15},
             },
         }
 
@@ -199,9 +199,9 @@ class TestDocumentSerialization:
         assert doc.full_text == "Full text"
         assert doc.metadata == {"source": "db"}
         assert "bio" in doc.chunks
-        assert doc.chunks["bio"].faiss_id == 10
+        assert doc.chunks["bio"].id == 10
         assert doc.chunks["bio"].i_start is None
-        assert doc.chunks["0"].faiss_id == 20
+        assert doc.chunks["0"].id == 20
         assert doc.chunks["0"].i_start == 5
         assert doc.chunks["0"].i_end == 15
 
@@ -213,9 +213,9 @@ class TestDocumentSerialization:
             full_text="Long text for chunking",
             metadata={"version": "1.0"},
             chunks={
-                "title": DocumentChunk(faiss_id=100),
-                "0": DocumentChunk(faiss_id=101, i_start=0, i_end=10),
-                "1": DocumentChunk(faiss_id=102, i_start=11, i_end=22),
+                "title": DocumentChunk(id=100),
+                "0": DocumentChunk(id=101, i_start=0, i_end=10),
+                "1": DocumentChunk(id=102, i_start=11, i_end=22),
             },
         )
 
@@ -229,7 +229,7 @@ class TestDocumentSerialization:
         assert len(restored.chunks) == len(original.chunks)
 
         for key in original.chunks:
-            assert restored.chunks[key].faiss_id == original.chunks[key].faiss_id
+            assert restored.chunks[key].id == original.chunks[key].id
             assert restored.chunks[key].i_start == original.chunks[key].i_start
             assert restored.chunks[key].i_end == original.chunks[key].i_end
 
@@ -246,10 +246,10 @@ class TestDocumentSerialization:
 
     def test_from_dict_partial_chunks(self):
         """Test from_dict() with chunks missing optional fields."""
-        data = {"id": "doc5", "chunks": {"bio": {"faiss_id": 42}}}
+        data = {"id": "doc5", "chunks": {"bio": {"id": 42}}}
         doc = Document.from_dict(data)
 
-        assert doc.chunks["bio"].faiss_id == 42
+        assert doc.chunks["bio"].id == 42
         assert doc.chunks["bio"].i_start is None
         assert doc.chunks["bio"].i_end is None
 

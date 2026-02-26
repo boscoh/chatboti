@@ -420,8 +420,8 @@ class HDF5RAGService(FaissRAGService):
         """
         global_indices = []
         for doc_id in doc_ids:
-            doc = self.documents[doc_id]
-            if doc.i_vector_start is None:
+            doc = self.documents.get(doc_id)
+            if doc is None or doc.i_vector_start is None:
                 continue
             n = len(doc.chunks)
             global_indices.extend(range(doc.i_vector_start, doc.i_vector_start + n))

@@ -149,8 +149,8 @@ async def test_search_with_chunk_level_text(rag_service):
         id="chunk_level_doc",
         full_text=full_text,
         chunks={
-            "0": DocumentChunk(faiss_id=-1, i_start=0, i_end=45),
-            "1": DocumentChunk(faiss_id=-1, i_start=46, i_end=71),
+            "0": DocumentChunk(id=-1, i_start=0, i_end=45),
+            "1": DocumentChunk(id=-1, i_start=46, i_end=71),
         },
     )
     await rag_service.add_document(doc)
@@ -182,8 +182,8 @@ async def test_search_with_mixed_document_types(rag_service):
         content={"title": "Introduction"},
         full_text="A longer text document for chunking.",
         chunks={
-            "title": DocumentChunk(faiss_id=-1),
-            "0": DocumentChunk(faiss_id=-1, i_start=0, i_end=20),
+            "title": DocumentChunk(id=-1),
+            "0": DocumentChunk(id=-1, i_start=0, i_end=20),
         },
     )
     await rag_service.add_document(doc)

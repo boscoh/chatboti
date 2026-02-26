@@ -145,14 +145,14 @@ class TestLoadCSV:
         assert "bio" not in docs[2].chunks  # Empty value
 
     @pytest.mark.asyncio
-    async def test_chunks_have_unassigned_faiss_id(self, temp_csv):
-        """Test that all chunks have faiss_id=-1 (unassigned)."""
+    async def test_chunks_have_unassigned_id(self, temp_csv):
+        """Test that all chunks have id=-1 (unassigned before embedding)."""
         docs = await load_csv(str(temp_csv))
 
         for doc in docs:
             for chunk in doc.chunks.values():
                 assert isinstance(chunk, DocumentChunk)
-                assert chunk.faiss_id == -1
+                assert chunk.id == -1
                 assert chunk.i_start is None
                 assert chunk.i_end is None
 

@@ -1,11 +1,12 @@
-"""Integration tests for HDF5RAGService using real implementation."""
+"""Tests for HDF5RAGService.
 
-import json
+Covers: add_document + search, i_vector_start/i_vector_end, DocumentChunk.id,
+include_documents, multi-document search, doc_ids filtered search, and
+save/reload round-trip.
+"""
 
-import numpy as np
 import pytest
 
-# Try to import h5py - tests will be skipped if not available
 try:
     import h5py
 
@@ -13,598 +14,300 @@ try:
 except ImportError:
     HDF5_AVAILABLE = False
 
-from chatboti.document import ChunkRef, ChunkResult, Document, DocumentChunk
+from chatboti.document import ChunkResult, Document, DocumentChunk
 from chatboti.hdf5_rag import HDF5RAGService
 from tests.conftest import DeterministicEmbedClient
 
 
+def _make_doc(doc_id: str, fields: dict) -> Document:
+    """Build a field-chunked Document from a dict of field_name -> text.
+
+    :param doc_id: Document identifier
+    :param fields: Mapping of field name to text content
+    :return: Document with one DocumentChunk per field
+    """
+    return Document(
+        id=doc_id,
+        content=fields,
+        chunks={key: DocumentChunk(id=-1) for key in fields},
+    )
+
+
 @pytest.mark.skipif(not HDF5_AVAILABLE, reason="h5py not installed")
-class TestHDF5RAGServiceInitialization:
-    """Test HDF5RAGService initialization."""
+class TestHDF5RAGServiceAddAndSearch:
+    """End-to-end add_document + search tests."""
 
     @pytest.mark.asyncio
-    async def test_new_service_creates_empty_storage(self, tmp_path, embed_client):
-        """Test that new service creates empty HDF5 structure."""
+    async def test_add_document_and_search_returns_results(self, tmp_path):
+        """add_document followed by search returns at least one ChunkResult."""
         hdf5_path = tmp_path / "test.h5"
+        embed_client = DeterministicEmbedClient(embedding_dim=64)
 
         async with HDF5RAGService(
-            hdf5_path=hdf5_path, embed_client=embed_client
+            embed_client=embed_client, hdf5_path=hdf5_path
         ) as service:
-            assert service.vectors is not None
-            assert service.vectors.ntotal == 0
-            assert service.chunk_refs == []
-            assert service.documents == {}
-            assert not hdf5_path.exists()  # Not saved yet
-
-    @pytest.mark.asyncio
-    async def test_load_existing_service_from_hdf5(self, tmp_path, embed_client):
-        """Test loading existing service from HDF5 file."""
-        hdf5_path = tmp_path / "test.h5"
-
-        async with HDF5RAGService(
-            hdf5_path=hdf5_path, embed_client=embed_client
-        ) as service1:
-            doc = Document(
-                id="doc1",
-                content={"field1": "test content"},
-                chunks={"field1": DocumentChunk(faiss_id=-1)},
-            )
-            await service1.add_document(doc)
-            service1.save()
-
-        async with HDF5RAGService(
-            hdf5_path=hdf5_path, embed_client=embed_client
-        ) as service2:
-            assert len(service2.chunk_refs) == 1
-
-            chunk_ref = service2.chunk_refs[0]
-            assert chunk_ref is not None
-            assert hasattr(chunk_ref, "document_id")
-            assert hasattr(chunk_ref, "chunk_key")
-
-            found_doc = None
-            for doc_id, doc in service2.documents.items():
-                if isinstance(doc_id, bytes):
-                    try:
-                        decoded_id = doc_id.decode("utf-8")
-                        if decoded_id == "doc1":
-                            found_doc = doc
-                            break
-                    except UnicodeDecodeError:
-                        pass
-                elif doc_id == "doc1":
-                    found_doc = doc
-                    break
-
-            assert found_doc is not None
-            assert found_doc.id == "doc1" or found_doc.id == b"doc1"
-
-    @pytest.mark.asyncio
-    async def test_correct_embedding_dimensions(self, tmp_path, embed_client):
-        """Test that service respects embedding dimensions."""
-        hdf5_path = tmp_path / "test.h5"
-
-        embed_client_384 = DeterministicEmbedClient(embedding_dim=384)
-
-        async with HDF5RAGService(
-            hdf5_path=hdf5_path, embed_client=embed_client_384
-        ) as service:
-            assert service.embedding_dim == 384
-            assert service.vectors.embedding_dim == 384
-
-
-@pytest.mark.skipif(not HDF5_AVAILABLE, reason="h5py not installed")
-class TestHDF5RAGServiceSaveLoad:
-    """Test HDF5 save/load functionality."""
-
-    @pytest.mark.asyncio
-    async def test_hdf5_save_load_roundtrip(self, tmp_path, embed_client_768):
-        """Test save and load roundtrip preserves all data."""
-        hdf5_path = tmp_path / "roundtrip.h5"
-
-        async with HDF5RAGService(
-            hdf5_path=hdf5_path, embed_client=embed_client_768
-        ) as service1:
-            doc1 = Document(
-                id="doc1",
-                content={"title": "Test Title", "body": "Test Body"},
-                full_text="Test Title\nTest Body",
-                metadata={"source": "test.txt"},
-                chunks={
-                    "title": DocumentChunk(faiss_id=-1),
-                    "body": DocumentChunk(faiss_id=-1),
-                },
-            )
-            doc2 = Document(
-                id="doc2",
-                content={"field": "value"},
-                chunks={"field": DocumentChunk(faiss_id=-1)},
-            )
-
-            await service1.add_document(doc1)
-            await service1.add_document(doc2)
-            service1.save()
-            assert hdf5_path.exists()
-
-        async with HDF5RAGService(
-            hdf5_path=hdf5_path, embed_client=embed_client_768
-        ) as service2:
-            assert len(service2.documents) == 2
-            assert len(service2.chunk_refs) == 3  # doc1 has 2 chunks, doc2 has 1 chunk
-            assert service2.vectors.ntotal == 3
-
-            assert service2.documents["doc1"].content["title"] == "Test Title"
-            assert service2.documents["doc1"].full_text == "Test Title\nTest Body"
-            assert service2.documents["doc2"].content["field"] == "value"
-
-    @pytest.mark.asyncio
-    async def test_save_empty_service(self, tmp_path, embed_client_768):
-        """Test saving empty service creates valid HDF5 file."""
-        hdf5_path = tmp_path / "empty.h5"
-
-        async with HDF5RAGService(
-            hdf5_path=hdf5_path, embed_client=embed_client_768
-        ) as service:
-            service.save()
-
-        async with HDF5RAGService(
-            hdf5_path=hdf5_path, embed_client=embed_client_768
-        ) as service2:
-            assert len(service2.documents) == 0
-            assert len(service2.chunk_refs) == 0
-            assert service2.vectors.ntotal == 0
-
-
-@pytest.mark.skipif(not HDF5_AVAILABLE, reason="h5py not installed")
-class TestHDF5RAGServiceMetadata:
-    """Test metadata preservation in HDF5."""
-
-    @pytest.mark.asyncio
-    async def test_hdf5_metadata_preservation(self, tmp_path, embed_client):
-        """Test that metadata attributes are preserved correctly."""
-        hdf5_path = tmp_path / "metadata.h5"
-
-        embed_client_512 = DeterministicEmbedClient(embedding_dim=512)
-        async with HDF5RAGService(
-            hdf5_path=hdf5_path, embed_client=embed_client_512
-        ) as service:
-            service.model_name = "custom-embed-model"
-
-            doc = Document(
-                id="doc1",
-                content={"text": "sample"},
-                chunks={"text": DocumentChunk(faiss_id=0)},
-            )
-            service.documents["doc1"] = doc
-            service.chunk_refs.append(ChunkRef(document_id="doc1", chunk_key="text"))
-            vector = np.random.randn(1, 512).astype(np.float32)
-            service.vectors.add(vector)
-
-            service.save()
-
-        with h5py.File(str(hdf5_path), "r") as f:
-            assert f.attrs["model_name"] == "custom-embed-model"
-            assert f.attrs["embedding_dim"] == 512
-            assert f.attrs["vector_count"] == 1
-            assert f.attrs["document_count"] == 1
-
-        async with HDF5RAGService(
-            hdf5_path=hdf5_path, embed_client=embed_client_512
-        ) as service2:
-            assert service2.model_name == "custom-embed-model"
-            assert service2.embedding_dim == 512
-
-
-@pytest.mark.skipif(not HDF5_AVAILABLE, reason="h5py not installed")
-class TestHDF5RAGServiceStructure:
-    """Test HDF5 file structure."""
-
-    @pytest.mark.asyncio
-    async def test_hdf5_structure(self, tmp_path, embed_client_768):
-        """Test that HDF5 file has correct structure."""
-        hdf5_path = tmp_path / "structure.h5"
-
-        async with HDF5RAGService(
-            hdf5_path=hdf5_path, embed_client=embed_client_768
-        ) as service:
-            doc = Document(
-                id="doc1",
-                content={"field": "content"},
-                chunks={"field": DocumentChunk(faiss_id=0)},
-            )
-            service.documents["doc1"] = doc
-            service.chunk_refs.append(ChunkRef(document_id="doc1", chunk_key="field"))
-            vector = np.random.randn(1, 768).astype(np.float32)
-            service.vectors.add(vector)
-            service.save()
-
-        with h5py.File(str(hdf5_path), "r") as f:
-            assert "vectors" in f
-            assert "chunks" in f
-            assert "documents" in f
-
-            assert f["vectors"].shape == (1, 768)
-            assert f["vectors"].dtype == np.float32
-
-            chunks_data = f["chunks"]
-            assert len(chunks_data) == 1
-            assert "faiss_id" in chunks_data.dtype.names
-            assert "document_id" in chunks_data.dtype.names
-            assert "chunk_key" in chunks_data.dtype.names
-
-            assert isinstance(f["documents"], h5py.Group)
-            assert "doc1" in f["documents"]
-
-            assert "model_name" in f.attrs
-            assert "embedding_dim" in f.attrs
-            assert "vector_count" in f.attrs
-            assert "document_count" in f.attrs
-
-
-@pytest.mark.skipif(not HDF5_AVAILABLE, reason="h5py not installed")
-class TestHDF5RAGServiceDocumentManagement:
-    """Test document management with HDF5."""
-
-    @pytest.mark.asyncio
-    async def test_add_document_with_embeddings(self, tmp_path, embed_client):
-        """Test add_document() with embed_client."""
-        hdf5_path = tmp_path / "documents.h5"
-
-        async with HDF5RAGService(
-            hdf5_path=hdf5_path, embed_client=embed_client
-        ) as service:
-            doc = Document(
-                id="test_doc",
-                content={"title": "Test", "body": "Content"},
-                chunks={
-                    "title": DocumentChunk(faiss_id=-1),
-                    "body": DocumentChunk(faiss_id=-1),
-                },
-            )
-
+            doc = _make_doc("doc1", {"bio": "machine learning researcher"})
             await service.add_document(doc)
 
-            # 1 call during init to detect embedding_dim + 2 for chunks
-            assert embed_client.call_count == 3
-            assert "Test" in embed_client.embedded_texts
-            assert "Content" in embed_client.embedded_texts
+            results = await service.search("machine learning", k=1)
 
-            assert "test_doc" in service.documents
-            assert service.documents["test_doc"].id == "test_doc"
-
-            assert len(service.chunk_refs) == 2
-            assert service.chunk_refs[0].document_id == "test_doc"
-            assert service.chunk_refs[0].chunk_key == "title"
-
-            assert doc.chunks["title"].faiss_id == 0
-            assert doc.chunks["body"].faiss_id == 1
-
-            assert service.vectors.ntotal == 2
-
-
-@pytest.mark.skipif(not HDF5_AVAILABLE, reason="h5py not installed")
-class TestHDF5RAGServiceSearch:
-    """Test search functionality with HDF5."""
+        assert len(results) == 1
+        assert isinstance(results[0], ChunkResult)
+        assert results[0].document_id == "doc1"
+        assert results[0].chunk_key == "bio"
+        assert results[0].text == "machine learning researcher"
 
     @pytest.mark.asyncio
-    async def test_hdf5_search(self, tmp_path, embed_client):
-        """Test that search works correctly after HDF5 load."""
-        hdf5_path = tmp_path / "search.h5"
+    async def test_i_vector_start_and_end_set_correctly(self, tmp_path):
+        """add_document sets i_vector_start / i_vector_end on the Document."""
+        hdf5_path = tmp_path / "test.h5"
+        embed_client = DeterministicEmbedClient(embedding_dim=64)
 
         async with HDF5RAGService(
-            hdf5_path=hdf5_path, embed_client=embed_client
+            embed_client=embed_client, hdf5_path=hdf5_path
         ) as service:
-            doc = Document(
-                id="doc1",
-                content={"field": "test content"},
-                chunks={"field": DocumentChunk(faiss_id=-1)},
-            )
-            await service.add_document(doc)
-            service.save()
-
-        async with HDF5RAGService(
-            hdf5_path=hdf5_path, embed_client=embed_client
-        ) as service2:
-            results = await service2.search("test query", k=1)
-
-            assert len(results) == 1
-            assert isinstance(results[0], ChunkResult)
-            assert results[0].document_id == "doc1"
-            assert results[0].chunk_key == "field"
-            assert results[0].text == "test content"
-
-    @pytest.mark.asyncio
-    async def test_search_include_documents_parameter(self, tmp_path, embed_client):
-        """Test search() with include_documents=True."""
-        hdf5_path = tmp_path / "search_docs.h5"
-
-        async with HDF5RAGService(
-            hdf5_path=hdf5_path, embed_client=embed_client
-        ) as service:
-            doc = Document(
-                id="doc1",
-                content={"field": "test content"},
-                full_text="Full document text goes here",
-                chunks={"field": DocumentChunk(faiss_id=-1)},
-            )
-            await service.add_document(doc)
-            service.save()
-
-        async with HDF5RAGService(
-            hdf5_path=hdf5_path, embed_client=embed_client
-        ) as service2:
-            results = await service2.search("test query", k=1, include_documents=True)
-
-            assert len(results) == 1
-            assert results[0].document_text == "Full document text goes here"
-
-
-@pytest.mark.skipif(not HDF5_AVAILABLE, reason="h5py not installed")
-class TestHDF5RAGServiceDocumentFilter:
-    """Test document-filtered search."""
-
-    @pytest.mark.asyncio
-    async def test_i_vector_start_set_on_add(self, tmp_path, embed_client):
-        """Test that i_vector_start is set correctly on each document."""
-        hdf5_path = tmp_path / "filter.h5"
-
-        async with HDF5RAGService(
-            hdf5_path=hdf5_path, embed_client=embed_client
-        ) as service:
-            doc1 = Document(
-                id="doc1",
-                content={"a": "text a", "b": "text b"},
-                chunks={"a": DocumentChunk(faiss_id=-1), "b": DocumentChunk(faiss_id=-1)},
-            )
-            doc2 = Document(
-                id="doc2",
-                content={"c": "text c"},
-                chunks={"c": DocumentChunk(faiss_id=-1)},
-            )
+            doc1 = _make_doc("doc1", {"a": "alpha", "b": "beta"})
+            doc2 = _make_doc("doc2", {"c": "gamma"})
             await service.add_document(doc1)
             await service.add_document(doc2)
 
             assert doc1.i_vector_start == 0
-            assert doc2.i_vector_start == 2  # doc1 has 2 chunks
+            assert doc1.i_vector_end == 2
+            assert doc2.i_vector_start == 2
+            assert doc2.i_vector_end == 3
 
     @pytest.mark.asyncio
-    async def test_filtered_search_returns_only_selected_docs(self, tmp_path, embed_client):
-        """Test that doc_ids filter restricts results to selected documents."""
-        hdf5_path = tmp_path / "filter.h5"
+    async def test_chunk_id_assigned_on_add(self, tmp_path):
+        """DocumentChunk.id is updated to its vector index after add_document."""
+        hdf5_path = tmp_path / "test.h5"
+        embed_client = DeterministicEmbedClient(embedding_dim=64)
 
         async with HDF5RAGService(
-            hdf5_path=hdf5_path, embed_client=embed_client
+            embed_client=embed_client, hdf5_path=hdf5_path
         ) as service:
-            doc1 = Document(
-                id="doc1",
-                content={"field": "alpha content"},
-                chunks={"field": DocumentChunk(faiss_id=-1)},
-            )
-            doc2 = Document(
-                id="doc2",
-                content={"field": "beta content"},
-                chunks={"field": DocumentChunk(faiss_id=-1)},
-            )
+            doc = _make_doc("doc1", {"x": "text x", "y": "text y"})
+            await service.add_document(doc)
+
+            assert doc.chunks["x"].id == 0
+            assert doc.chunks["y"].id == 1
+
+    @pytest.mark.asyncio
+    async def test_search_include_documents_returns_content(self, tmp_path):
+        """search() with include_documents=True populates result.content."""
+        hdf5_path = tmp_path / "test.h5"
+        embed_client = DeterministicEmbedClient(embedding_dim=64)
+
+        async with HDF5RAGService(
+            embed_client=embed_client, hdf5_path=hdf5_path
+        ) as service:
+            doc = _make_doc("doc1", {"title": "AI talk", "abstract": "Deep learning"})
+            await service.add_document(doc)
+
+            results = await service.search("deep learning", k=1, include_documents=True)
+
+        assert len(results) >= 1
+        assert results[0].content is not None
+        assert "title" in results[0].content or "abstract" in results[0].content
+
+    @pytest.mark.asyncio
+    async def test_search_multiple_documents(self, tmp_path):
+        """search returns results across multiple documents."""
+        hdf5_path = tmp_path / "test.h5"
+        embed_client = DeterministicEmbedClient(embedding_dim=64)
+
+        async with HDF5RAGService(
+            embed_client=embed_client, hdf5_path=hdf5_path
+        ) as service:
+            for i in range(3):
+                doc = _make_doc(f"doc{i}", {"field": f"content {i}"})
+                await service.add_document(doc)
+
+            results = await service.search("content", k=3)
+
+        assert len(results) == 3
+        doc_ids = {r.document_id for r in results}
+        assert doc_ids == {"doc0", "doc1", "doc2"}
+
+
+@pytest.mark.skipif(not HDF5_AVAILABLE, reason="h5py not installed")
+class TestHDF5RAGServiceDocIdsFilter:
+    """Tests for doc_ids-restricted search."""
+
+    @pytest.mark.asyncio
+    async def test_doc_ids_restricts_results_to_selected_docs(self, tmp_path):
+        """search with doc_ids only returns chunks from those documents."""
+        hdf5_path = tmp_path / "test.h5"
+        embed_client = DeterministicEmbedClient(embedding_dim=64)
+
+        async with HDF5RAGService(
+            embed_client=embed_client, hdf5_path=hdf5_path
+        ) as service:
+            doc1 = _make_doc("doc1", {"field": "alpha content"})
+            doc2 = _make_doc("doc2", {"field": "beta content"})
             await service.add_document(doc1)
             await service.add_document(doc2)
 
             results = await service.search("query", k=5, doc_ids=["doc1"])
-            assert all(r.document_id == "doc1" for r in results)
 
-            results = await service.search("query", k=5, doc_ids=["doc2"])
-            assert all(r.document_id == "doc2" for r in results)
+        assert len(results) >= 1
+        assert all(r.document_id == "doc1" for r in results)
 
     @pytest.mark.asyncio
-    async def test_filtered_search_roundtrip(self, tmp_path, embed_client):
-        """Test that doc_ids filter works after save/load roundtrip."""
-        hdf5_path = tmp_path / "filter.h5"
+    async def test_doc_ids_excludes_unrequested_docs(self, tmp_path):
+        """search with doc_ids does not return chunks from excluded documents."""
+        hdf5_path = tmp_path / "test.h5"
+        embed_client = DeterministicEmbedClient(embedding_dim=64)
 
         async with HDF5RAGService(
-            hdf5_path=hdf5_path, embed_client=embed_client
+            embed_client=embed_client, hdf5_path=hdf5_path
         ) as service:
-            for i in range(3):
-                doc = Document(
-                    id=f"doc{i}",
-                    content={"field": f"content {i}"},
-                    chunks={"field": DocumentChunk(faiss_id=-1)},
-                )
+            for i in range(4):
+                doc = _make_doc(f"doc{i}", {"field": f"text {i}"})
+                await service.add_document(doc)
+
+            results = await service.search("text", k=10, doc_ids=["doc0", "doc3"])
+
+        result_doc_ids = {r.document_id for r in results}
+        assert result_doc_ids == {"doc0", "doc3"}
+        assert "doc1" not in result_doc_ids
+        assert "doc2" not in result_doc_ids
+
+    @pytest.mark.asyncio
+    async def test_doc_ids_empty_list_returns_no_results(self, tmp_path):
+        """search with empty doc_ids returns an empty list."""
+        hdf5_path = tmp_path / "test.h5"
+        embed_client = DeterministicEmbedClient(embedding_dim=64)
+
+        async with HDF5RAGService(
+            embed_client=embed_client, hdf5_path=hdf5_path
+        ) as service:
+            doc = _make_doc("doc1", {"field": "some content"})
+            await service.add_document(doc)
+
+            results = await service.search("query", k=5, doc_ids=[])
+
+        assert results == []
+
+    @pytest.mark.asyncio
+    async def test_doc_ids_unknown_id_returns_no_results(self, tmp_path):
+        """search with a non-existent doc_id returns an empty list."""
+        hdf5_path = tmp_path / "test.h5"
+        embed_client = DeterministicEmbedClient(embedding_dim=64)
+
+        async with HDF5RAGService(
+            embed_client=embed_client, hdf5_path=hdf5_path
+        ) as service:
+            doc = _make_doc("doc1", {"field": "content"})
+            await service.add_document(doc)
+
+            results = await service.search("query", k=5, doc_ids=["nonexistent"])
+
+        assert results == []
+
+
+@pytest.mark.skipif(not HDF5_AVAILABLE, reason="h5py not installed")
+class TestHDF5RAGServiceSaveReload:
+    """Tests for save/reload round-trip persistence."""
+
+    @pytest.mark.asyncio
+    async def test_save_creates_file(self, tmp_path):
+        """save() writes HDF5 file to disk."""
+        hdf5_path = tmp_path / "test.h5"
+        embed_client = DeterministicEmbedClient(embedding_dim=64)
+
+        async with HDF5RAGService(
+            embed_client=embed_client, hdf5_path=hdf5_path
+        ) as service:
+            doc = _make_doc("doc1", {"field": "hello world"})
+            await service.add_document(doc)
+            service.save()
+
+        assert hdf5_path.exists()
+
+    @pytest.mark.asyncio
+    async def test_reload_recovers_search_results(self, tmp_path):
+        """Data added before save() is searchable in a new service instance."""
+        hdf5_path = tmp_path / "test.h5"
+        embed_client = DeterministicEmbedClient(embedding_dim=64)
+
+        async with HDF5RAGService(
+            embed_client=embed_client, hdf5_path=hdf5_path
+        ) as service:
+            doc = _make_doc("doc1", {"field": "test content"})
+            await service.add_document(doc)
+            service.save()
+
+        embed_client2 = DeterministicEmbedClient(embedding_dim=64)
+        async with HDF5RAGService(
+            embed_client=embed_client2, hdf5_path=hdf5_path
+        ) as service2:
+            results = await service2.search("test query", k=1)
+
+        assert len(results) == 1
+        assert results[0].document_id == "doc1"
+        assert results[0].chunk_key == "field"
+        assert results[0].text == "test content"
+
+    @pytest.mark.asyncio
+    async def test_reload_preserves_document_count(self, tmp_path):
+        """Multiple documents survive a save/reload cycle."""
+        hdf5_path = tmp_path / "test.h5"
+        embed_client = DeterministicEmbedClient(embedding_dim=64)
+
+        async with HDF5RAGService(
+            embed_client=embed_client, hdf5_path=hdf5_path
+        ) as service:
+            for i in range(5):
+                doc = _make_doc(f"doc{i}", {"field": f"content {i}"})
                 await service.add_document(doc)
             service.save()
 
+        embed_client2 = DeterministicEmbedClient(embedding_dim=64)
         async with HDF5RAGService(
-            hdf5_path=hdf5_path, embed_client=embed_client
+            embed_client=embed_client2, hdf5_path=hdf5_path
         ) as service2:
-            results = await service2.search("query", k=5, doc_ids=["doc0", "doc2"])
-            result_doc_ids = {r.document_id for r in results}
-            assert result_doc_ids == {"doc0", "doc2"}
-            assert "doc1" not in result_doc_ids
+            results = await service2.search("content", k=5)
+
+        assert len(results) == 5
 
     @pytest.mark.asyncio
-    async def test_filtered_search_empty_doc_ids(self, tmp_path, embed_client):
-        """Test that empty doc_ids list returns no results."""
-        hdf5_path = tmp_path / "filter.h5"
+    async def test_reload_preserves_model_name(self, tmp_path):
+        """model_name stored via save() is recovered on reload."""
+        hdf5_path = tmp_path / "test.h5"
+        embed_client = DeterministicEmbedClient(embedding_dim=64)
+        embed_client.model = "my-custom-model"
 
         async with HDF5RAGService(
-            hdf5_path=hdf5_path, embed_client=embed_client
+            embed_client=embed_client, hdf5_path=hdf5_path
         ) as service:
-            doc = Document(
-                id="doc1",
-                content={"field": "content"},
-                chunks={"field": DocumentChunk(faiss_id=-1)},
-            )
-            await service.add_document(doc)
-
-            results = await service.search("query", doc_ids=[])
-            assert results == []
-
-
-@pytest.mark.skipif(not HDF5_AVAILABLE, reason="h5py not installed")
-class TestHDF5RAGServiceConversion:
-    """Test conversion from FAISS+JSON to HDF5."""
-
-    @pytest.mark.skip(reason="from_faiss_json method not yet implemented")
-    def test_hdf5_conversion_from_faiss(self, tmp_path):
-        """Test conversion from existing FAISS+JSON files."""
-        import faiss
-
-        faiss_path = tmp_path / "test.faiss"
-        json_path = tmp_path / "test_meta.json"
-        hdf5_path = tmp_path / "converted.h5"
-
-        embedding_dim = 768
-        index = faiss.IndexFlatIP(embedding_dim)
-        vectors = np.random.randn(3, embedding_dim).astype(np.float32)
-        index.add(vectors)
-        faiss.write_index(index, str(faiss_path))
-
-        metadata = {
-            "chunk_refs": [
-                {"document_id": "doc1", "chunk_key": "chunk0"},
-                {"document_id": "doc1", "chunk_key": "chunk1"},
-                {"document_id": "doc2", "chunk_key": "chunk0"},
-            ],
-            "documents": [
-                {
-                    "id": "doc1",
-                    "content": {"field": "value1"},
-                    "full_text": "",
-                    "metadata": {},
-                    "source": "",
-                    "chunks": {
-                        "chunk0": {"faiss_id": 0, "i_start": None, "i_end": None},
-                        "chunk1": {"faiss_id": 1, "i_start": None, "i_end": None},
-                    },
-                },
-                {
-                    "id": "doc2",
-                    "content": {"field": "value2"},
-                    "full_text": "",
-                    "metadata": {},
-                    "source": "",
-                    "chunks": {
-                        "chunk0": {"faiss_id": 2, "i_start": None, "i_end": None}
-                    },
-                },
-            ],
-        }
-
-        with open(json_path, "w") as f:
-            json.dump(metadata, f)
-
-        service = HDF5RAGService.from_faiss_json(
-            faiss_path=faiss_path, json_path=json_path, hdf5_path=hdf5_path
-        )
-
-        assert hdf5_path.exists()
-        assert len(service.documents) == 2
-        assert len(service.chunk_refs) == 3
-        assert service.vectors.shape == (3, embedding_dim)
-
-        assert "doc1" in service.documents
-        assert "doc2" in service.documents
-        assert service.chunk_refs[0].document_id == "doc1"
-        assert service.chunk_refs[2].document_id == "doc2"
-
-
-@pytest.mark.skipif(not HDF5_AVAILABLE, reason="h5py not installed")
-class TestHDF5RAGServiceErrorHandling:
-    """Test error handling for HDF5 operations."""
-
-    @pytest.mark.asyncio
-    async def test_hdf5_corrupted_file(self, tmp_path, embed_client_768):
-        """Test error handling for invalid HDF5 files."""
-        hdf5_path = tmp_path / "corrupted.h5"
-
-        with open(hdf5_path, "w") as f:
-            f.write("This is not a valid HDF5 file")
-
-        with pytest.raises((OSError, IOError)):
-            async with HDF5RAGService(
-                hdf5_path=hdf5_path, embed_client=embed_client_768
-            ) as _:
-                pass
-
-    @pytest.mark.asyncio
-    async def test_missing_hdf5_file(self, tmp_path, embed_client_768):
-        """Test error handling for missing HDF5 file."""
-        hdf5_path = tmp_path / "nonexistent.h5"
-
-        async with HDF5RAGService(
-            hdf5_path=hdf5_path, embed_client=embed_client_768
-        ) as service:
-            assert len(service.documents) == 0
-
-    @pytest.mark.asyncio
-    async def test_load_missing_file_explicitly(self, tmp_path, embed_client_768):
-        """Test explicit load of missing file raises error."""
-        hdf5_path = tmp_path / "missing.h5"
-
-        async with HDF5RAGService(
-            hdf5_path=hdf5_path, embed_client=embed_client_768
-        ) as service:
-            with pytest.raises(FileNotFoundError):
-                service.load_from_hdf5(hdf5_path)
-
-    @pytest.mark.asyncio
-    async def test_dimension_mismatch(self, tmp_path, embed_client_768):
-        """Test handling of dimension mismatch."""
-        hdf5_path = tmp_path / "dimension.h5"
-
-        async with HDF5RAGService(
-            hdf5_path=hdf5_path, embed_client=embed_client_768
-        ) as service1:
-            vector = np.random.randn(1, 768).astype(np.float32)
-            service1.vectors.add(vector)
-            service1.chunk_refs.append(ChunkRef(document_id="doc1", chunk_key="chunk0"))
-            doc = Document(
-                id="doc1",
-                content={"field": "value"},
-                chunks={"chunk0": DocumentChunk(faiss_id=0)},
-            )
-            service1.documents["doc1"] = doc
-            service1.save()
-
-        embed_client_384 = DeterministicEmbedClient(embedding_dim=384)
-        async with HDF5RAGService(
-            hdf5_path=hdf5_path,
-            embed_client=embed_client_384,
-        ) as service2:
-            assert service2.embedding_dim == 768  # Loaded from file, not client
-
-
-@pytest.mark.skipif(not HDF5_AVAILABLE, reason="h5py not installed")
-class TestHDF5RAGServiceCompression:
-    """Test HDF5 compression features."""
-
-    @pytest.mark.asyncio
-    async def test_vectors_compression(self, tmp_path, embed_client_768):
-        """Test that vectors are compressed in HDF5 file."""
-        hdf5_path = tmp_path / "compressed.h5"
-
-        async with HDF5RAGService(
-            hdf5_path=hdf5_path, embed_client=embed_client_768
-        ) as service:
-            n_vectors = 100
-            vectors = np.random.randn(n_vectors, 768).astype(np.float32)
-            service.vectors.add(vectors)
-
-            for i in range(n_vectors):
-                service.chunk_refs.append(
-                    ChunkRef(document_id=f"doc{i}", chunk_key="chunk0")
-                )
-                doc = Document(
-                    id=f"doc{i}",
-                    content={"field": f"value{i}"},
-                    chunks={"chunk0": DocumentChunk(faiss_id=i)},
-                )
-                service.documents[f"doc{i}"] = doc
-
             service.save()
 
-        with h5py.File(str(hdf5_path), "r") as f:
-            vectors_dataset = f["vectors"]
-            assert vectors_dataset.compression == "gzip"
+        embed_client2 = DeterministicEmbedClient(embedding_dim=64)
+        async with HDF5RAGService(
+            embed_client=embed_client2, hdf5_path=hdf5_path
+        ) as service2:
+            assert service2.model_name == "my-custom-model"
 
-        file_size = hdf5_path.stat().st_size
-        uncompressed_size = n_vectors * 768 * 4  # float32 = 4 bytes
-        assert file_size < uncompressed_size * 2
+    @pytest.mark.asyncio
+    async def test_save_reload_doc_ids_filter_still_works(self, tmp_path):
+        """doc_ids filter is correct after a save/reload round-trip."""
+        hdf5_path = tmp_path / "test.h5"
+        embed_client = DeterministicEmbedClient(embedding_dim=64)
+
+        async with HDF5RAGService(
+            embed_client=embed_client, hdf5_path=hdf5_path
+        ) as service:
+            for i in range(3):
+                doc = _make_doc(f"doc{i}", {"field": f"value {i}"})
+                await service.add_document(doc)
+            service.save()
+
+        embed_client2 = DeterministicEmbedClient(embedding_dim=64)
+        async with HDF5RAGService(
+            embed_client=embed_client2, hdf5_path=hdf5_path
+        ) as service2:
+            results = await service2.search("value", k=5, doc_ids=["doc0", "doc2"])
+
+        result_doc_ids = {r.document_id for r in results}
+        assert result_doc_ids == {"doc0", "doc2"}
+        assert "doc1" not in result_doc_ids

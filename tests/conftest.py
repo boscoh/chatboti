@@ -68,24 +68,24 @@ def sample_documents():
             content={"title": "First Document", "body": "Content of first document"},
             full_text="First Document\nContent of first document",
             chunks={
-                "title": DocumentChunk(faiss_id=-1),
-                "body": DocumentChunk(faiss_id=-1),
+                "title": DocumentChunk(id=-1),
+                "body": DocumentChunk(id=-1),
             },
         ),
         Document(
             id="doc2",
             content={"title": "Second Document", "summary": "Brief summary"},
             chunks={
-                "title": DocumentChunk(faiss_id=-1),
-                "summary": DocumentChunk(faiss_id=-1),
+                "title": DocumentChunk(id=-1),
+                "summary": DocumentChunk(id=-1),
             },
         ),
         Document(
             id="doc3",
             content={"name": "Alice", "bio": "Software engineer with AI expertise"},
             chunks={
-                "name": DocumentChunk(faiss_id=-1),
-                "bio": DocumentChunk(faiss_id=-1),
+                "name": DocumentChunk(id=-1),
+                "bio": DocumentChunk(id=-1),
             },
         ),
     ]
@@ -108,8 +108,8 @@ async def faiss_service(tmp_path, embed_client_768):
         id="doc1",
         content={"title": "AI Research", "field": "machine learning"},
         chunks={
-            "title": DocumentChunk(faiss_id=-1),
-            "field": DocumentChunk(faiss_id=-1),
+            "title": DocumentChunk(id=-1),
+            "field": DocumentChunk(id=-1),
         },
     )
     await service.add_document(doc1)
@@ -118,8 +118,8 @@ async def faiss_service(tmp_path, embed_client_768):
         id="doc2",
         content={"title": "Software Engineering", "field": "distributed systems"},
         chunks={
-            "title": DocumentChunk(faiss_id=-1),
-            "field": DocumentChunk(faiss_id=-1),
+            "title": DocumentChunk(id=-1),
+            "field": DocumentChunk(id=-1),
         },
     )
     await service.add_document(doc2)
@@ -146,8 +146,8 @@ async def hdf5_service(tmp_path, embed_client_768):
         id="doc1",
         content={"title": "AI Research", "field": "machine learning"},
         chunks={
-            "title": DocumentChunk(faiss_id=-1),
-            "field": DocumentChunk(faiss_id=-1),
+            "title": DocumentChunk(id=-1),
+            "field": DocumentChunk(id=-1),
         },
     )
     await service.add_document(doc1)
@@ -156,8 +156,8 @@ async def hdf5_service(tmp_path, embed_client_768):
         id="doc2",
         content={"title": "Software Engineering", "field": "distributed systems"},
         chunks={
-            "title": DocumentChunk(faiss_id=-1),
-            "field": DocumentChunk(faiss_id=-1),
+            "title": DocumentChunk(id=-1),
+            "field": DocumentChunk(id=-1),
         },
     )
     await service.add_document(doc2)
@@ -193,8 +193,8 @@ async def rag_service(request, tmp_path, embed_client_768):
         id="doc1",
         content={"title": "AI Research", "field": "machine learning"},
         chunks={
-            "title": DocumentChunk(faiss_id=-1),
-            "field": DocumentChunk(faiss_id=-1),
+            "title": DocumentChunk(id=-1),
+            "field": DocumentChunk(id=-1),
         },
     )
     await service.add_document(doc1)
@@ -203,8 +203,8 @@ async def rag_service(request, tmp_path, embed_client_768):
         id="doc2",
         content={"title": "Software Engineering", "field": "distributed systems"},
         chunks={
-            "title": DocumentChunk(faiss_id=-1),
-            "field": DocumentChunk(faiss_id=-1),
+            "title": DocumentChunk(id=-1),
+            "field": DocumentChunk(id=-1),
         },
     )
     await service.add_document(doc2)
