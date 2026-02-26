@@ -18,10 +18,12 @@ from chatboti.rag_cli import (
     search_rag,
     show_hdf5_info,
 )
+from chatboti.config import load_env
 from chatboti.server import run_server
 from chatboti.utils import get_version
 
 setup_logging()
+load_env()
 
 logger = logging.getLogger(__name__)
 
