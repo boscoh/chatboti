@@ -58,6 +58,7 @@ async def create_rag_service(
         else:
             backend = rag_mode
 
+        logger.info(f"Using RAG backend: {backend}")
         if verbose:
             print(f"• Format: {backend.upper()}")
 

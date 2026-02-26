@@ -32,6 +32,7 @@ async def lifespan(app):
         embed_client = await get_embed_client()
 
         rag_mode = os.getenv("RAG_MODE", "faiss")
+        logger.info(f"Using RAG backend: {rag_mode}")
         if rag_mode == "sqlite":
             rag_service = SQLiteRAGService(embed_client=embed_client, data_dir=data_dir)
         elif rag_mode == "hdf5":
@@ -40,7 +41,7 @@ async def lifespan(app):
             rag_service = FaissRAGService(embed_client=embed_client, data_dir=data_dir)
 
         await rag_service.__aenter__()
-        logger.info(f"RAG service initialized with mode '{rag_mode}'")
+        logger.info(f"RAG service ready")
     except Exception as e:
         logger.error(f"Failed to initialize RAG service: {e}", exc_info=True)
         raise
