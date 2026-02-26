@@ -159,7 +159,7 @@ class FaissRAGService:
 
             # Track metadata
             self.chunk_refs.append(ChunkRef(document_id=doc.id, chunk_key=chunk_key))
-            chunk.faiss_id = faiss_id
+            chunk.id = faiss_id
 
         self.documents[doc.id] = doc
 

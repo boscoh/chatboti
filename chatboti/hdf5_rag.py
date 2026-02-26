@@ -100,7 +100,7 @@ class HDF5RAGService(FaissRAGService):
     Storage format:
         /metadata (attributes: model_name, embedding_dim, created_at, etc.)
         /vectors (dataset: float32 array [n_chunks × embedding_dim])
-        /chunks (dataset: structured array with faiss_id, document_id, chunk_key)
+        /chunks (dataset: structured array with id, document_id, chunk_key)
         /documents (group with nested groups for each document)
 
     Usage:
@@ -169,12 +169,13 @@ class HDF5RAGService(FaissRAGService):
         """
         doc.i_vector_start = len(self.chunk_refs)
         for chunk_key, chunk in doc.chunks.items():
-            faiss_id = len(self.chunk_refs)
+            chunk_id = len(self.chunk_refs)
             chunk_text = doc.get_chunk_text(chunk_key)
             embedding = await self.get_embedding(chunk_text)
             self.vectors.add(embedding)
             self.chunk_refs.append(ChunkRef(document_id=doc.id, chunk_key=chunk_key))
-            chunk.faiss_id = faiss_id
+            chunk.id = chunk_id
+        doc.i_vector_end = len(self.chunk_refs)
         self.documents[doc.id] = doc
 
     def vector_search(
@@ -239,13 +240,16 @@ class HDF5RAGService(FaissRAGService):
 
                     doc_data = {
                         "id": doc_id,
-                        "source": doc_group.attrs.get("source", ""),
                         "i_vector_start": doc_group.attrs.get("i_vector_start", None),
+                        "i_vector_end": doc_group.attrs.get("i_vector_end", None),
                         "full_text": "",
                         "content": {},
                         "metadata": {},
                         "chunks": {},
                     }
+                    # Back-compat: old files stored source as HDF5 attribute
+                    if "source" in doc_group.attrs:
+                        doc_data["source"] = doc_group.attrs["source"]
 
                     if "full_text" in doc_group:
                         doc_data["full_text"] = doc_group["full_text"][()]
@@ -302,7 +306,7 @@ class HDF5RAGService(FaissRAGService):
             if self.chunk_refs:
                 chunk_dtype = np.dtype(
                     [
-                        ("faiss_id", "i8"),
+                        ("id", "i8"),
                         ("document_id", h5py.string_dtype(encoding="utf-8")),
                         ("chunk_key", h5py.string_dtype(encoding="utf-8")),
                     ]
@@ -318,7 +322,7 @@ class HDF5RAGService(FaissRAGService):
             else:
                 chunk_dtype = np.dtype(
                     [
-                        ("faiss_id", "i8"),
+                        ("id", "i8"),
                         ("document_id", h5py.string_dtype(encoding="utf-8")),
                         ("chunk_key", h5py.string_dtype(encoding="utf-8")),
                     ]
@@ -328,9 +332,10 @@ class HDF5RAGService(FaissRAGService):
             docs_group = f.create_group("documents")
             for doc_id, doc in self.documents.items():
                 doc_group = docs_group.create_group(doc_id)
-                doc_group.attrs["source"] = doc.source
                 if doc.i_vector_start is not None:
                     doc_group.attrs["i_vector_start"] = doc.i_vector_start
+                if doc.i_vector_end is not None:
+                    doc_group.attrs["i_vector_end"] = doc.i_vector_end
 
                 if doc.full_text:
                     doc_group.create_dataset("full_text", data=doc.full_text)
@@ -348,7 +353,7 @@ class HDF5RAGService(FaissRAGService):
                 if doc.chunks:
                     chunks_dict = {
                         key: {
-                            "faiss_id": chunk.faiss_id,
+                            "id": chunk.id,
                             "i_start": chunk.i_start,
                             "i_end": chunk.i_end,
                         }
