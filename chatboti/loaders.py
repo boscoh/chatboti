@@ -32,14 +32,17 @@ async def load_csv(
         for i, row in enumerate(reader):
             # Create document with content dict
             doc = Document(
-                id=f"{prefix}-{i}", content=dict(row), chunks={}, source=source
+                id=f"{prefix}-{i}",
+                content=dict(row),
+                chunks={},
+                metadata={"source": source},
             )
 
             # Create chunks for embed fields
             fields = embed_fields or [k for k, v in row.items() if v]
             for field in fields:
                 if field in row and row[field]:
-                    doc.chunks[field] = DocumentChunk(faiss_id=-1)  # Assigned later
+                    doc.chunks[field] = DocumentChunk(id=-1)  # Assigned later
 
             documents.append(doc)
 

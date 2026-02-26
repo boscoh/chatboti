@@ -14,14 +14,14 @@ class DocumentChunk:
     Global ID: (document.id, dict_key)
     """
 
-    faiss_id: int
+    id: int
     i_start: Optional[int] = None
     i_end: Optional[int] = None
 
 
 @dataclass(frozen=True)
 class ChunkRef:
-    """Maps faiss_id to document location."""
+    """Maps chunk id to document location."""
 
     document_id: str
     chunk_key: str
@@ -52,26 +52,26 @@ class Document:
         full_text: str = "",
         metadata: Optional[dict] = None,
         chunks: Optional[Dict[str, DocumentChunk]] = None,
-        source: str = "",
         i_vector_start: Optional[int] = None,
+        i_vector_end: Optional[int] = None,
     ):
         """Initialize a document.
 
         :param id: Unique document identifier
         :param content: Flexible fields for field-level chunking
         :param full_text: Complete text for chunk-level chunking
-        :param metadata: Source, timestamp, and other metadata
+        :param metadata: Source, timestamp, and other metadata (includes "source")
         :param chunks: Mapping of field names or indices to chunks
-        :param source: Original source file path
         :param i_vector_start: Index of first chunk's vector in the store (set by add_document)
+        :param i_vector_end: One past the last chunk's vector index (set by add_document)
         """
         self.id = id
         self.content = content if content is not None else {}
         self.full_text = full_text
         self.metadata = metadata if metadata is not None else {}
         self.chunks = chunks if chunks is not None else {}
-        self.source = source
         self.i_vector_start = i_vector_start
+        self.i_vector_end = i_vector_end
 
     def get_chunk_text(self, key: str) -> str:
         """Get chunk text by field name or index.
@@ -115,11 +115,11 @@ class Document:
             "content": self.content,
             "full_text": self.full_text,
             "metadata": self.metadata,
-            "source": self.source,
             "i_vector_start": self.i_vector_start,
+            "i_vector_end": self.i_vector_end,
             "chunks": {
                 key: {
-                    "faiss_id": chunk.faiss_id,
+                    "id": chunk.id,
                     "i_start": chunk.i_start,
                     "i_end": chunk.i_end,
                 }
@@ -136,7 +136,7 @@ class Document:
         """
         chunks = {
             key: DocumentChunk(
-                faiss_id=chunk_data["faiss_id"],
+                id=chunk_data.get("id", chunk_data.get("faiss_id", -1)),
                 i_start=chunk_data.get("i_start"),
                 i_end=chunk_data.get("i_end"),
             )
@@ -146,16 +146,22 @@ class Document:
         # Infer i_vector_start from chunks if not stored (backwards compat)
         i_vector_start = data.get("i_vector_start")
         if i_vector_start is None and chunks:
-            ids = [c.faiss_id for c in chunks.values() if c.faiss_id >= 0]
+            ids = [c.id for c in chunks.values() if c.id >= 0]
             if ids:
                 i_vector_start = min(ids)
+
+        # Back-compat: old files stored source as top-level key
+        metadata = data.get("metadata", {})
+        if "source" in data and "source" not in metadata:
+            metadata = dict(metadata)
+            metadata["source"] = data["source"]
 
         return Document(
             id=data["id"],
             content=data.get("content", {}),
             full_text=data.get("full_text", ""),
-            metadata=data.get("metadata", {}),
+            metadata=metadata,
             chunks=chunks,
-            source=data.get("source", ""),
             i_vector_start=i_vector_start,
+            i_vector_end=data.get("i_vector_end"),
         )
