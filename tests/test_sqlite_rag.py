@@ -274,6 +274,32 @@ class TestSQLiteRAGServiceSaveReload:
             assert service2.model_name == "my-custom-model"
 
     @pytest.mark.asyncio
+    async def test_auto_db_path_persists_to_file(self, tmp_path):
+        """When db_path is omitted, data_dir is used to resolve the path and data persists."""
+        embed_client = DeterministicEmbedClient(embedding_dim=64)
+        embed_client.model = "test-model"
+
+        async with SQLiteRAGService(
+            embed_client=embed_client, data_dir=tmp_path
+        ) as service:
+            doc = _make_doc("doc1", {"field": "auto path content"})
+            await service.add_document(doc)
+            service.save()
+            db_path = service.db_path
+
+        assert db_path.exists(), "DB file must be created on disk, not in :memory:"
+
+        embed_client2 = DeterministicEmbedClient(embedding_dim=64)
+        embed_client2.model = "test-model"
+        async with SQLiteRAGService(
+            embed_client=embed_client2, data_dir=tmp_path
+        ) as service2:
+            results = await service2.search("auto path", k=1)
+
+        assert len(results) == 1
+        assert results[0].document_id == "doc1"
+
+    @pytest.mark.asyncio
     async def test_save_reload_doc_ids_filter_still_works(self, tmp_path):
         """doc_ids filter is correct after a save/reload round-trip."""
         db_path = tmp_path / "test.db"
