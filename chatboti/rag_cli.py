@@ -71,6 +71,9 @@ async def create_rag_service(
                 if verbose:
                     print(f"• SQLite DB: {rag.db_path}")
                     print(f"• Embedding dim: {rag.embedding_dim}")
+                n_docs = rag._conn.execute("SELECT COUNT(*) FROM documents").fetchone()[0]
+                if n_docs == 0:
+                    logger.warning(f"SQLite DB is empty: {rag.db_path} — run 'build-rag --rag-mode=sqlite' first")
                 yield rag
         elif backend == "hdf5":
             async with HDF5RAGService(
@@ -81,6 +84,8 @@ async def create_rag_service(
                 if verbose:
                     print(f"• HDF5 file: {rag.hdf5_path}")
                     print(f"• Embedding dim: {rag.embedding_dim}")
+                if len(rag.documents) == 0:
+                    logger.warning(f"HDF5 file is empty: {rag.hdf5_path} — run 'build-rag --rag-mode=hdf5' first")
                 yield rag
         else:
             async with FaissRAGService(
@@ -93,6 +98,8 @@ async def create_rag_service(
                     print(f"• Index: {rag.index_path}")
                     print(f"• Metadata: {rag.metadata_path}")
                     print(f"• Embedding dim: {rag.embedding_dim}")
+                if len(rag.documents) == 0:
+                    logger.warning(f"FAISS index is empty: {rag.index_path} — run 'build-rag' first")
                 yield rag
     finally:
         # Close the client if we created it
