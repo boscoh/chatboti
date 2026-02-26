@@ -233,3 +233,52 @@ class TestFaissRAGServiceSaveReload:
             metadata_path=metadata_path,
         ) as service2:
             assert service2.model_name == "my-custom-model"
+
+
+class TestFaissRAGServiceDataDir:
+    """Tests for data_dir-based path resolution (mirrors CLI usage)."""
+
+    @pytest.mark.asyncio
+    async def test_data_dir_creates_expected_files(self, tmp_path):
+        """Using data_dir creates model-named .faiss and .json files in that directory."""
+        embed_client = DeterministicEmbedClient(embedding_dim=64)
+        embed_client.model = "test-model"
+
+        async with FaissRAGService(
+            embed_client=embed_client, data_dir=tmp_path
+        ) as service:
+            doc = _make_doc("doc1", {"field": "hello world"})
+            await service.add_document(doc)
+            service.save()
+
+        faiss_files = list(tmp_path.glob("*.faiss"))
+        json_files = list(tmp_path.glob("*.json"))
+        assert len(faiss_files) == 1, "Expected exactly one .faiss file in data_dir"
+        assert len(json_files) == 1, "Expected exactly one .json file in data_dir"
+        assert faiss_files[0].name == "vectors-test-model.faiss"
+        assert json_files[0].name == "metadata-test-model.json"
+
+    @pytest.mark.asyncio
+    async def test_data_dir_persists_across_open_close(self, tmp_path):
+        """Data written via data_dir is searchable in a second instance using the same data_dir."""
+        embed_client = DeterministicEmbedClient(embedding_dim=64)
+        embed_client.model = "test-model"
+
+        async with FaissRAGService(
+            embed_client=embed_client, data_dir=tmp_path
+        ) as service:
+            doc = _make_doc("doc1", {"field": "data dir content"})
+            await service.add_document(doc)
+            service.save()
+
+        embed_client2 = DeterministicEmbedClient(embedding_dim=64)
+        embed_client2.model = "test-model"
+        async with FaissRAGService(
+            embed_client=embed_client2, data_dir=tmp_path
+        ) as service2:
+            results = await service2.search("data dir", k=1)
+
+        assert len(results) == 1
+        assert results[0].document_id == "doc1"
+        assert results[0].chunk_key == "field"
+        assert results[0].text == "data dir content"

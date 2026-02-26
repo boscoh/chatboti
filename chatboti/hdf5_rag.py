@@ -139,18 +139,24 @@ class HDF5RAGService(FaissRAGService):
 
     async def __aenter__(self):
         """Async context manager entry - performs async initialization."""
-        await super().__aenter__()
-
+        # Resolve hdf5_path before super().__aenter__() so initialize_search_backend()
+        # can check self.hdf5_path.exists().  We derive data_dir and model_slug here
+        # using the same logic that FaissRAGService.__aenter__ would apply later.
         if not self.hdf5_path:
             from chatboti.utils import make_slug
 
+            if not self.data_dir:
+                import chatboti
+
+                self.data_dir = Path(chatboti.__file__).parent / "data"
+
+            model_name = getattr(self.embed_client, "model", None)
             model_slug = (
-                make_slug(self.model_name, strip_latest=True)
-                if self.model_name
-                else "default"
+                make_slug(model_name, strip_latest=True) if model_name else "default"
             )
             self.hdf5_path = self.data_dir / f"embeddings-{model_slug}.h5"
 
+        await super().__aenter__()
         return self
 
     def initialize_search_backend(self):

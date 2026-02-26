@@ -311,3 +311,50 @@ class TestHDF5RAGServiceSaveReload:
         result_doc_ids = {r.document_id for r in results}
         assert result_doc_ids == {"doc0", "doc2"}
         assert "doc1" not in result_doc_ids
+
+
+@pytest.mark.skipif(not HDF5_AVAILABLE, reason="h5py not installed")
+class TestHDF5RAGServiceDataDir:
+    """Tests for data_dir-based path resolution (mirrors CLI usage)."""
+
+    @pytest.mark.asyncio
+    async def test_data_dir_creates_expected_file(self, tmp_path):
+        """Using data_dir creates a model-named .h5 file in that directory."""
+        embed_client = DeterministicEmbedClient(embedding_dim=64)
+        embed_client.model = "test-model"
+
+        async with HDF5RAGService(
+            embed_client=embed_client, data_dir=tmp_path
+        ) as service:
+            doc = _make_doc("doc1", {"field": "hello world"})
+            await service.add_document(doc)
+            service.save()
+
+        h5_files = list(tmp_path.glob("*.h5"))
+        assert len(h5_files) == 1, "Expected exactly one .h5 file in data_dir"
+        assert h5_files[0].name == "embeddings-test-model.h5"
+
+    @pytest.mark.asyncio
+    async def test_data_dir_persists_across_open_close(self, tmp_path):
+        """Data written via data_dir is searchable in a second instance using the same data_dir."""
+        embed_client = DeterministicEmbedClient(embedding_dim=64)
+        embed_client.model = "test-model"
+
+        async with HDF5RAGService(
+            embed_client=embed_client, data_dir=tmp_path
+        ) as service:
+            doc = _make_doc("doc1", {"field": "data dir content"})
+            await service.add_document(doc)
+            service.save()
+
+        embed_client2 = DeterministicEmbedClient(embedding_dim=64)
+        embed_client2.model = "test-model"
+        async with HDF5RAGService(
+            embed_client=embed_client2, data_dir=tmp_path
+        ) as service2:
+            results = await service2.search("data dir", k=1)
+
+        assert len(results) == 1
+        assert results[0].document_id == "doc1"
+        assert results[0].chunk_key == "field"
+        assert results[0].text == "data dir content"
