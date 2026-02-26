@@ -72,18 +72,20 @@ class SQLiteRAGService(FaissRAGService):
 
     async def __aenter__(self):
         """Async context manager entry - performs async initialization."""
-        await super().__aenter__()
-
+        # db_path must be set before super().__aenter__() calls initialize_search_backend(),
+        # otherwise the connection defaults to :memory: and data is lost on exit.
         if not self.db_path:
             from chatboti.utils import make_slug
 
-            model_slug = (
-                make_slug(self.model_name, strip_latest=True)
-                if self.model_name
-                else "default"
-            )
+            if not self.data_dir:
+                import chatboti
+                self.data_dir = Path(chatboti.__file__).parent / "data"
+
+            model_name = getattr(self.embed_client, "model", None)
+            model_slug = make_slug(model_name, strip_latest=True) if model_name else "default"
             self.db_path = self.data_dir / f"embeddings-{model_slug}.db"
 
+        await super().__aenter__()
         return self
 
     def initialize_search_backend(self):
