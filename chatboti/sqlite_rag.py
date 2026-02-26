@@ -89,7 +89,9 @@ class SQLiteRAGService(FaissRAGService):
     def initialize_search_backend(self):
         """Open connection, load extension, create tables, load stored metadata."""
         self._conn = sqlite3.connect(str(self.db_path) if self.db_path else ":memory:")
+        self._conn.enable_load_extension(True)
         sqlite_vec.load(self._conn)
+        self._conn.enable_load_extension(False)
 
         # Create tables if they don't exist yet.  vec_items requires knowing
         # embedding_dim at table-creation time; we skip it until __aenter__
@@ -208,8 +210,9 @@ class SQLiteRAGService(FaissRAGService):
         :return: (distances, rowids) both shape (k,)
         """
         norm_vec = _l2_normalize(query_emb)
+        # sqlite-vec requires either LIMIT or 'k = ?' constraint.
         cur = self._conn.execute(
-            "SELECT rowid, distance FROM vec_items WHERE embedding MATCH ? ORDER BY distance LIMIT ?",
+            "SELECT rowid, distance FROM vec_items WHERE embedding MATCH ? AND k = ?",
             (norm_vec.tobytes(), k),
         )
         rows = cur.fetchall()
@@ -224,6 +227,9 @@ class SQLiteRAGService(FaissRAGService):
     ) -> list[tuple[int, float]]:
         """KNN search restricted to rowid range [i_start, i_end_exclusive - 1].
 
+        sqlite-vec requires 'k = ?' (not LIMIT) when combining MATCH with
+        rowid BETWEEN constraints.
+
         :param norm_vec: Normalized query vector (1-D float32)
         :param k: Number of results
         :param i_start: Inclusive lower bound for rowid
@@ -233,9 +239,9 @@ class SQLiteRAGService(FaissRAGService):
         cur = self._conn.execute(
             """SELECT rowid, distance FROM vec_items
                WHERE embedding MATCH ?
-                 AND rowid BETWEEN ? AND ?
-               ORDER BY distance LIMIT ?""",
-            (norm_vec.tobytes(), i_start, i_end_exclusive - 1, k),
+                 AND k = ?
+                 AND rowid BETWEEN ? AND ?""",
+            (norm_vec.tobytes(), k, i_start, i_end_exclusive - 1),
         )
         return cur.fetchall()
 
