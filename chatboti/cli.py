@@ -3,6 +3,7 @@
 
 import asyncio
 import logging
+import os
 from pathlib import Path
 
 from cyclopts import App
@@ -26,57 +27,86 @@ logger = logging.getLogger(__name__)
 
 app = App(name="chatboti", help="Chatboti - RAG starter kit")
 
+_DEFAULT_RAG_MODE = os.getenv("RAG_MODE", "faiss")
+
 
 @app.command(name="ui-chat", sort_key=0)
-def ui_chat():
-    """Start the UI with FastAPI backend and open browser."""
+def ui_chat(rag_mode: str = _DEFAULT_RAG_MODE):
+    """Start the UI with FastAPI backend and open browser.
+
+    :param rag_mode: RAG backend to use (faiss/hdf5/sqlite)
+    """
+    os.environ["RAG_MODE"] = rag_mode
     run_server("127.0.0.1", 8000, open_browser=True, reload=False)
 
 
 @app.command(sort_key=1)
-def server(host: str = "0.0.0.0", port: int = 8000, reload: bool = False):
+def server(
+    host: str = "0.0.0.0",
+    port: int = 8000,
+    reload: bool = False,
+    rag_mode: str = _DEFAULT_RAG_MODE,
+):
     """Start the FastAPI server only.
 
     :param host: Server host
     :param port: Server port
     :param reload: Enable auto-reload on file changes
+    :param rag_mode: RAG backend to use (faiss/hdf5/sqlite)
     """
+    os.environ["RAG_MODE"] = rag_mode
     run_server(host, port, open_browser=False, reload=reload)
 
 
 @app.command(name="cli-chat", sort_key=2)
-def cli_chat():
-    """Interactive chat with agent using MCP tools."""
+def cli_chat(rag_mode: str = _DEFAULT_RAG_MODE):
+    """Interactive chat with agent using MCP tools.
+
+    :param rag_mode: RAG backend to use (faiss/hdf5/sqlite)
+    """
+    os.environ["RAG_MODE"] = rag_mode
     asyncio.run(agent_amain())
 
 
 @app.command(name="build-rag", sort_key=3)
-def build_rag(csv_path: str = "", index_path: str = "", metadata_path: str = ""):
+def build_rag(
+    csv_path: str = "",
+    index_path: str = "",
+    metadata_path: str = "",
+    rag_mode: str = _DEFAULT_RAG_MODE,
+):
     """Build RAG embeddings from CSV data (defaults to chatboti/data/).
 
     :param csv_path: Path to CSV file
-    :param index_path: Path to save FAISS index or HDF5 file
+    :param index_path: Path to save index file (.faiss, .h5, or .db)
     :param metadata_path: Path to save metadata JSON (FAISS only)
+    :param rag_mode: RAG backend to use (faiss/hdf5/sqlite)
     """
     asyncio.run(
         build_rag_new(
             csv_path if csv_path else None,
             index_path if index_path else None,
             metadata_path if metadata_path else None,
+            rag_mode=rag_mode,
         )
     )
 
 
 @app.command(name="search-rag", sort_key=4)
 def search_rag_cmd(
-    query: str, k: int = 5, index_path: str = "", metadata_path: str = ""
+    query: str,
+    k: int = 5,
+    index_path: str = "",
+    metadata_path: str = "",
+    rag_mode: str = _DEFAULT_RAG_MODE,
 ):
     """Search the RAG index for relevant documents (defaults to chatboti/data/).
 
     :param query: Search query
     :param k: Number of results to return
-    :param index_path: Path to FAISS index or HDF5 file
+    :param index_path: Path to index file (.faiss, .h5, or .db)
     :param metadata_path: Path to metadata JSON (FAISS only)
+    :param rag_mode: RAG backend to use (faiss/hdf5/sqlite)
     """
     asyncio.run(
         search_rag(
@@ -84,6 +114,7 @@ def search_rag_cmd(
             k,
             index_path if index_path else None,
             metadata_path if metadata_path else None,
+            rag_mode=rag_mode,
         )
     )
 
@@ -128,8 +159,12 @@ def hdf5_info_cmd(hdf5_path: str):
 
 
 @app.command(sort_key=8)
-def docker():
-    """Build and run Docker container with AWS credentials."""
+def docker(rag_mode: str = _DEFAULT_RAG_MODE):
+    """Build and run Docker container with AWS credentials.
+
+    :param rag_mode: RAG backend to inject as RAG_MODE into the container (faiss/hdf5/sqlite)
+    """
+    os.environ["RAG_MODE"] = rag_mode
     run_docker_main()
 
 

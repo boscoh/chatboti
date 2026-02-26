@@ -230,10 +230,12 @@ def main():
 
     chat_service = os.getenv("CHAT_SERVICE", "openai")
     embed_service = os.getenv("EMBED_SERVICE", "openai")
+    rag_mode = os.getenv("RAG_MODE", "faiss")
 
     env_vars = {
         "CHAT_SERVICE": chat_service,
         "EMBED_SERVICE": embed_service,
+        "RAG_MODE": rag_mode,
     }
 
     uses_bedrock = chat_service == "bedrock" or embed_service == "bedrock"

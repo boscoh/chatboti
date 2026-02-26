@@ -11,6 +11,7 @@ from rich.pretty import pprint
 from chatboti.config import get_embed_client
 from chatboti.faiss_rag import FaissRAGService
 from chatboti.hdf5_rag import HDF5RAGService
+from chatboti.sqlite_rag import SQLiteRAGService
 
 logger = logging.getLogger(__name__)
 
@@ -21,14 +22,16 @@ async def create_rag_service(
     data_dir: Union[str, Path] = None,
     embed_client: SimpleLLMClient = None,
     verbose: bool = False,
-) -> AsyncGenerator[Union[FaissRAGService, HDF5RAGService], None]:
-    """Create and initialize a RAG service based on file extension.
+    rag_mode: str = "faiss",
+) -> AsyncGenerator[Union[FaissRAGService, HDF5RAGService, SQLiteRAGService], None]:
+    """Create and initialize a RAG service based on file extension or rag_mode.
 
-    :param index_path: Path to index file (.faiss or .h5)
+    :param index_path: Path to index file (.faiss, .h5, or .db)
     :param metadata_path: Path to metadata JSON (for FAISS only)
     :param data_dir: Data directory path
     :param embed_client: Embedding client (will be created if None)
     :param verbose: Print service info when created
+    :param rag_mode: Backend to use when index_path is not given (faiss/hdf5/sqlite)
     :return: Async generator yielding the RAG service
     """
     if data_dir is None:
@@ -43,12 +46,32 @@ async def create_rag_service(
         embed_client = await get_embed_client()
 
     try:
-        use_hdf5 = index_path and Path(index_path).suffix == ".h5"
+        # Determine backend: explicit extension takes precedence over rag_mode.
+        if index_path:
+            ext = Path(index_path).suffix
+            if ext == ".h5":
+                backend = "hdf5"
+            elif ext == ".db":
+                backend = "sqlite"
+            else:
+                backend = "faiss"
+        else:
+            backend = rag_mode
 
         if verbose:
-            print(f"• Format: {'HDF5' if use_hdf5 else 'FAISS'}")
+            print(f"• Format: {backend.upper()}")
 
-        if use_hdf5:
+        if backend == "sqlite":
+            async with SQLiteRAGService(
+                embed_client=embed_client,
+                data_dir=data_dir,
+                db_path=Path(index_path) if index_path else None,
+            ) as rag:
+                if verbose:
+                    print(f"• SQLite DB: {rag.db_path}")
+                    print(f"• Embedding dim: {rag.embedding_dim}")
+                yield rag
+        elif backend == "hdf5":
             async with HDF5RAGService(
                 embed_client=embed_client,
                 data_dir=data_dir,
@@ -81,13 +104,17 @@ async def create_rag_service(
 
 
 async def build_embeddings(
-    csv_path: str = None, index_path: str = None, metadata_path: str = None
+    csv_path: str = None,
+    index_path: str = None,
+    metadata_path: str = None,
+    rag_mode: str = "faiss",
 ):
     """Build RAG embeddings from speaker CSV data.
 
     :param csv_path: Path to CSV file (default: chatboti/data/2025-09-02-speaker-bio.csv)
-    :param index_path: Path to save FAISS index (or .h5 for HDF5 format)
-    :param metadata_path: Path to save metadata JSON (not used if index_path is .h5)
+    :param index_path: Path to save index file (.faiss, .h5, or .db)
+    :param metadata_path: Path to save metadata JSON (FAISS only)
+    :param rag_mode: Backend to use when index_path is not given (faiss/hdf5/sqlite)
     """
     data_dir = Path(__file__).parent / "data"
     csv_path = Path(csv_path) if csv_path else data_dir / "2025-09-02-speaker-bio.csv"
@@ -103,26 +130,29 @@ async def build_embeddings(
         metadata_path=metadata_path,
         data_dir=data_dir,
         verbose=True,
+        rag_mode=rag_mode,
     ):
         print()
         print(f"→ Building embeddings from {csv_path}...")
         await rag.build_embeddings_from_documents(str(csv_path))
 
         print("\n✓ RAG embeddings built successfully!")
-        print(f"  ├─ Documents: {len(rag.documents)}")
-        print(f"  ├─ Chunks: {len(rag.chunk_refs)}")
-        print(f"  └─ Vectors: {rag.index.ntotal}")
 
 
 async def search_rag(
-    query: str, k: int = 5, index_path: str = None, metadata_path: str = None
+    query: str,
+    k: int = 5,
+    index_path: str = None,
+    metadata_path: str = None,
+    rag_mode: str = "faiss",
 ):
     """Search RAG index for relevant documents.
 
     :param query: Search query
     :param k: Number of results
-    :param index_path: Path to index file (.faiss or .h5)
-    :param metadata_path: Path to metadata JSON (for FAISS only)
+    :param index_path: Path to index file (.faiss, .h5, or .db)
+    :param metadata_path: Path to metadata JSON (FAISS only)
+    :param rag_mode: Backend to use when index_path is not given (faiss/hdf5/sqlite)
     """
     data_dir = Path(__file__).parent / "data"
 
@@ -131,8 +161,8 @@ async def search_rag(
         metadata_path=metadata_path,
         data_dir=data_dir,
         verbose=True,
+        rag_mode=rag_mode,
     ):
-        print(f"✓ Loaded: {len(rag.documents)} documents, {rag.index.ntotal} vectors\n")
         print(f"→ Searching for: '{query}'")
         results = await rag.search(query, k=k, include_documents=True)
 

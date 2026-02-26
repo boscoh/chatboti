@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import logging
+import os
 import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -11,6 +12,8 @@ from chatboti.llm import SimpleLLMClient
 
 from chatboti.config import get_embed_client, load_env
 from chatboti.faiss_rag import FaissRAGService
+from chatboti.hdf5_rag import HDF5RAGService
+from chatboti.sqlite_rag import SQLiteRAGService
 from chatboti.logger import setup_logging
 
 logger = logging.getLogger(__name__)
@@ -28,11 +31,16 @@ async def lifespan(app):
 
         embed_client = await get_embed_client()
 
-        rag_service = FaissRAGService(embed_client=embed_client, data_dir=data_dir)
+        rag_mode = os.getenv("RAG_MODE", "faiss")
+        if rag_mode == "sqlite":
+            rag_service = SQLiteRAGService(embed_client=embed_client, data_dir=data_dir)
+        elif rag_mode == "hdf5":
+            rag_service = HDF5RAGService(embed_client=embed_client, data_dir=data_dir)
+        else:
+            rag_service = FaissRAGService(embed_client=embed_client, data_dir=data_dir)
+
         await rag_service.__aenter__()
-        logger.info(
-            f"RAG service initialized: {len(rag_service.documents)} documents, {rag_service.index.ntotal} vectors"
-        )
+        logger.info(f"RAG service initialized with mode '{rag_mode}'")
     except Exception as e:
         logger.error(f"Failed to initialize RAG service: {e}", exc_info=True)
         raise
